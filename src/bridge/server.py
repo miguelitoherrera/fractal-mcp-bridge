@@ -11,9 +11,6 @@ from fractal_core.config import MAX_ITERATIONS, RESOLUTION
 mcp = FastMCP("FractalBridge")
 
 
-
-
-
 @mcp.tool
 def generate_mandelbrot_image(
         x_min: float,
