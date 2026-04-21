@@ -39,12 +39,26 @@ To use this bridge as an AI Agent, update your `claude_desktop_config.json`:
   "mcpServers": {
     "fractal-bridge": {
       "command": "/absolute/path/to/python",
-      "args": ["/absolute/path/to/fractal-mcp-bridge/src/bridge/server.py"]
+      "args": [
+        "/absolute/path/to/fractal-mcp-bridge/src/bridge/server.py"
+      ]
     }
   }
 }
 ```
-Take special care to use the correct python path that this repo will use.
+Take special care to align the python path with this repo's path.
 
-## ☁️ GCP Deployment
-TBD
+## ☁️ Gemini CLI Integration
+To use this bridge as an AI Agent, update your `settings.json`:
+```json
+{
+  "mcpServers": {
+    "fractal-bridge": {
+      "command": "/absolute/path/to/python",
+      "args": [
+        "/absolute/path/to/fractal-mcp-bridge/src/bridge/server.py"
+      ]
+    }
+  }
+}
+```
