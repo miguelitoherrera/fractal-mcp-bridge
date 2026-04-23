@@ -10,6 +10,27 @@ from fractal_core.config import MAX_ITERATIONS, RESOLUTION
 # Initialize the MCP server
 mcp = FastMCP("FractalBridge")
 
+def _generate_fractal_response(grid, fmt, quality, colormap, reverse_colormap, filename_prefix, x_min, x_max, y_min, y_max, max_iterations):
+    img_bytes = grid_to_image_bytes(
+        grid,
+        max_iterations,
+        fmt=fmt,
+        quality=quality,
+        colormap=colormap,
+        reverse=reverse_colormap,
+    )
+
+    ext = "jpg" if fmt == "jpeg" else "png"
+    return {
+        "type": "file",
+        "filename": f"{filename_prefix}_{x_min}_{x_max}_{y_min}_{y_max}_{colormap}.{ext}",
+        "mime_type": "image/jpeg" if fmt == "jpeg" else "image/png",
+        "data": base64.b64encode(img_bytes).decode("utf-8"),
+        "mean_escape": round(float(np.mean(grid)), 2),
+        "shape": list(grid.shape),
+        "colormap": colormap,
+    }
+
 
 @mcp.tool
 def generate_mandelbrot_image(
@@ -19,7 +40,7 @@ def generate_mandelbrot_image(
         y_max: float,
         resolution: int = RESOLUTION,
         max_iterations: int = MAX_ITERATIONS,
-        format: str = "jpeg",
+        img_format: str = "jpeg",
         quality: int = 95,
         colormap: str = "Inferno",
         reverse_colormap: bool = False,
@@ -33,7 +54,7 @@ def generate_mandelbrot_image(
     y_min, y_max  : imaginary-axis window
     resolution    : pixel width (height computed from aspect ratio)
     max_iterations: escape threshold
-    format        : "jpeg" or "png"
+    img_format    : "jpeg" or "png"
     quality       : JPEG quality 1-95
     colormap      : Bokeh palette name, e.g. "Viridis", "Inferno", "Plasma",
                     "Magma", "Turbo", "Cividis", "Spectral", "RdYlBu", ...
@@ -43,25 +64,19 @@ def generate_mandelbrot_image(
     height = round(width * (y_max - y_min) / (x_max - x_min))
     grid = mandelbrot_set(x_min, x_max, y_min, y_max, width, height, max_iterations)
 
-    img_bytes = grid_to_image_bytes(
-        grid,
-        max_iterations,
-        format,
-        quality,
+    return _generate_fractal_response(
+        grid=grid,
+        fmt=img_format,
+        quality=quality,
         colormap=colormap,
-        reverse=reverse_colormap,
+        reverse_colormap=reverse_colormap,
+        filename_prefix="mandelbrot",
+        x_min=x_min,
+        x_max=x_max,
+        y_min=y_min,
+        y_max=y_max,
+        max_iterations=max_iterations
     )
-
-    ext = "jpg" if format == "jpeg" else "png"
-    return {
-        "type": "file",
-        "filename": f"mandelbrot_{x_min}_{x_max}_{y_min}_{y_max}_{colormap}.{ext}",
-        "mime_type": "image/jpeg" if format == "jpeg" else "image/png",
-        "data": base64.b64encode(img_bytes).decode("utf-8"),
-        "mean_escape": round(float(np.mean(grid)), 2),
-        "shape": list(grid.shape),
-        "colormap": colormap,
-    }
 
 
 @mcp.tool
@@ -74,7 +89,7 @@ def generate_julia_image(
         c_imag: float,
         resolution: int = RESOLUTION,
         max_iterations: int = MAX_ITERATIONS,
-        format: str = "jpeg",
+        img_format: str = "jpeg",
         quality: int = 95,
         colormap: str = "Inferno",
         reverse_colormap: bool = False,
@@ -89,25 +104,19 @@ def generate_julia_image(
     # Calls the imported function directly from the virtual link
     grid = julia_set(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
 
-    img_bytes = grid_to_image_bytes(
-        grid,
-        max_iterations,
-        format,
-        quality,
+    return _generate_fractal_response(
+        grid=grid,
+        fmt=img_format,
+        quality=quality,
         colormap=colormap,
-        reverse=reverse_colormap,
+        reverse_colormap=reverse_colormap,
+        filename_prefix="julia",
+        x_min=x_min,
+        x_max=x_max,
+        y_min=y_min,
+        y_max=y_max,
+        max_iterations=max_iterations
     )
-
-    ext = "jpg" if format == "jpeg" else "png"
-    return {
-        "type": "file",
-        "filename": f"julia_{x_min}_{x_max}_{y_min}_{y_max}_{colormap}.{ext}",
-        "mime_type": "image/jpeg" if format == "jpeg" else "image/png",
-        "data": base64.b64encode(img_bytes).decode("utf-8"),
-        "mean_escape": round(float(np.mean(grid)), 2),
-        "shape": list(grid.shape),
-        "colormap": colormap,
-    }
 
 
 if __name__ == "__main__":
