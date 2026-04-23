@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fractal Interactive Explorer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+        select, input {
+            background: #333;
+            border: 1px solid #444;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .viewer {
+            position: relative;
+            cursor: crosshair;
+            align-self: center;
+            line-height: 0;
+        }
+        img {
+            border-radius: 4px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            max-width: 100%;
+            height: auto;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            grid-column: 1 / -1;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #3498db;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button.secondary {
+            background: #555;
+        }
+        button.secondary:hover {
+            background: #666;
+        }
+        .coords {
+            font-family: monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 0.8rem;
+            pointer-events: none;
+        }
+        .loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+        .loader.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fractal Explorer</h1>
+    
+    <div class="container">
+        <div class="controls">
+            <div class="control-group">
+                <label>Fractal Type</label>
+                <select id="type">
+                    <option value="mandelbrot">Mandelbrot</option>
+                    <option value="julia">Julia</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Colormap</label>
+                <select id="colormap">
+                    <option value="Blues">Blues</option>
+                    <option value="Cividis">Cividis</option>
+                    <option value="Greys">Greys</option>
+                    <option value="Inferno">Inferno</option>
+                    <option value="Magma">Magma</option>
+                    <option value="Plasma">Plasma</option>
+                    <option value="Turbo" selected>Turbo</option>
+                    <option value="Viridis">Viridis</option>
+                    <option value="YlGnBu">YlGnBu</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Max Iterations</label>
+                <input type="number" id="iterations" value="200" step="100">
+            </div>
+
+            <div class="control-group">
+                <label>Reverse Colormap</label>
+                <input type="checkbox" id="reverse_colormap" style="width: fit-content; align-self: start; margin-top: 10px;">
+            </div>
+
+            <div class="control-group">
+                <label>Zoom Factor (per click)</label>
+                <input type="number" id="zoomFactor" value="2" step="0.5" min="1.1">
+            </div>
+
+            <div id="julia-params" style="display:none; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="control-group">
+                    <label>Julia C (Real)</label>
+                    <input type="number" id="c_real" value="-0.74543" step="0.00001">
+                </div>
+                <div class="control-group">
+                    <label>Julia C (Imag)</label>
+                    <input type="number" id="c_imag" value="0.11301" step="0.00001">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="updateBtn">Update / Render</button>
+                <button id="resetBtn" class="secondary">Reset View</button>
+            </div>
+        </div>
+
+        <div class="viewer">
+            <div id="coordsDisplay" class="coords">Range: X[-2, 1], Y[-1.5, 1.5]</div>
+            <div id="loader" class="loader">Rendering...</div>
+            <img id="fractalImg" src="" alt="Fractal Image">
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let state = {
+            type: 'mandelbrot',
+            x_min: -2.0,
+            x_max: 1.0,
+            y_min: -1.5,
+            y_max: 1.5,
+            iterations: 200,
+            colormap: 'Turbo',
+            reverse_colormap: false,
+            c_real: -0.74543,
+            c_imag: 0.11301,
+            resolution: 800
+        };
+
+        const fractalImg = document.getElementById('fractalImg');
+        const loader = document.getElementById('loader');
+        const coordsDisplay = document.getElementById('coordsDisplay');
+        const juliaParams = document.getElementById('julia-params');
+
+        function updateStateFromUI() {
+            const oldType = state.type;
+            state.type = document.getElementById('type').value;
+            state.colormap = document.getElementById('colormap').value;
+            state.iterations = parseInt(document.getElementById('iterations').value);
+            state.reverse_colormap = document.getElementById('reverse_colormap').checked;
+            state.c_real = parseFloat(document.getElementById('c_real').value);
+            state.c_imag = parseFloat(document.getElementById('c_imag').value);
+            
+            juliaParams.style.display = state.type === 'julia' ? 'grid' : 'none';
+
+            // If type changed, reset to type-specific defaults
+            if (oldType !== state.type) {
+                resetView();
+            }
+        }
+
+        function render() {
+            loader.classList.add('active');
+            
+            const params = new URLSearchParams({
+                type: state.type,
+                x_min: state.x_min,
+                x_max: state.x_max,
+                y_min: state.y_min,
+                y_max: state.y_max,
+                max_iterations: state.iterations,
+                colormap: state.colormap,
+                reverse_colormap: state.reverse_colormap,
+                resolution: state.resolution,
+                c_real: state.c_real,
+                c_imag: state.c_imag
+            });
+
+            const url = `/render?${params.toString()}`;
+            fractalImg.src = url;
+            
+            coordsDisplay.textContent = `X: [${state.x_min.toFixed(6)}, ${state.x_max.toFixed(6)}] Y: [${state.y_min.toFixed(6)}, ${state.y_max.toFixed(6)}]`;
+        }
+
+        fractalImg.onload = () => {
+            loader.classList.remove('active');
+        };
+
+        fractalImg.onclick = (e) => {
+            const rect = fractalImg.getBoundingClientRect();
+            const px = (e.clientX - rect.left) / rect.width;
+            const py = (e.clientY - rect.top) / rect.height;
+            
+            // Map click to complex plane
+            const clickX = state.x_min + px * (state.x_max - state.x_min);
+            const clickY = state.y_min + py * (state.y_max - state.y_min);
+            
+            const zoom = parseFloat(document.getElementById('zoomFactor').value);
+            
+            // Calculate new width and height
+            const width = (state.x_max - state.x_min) / zoom;
+            const height = (state.y_max - state.y_min) / zoom;
+            
+            // Set new bounds centered on click
+            state.x_min = clickX - width / 2;
+            state.x_max = clickX + width / 2;
+            state.y_min = clickY - height / 2;
+            state.y_max = clickY + height / 2;
+            
+            render();
+        };
+
+        function resetView() {
+            if (state.type === 'mandelbrot') {
+                state.x_min = -2.0;
+                state.x_max = 1.0;
+                state.y_min = -1.5;
+                state.y_max = 1.5;
+            } else {
+                state.x_min = -2.0;
+                state.x_max = 2.0;
+                state.y_min = -2.0;
+                state.y_max = 2.0;
+            }
+            render();
+        }
+
+        document.getElementById('updateBtn').onclick = () => {
+            updateStateFromUI();
+            render();
+        };
+
+        document.getElementById('resetBtn').onclick = resetView;
+
+        document.getElementById('type').onchange = updateStateFromUI;
+
+        // Initial render
+        updateStateFromUI();
+        render();
+    </script>
+</body>
+</html>

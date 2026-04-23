@@ -62,3 +62,9 @@ To use this bridge as an AI Agent, update your `settings.json`:
   }
 }
 ```
+
+## Interactive Web Explorer
+If you want to interactively explore the Mandelbrot and Julia sets in more detail, you can also spin up the Fractal Explorer:
+```bash
+/absolute/path/to/python src/interactive_server.py 
+```
