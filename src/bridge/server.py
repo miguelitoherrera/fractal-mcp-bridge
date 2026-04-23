@@ -109,21 +109,6 @@ def generate_julia_image(
         "colormap": colormap,
     }
 
-@mcp.tool
-def push_fractal_metadata_to_bq(dataset_id: str, table_id: str, set_type: str) -> str:
-    """
-    Logs fractal computation metadata to BigQuery for research tracking.
-    """
-    from google.cloud import bigquery
-    client = bigquery.Client()
-
-    # Placeholder for logging the event to your GCP infrastructure
-    rows_to_insert = [{"set_type": set_type, "status": "computed"}]
-    table_ref = client.dataset(dataset_id).table(table_id)
-    errors = client.insert_rows_json(table_ref, rows_to_insert)
-
-    return "Metadata logged to BQ" if not errors else f"Error: {errors}"
-
 
 if __name__ == "__main__":
     mcp.run()
