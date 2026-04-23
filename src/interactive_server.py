@@ -13,7 +13,7 @@ os.makedirs("static", exist_ok=True)
 
 @app.get("/render")
 async def render_fractal(
-    type: str = Query("mandelbrot", pattern="^(mandelbrot|julia)$"),
+    fractal_type: str = Query("mandelbrot", alias="type", pattern="^(mandelbrot|julia)$"),
     x_min: float = Query(-2.0),
     x_max: float = Query(1.0),
     y_min: float = Query(-1.5),
@@ -25,7 +25,7 @@ async def render_fractal(
     c_real: float = Query(-0.7),
     c_imag: float = Query(0.27015),
 ):
-    if type == "mandelbrot":
+    if fractal_type == "mandelbrot":
         grid = mandelbrot_set(x_min, x_max, y_min, y_max, resolution, resolution, max_iterations)
     else:
         c = complex(c_real, c_imag)
