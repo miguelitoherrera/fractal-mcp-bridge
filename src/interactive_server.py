@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Query
 from fastapi.responses import StreamingResponse, HTMLResponse
-from fastapi.staticfiles import StaticFiles
 import io
 import os
 from fractal_core.mandelbrot import mandelbrot_set
@@ -14,7 +13,7 @@ os.makedirs("static", exist_ok=True)
 
 @app.get("/render")
 async def render_fractal(
-    type: str = Query("mandelbrot", regex="^(mandelbrot|julia)$"),
+    type: str = Query("mandelbrot", pattern="^(mandelbrot|julia)$"),
     x_min: float = Query(-2.0),
     x_max: float = Query(1.0),
     y_min: float = Query(-1.5),
