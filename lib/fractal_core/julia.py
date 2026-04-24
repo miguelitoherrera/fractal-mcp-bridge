@@ -2,7 +2,7 @@ import numpy as np
 import numba
 
 
-@numba.njit
+@numba.njit(fastmath=True)
 def julia(
     z_initial: complex,
     c: complex,
@@ -19,16 +19,29 @@ def julia(
 
     Returns: (int) The number of iterations until escape (max_iterations if it doesn't escape).
     """
-    z = z_initial
+    z_real = z_initial.real
+    z_imag = z_initial.imag
+    z_real_sq = z_real * z_real
+    z_imag_sq = z_imag * z_imag
+    c_real = c.real
+    c_imag = c.imag
+
     for i in range(max_iterations):
-        z = z*z + c
-        if abs(z) > 2:
+        z_imag = 2.0 * z_real * z_imag + c_imag
+        z_real = z_real_sq - z_imag_sq + c_real
+        
+        z_real_sq = z_real * z_real
+        z_imag_sq = z_imag * z_imag
+
+        # Check if abs(z) > 2.0 (equivalent to checking if abs(z)^2 > 4.0)
+        if z_real_sq + z_imag_sq > 4.0:
             return i
+
     return max_iterations
 
 
 # Parallelization happens here by using numba.prange for the rows.
-@numba.jit(nopython=True, parallel=True)
+@numba.njit(parallel=True, fastmath=True)
 def julia_set(
     x_min: float,
     x_max: float,
@@ -56,9 +69,13 @@ def julia_set(
     x_step = (x_max - x_min) / width
     y_step = (y_max - y_min) / height
 
-    grid = np.zeros((height, width))
+    # Use dtype=np.uint32 based on max_iterations for better cache locality
+    grid = np.empty((height, width), dtype=np.uint32)
+    
     for y in numba.prange(height):
+        # Move y-component calculation to outer loop
+        z_imag = y_min + y * y_step
         for x in range(width):
-            z_initial = complex(x_min + x * x_step, y_min + y * y_step)
+            z_initial = complex(x_min + x * x_step, z_imag)
             grid[y, x] = julia(z_initial, c, max_iterations)
     return grid
