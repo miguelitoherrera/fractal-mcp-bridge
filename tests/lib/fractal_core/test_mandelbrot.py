@@ -1,6 +1,6 @@
 import unittest
 from fractal_core.mandelbrot import mandelbrot, mandelbrot_set
-from fractal_core.config import MAX_ITERATIONS, RESOLUTION
+from fractal_core.config import MAX_ITERATIONS
 
 
 class TestMandelbrot(unittest.TestCase):
@@ -33,6 +33,11 @@ class TestMandelbrot(unittest.TestCase):
         grid = mandelbrot_set(-2, 2, -2, 2, 10, 10, 100)
         self.assertEqual(grid[5, 5], 100) # Near (0,0)
         self.assertEqual(grid[9, 9], 0)   # Near (2,2)
+
+    def test_mandelbrot_escape_branch(self):
+        # Specifically test immediate escape
+        res = mandelbrot(complex(3, 3), max_iterations=10)
+        self.assertEqual(res, 0)
 
 
 if __name__ == '__main__':
