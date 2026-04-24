@@ -4,7 +4,7 @@ import numpy as np
 import numba
 
 
-@numba.njit
+@numba.njit(fastmath=True)
 def mandelbrot(
     c: complex,
     max_iterations: int,
@@ -18,16 +18,30 @@ def mandelbrot(
 
     Returns: (int) The number of iterations until escape (max_iterations if it doesn't escape).
     """
-    z = 0
+    z_real = 0.0
+    z_imag = 0.0
+    z_real_sq = 0.0
+    z_imag_sq = 0.0
+    c_real = c.real
+    c_imag = c.imag
+
     for i in range(max_iterations):
-        z = z*z + c
-        if abs(z) > 2:
+        # Calculate z^2 + c avoiding complex object creation overhead
+        z_imag = 2.0 * z_real * z_imag + c_imag
+        z_real = z_real_sq - z_imag_sq + c_real
+        
+        z_real_sq = z_real * z_real
+        z_imag_sq = z_imag * z_imag
+
+        # Check if abs(z) > 2.0  (equivalent to checking if abs(z)^2 > 4.0)
+        if z_real_sq + z_imag_sq > 4.0:
             return i
+
     return max_iterations
 
 
 # Parallelization happens here by using numba.prange for the rows.
-@numba.jit(nopython=True, parallel=True)
+@numba.njit(parallel=True, fastmath=True)
 def mandelbrot_set(
     x_min: float,
     x_max: float,
@@ -53,9 +67,14 @@ def mandelbrot_set(
     x_step = (x_max - x_min) / width
     y_step = (y_max - y_min) / height
 
-    grid = np.zeros((height, width))
+    # Use dtype=np.uint16 or uint32 based on max_iterations for better cache locality 
+    # instead of the default float64 returned by np.zeros
+    grid = np.empty((height, width), dtype=np.uint32)
+    
     for y in numba.prange(height):
+        # Move c_imag loop hoisting
+        c_imag = y_min + y * y_step
         for x in range(width):
-            c = complex(x_min + x * x_step, y_min + y * y_step)
+            c = complex(x_min + x * x_step, c_imag)
             grid[y, x] = mandelbrot(c, max_iterations)
     return grid
