@@ -1,6 +1,6 @@
 import unittest
 from fractal_core.julia import julia, julia_set
-from fractal_core.config import MAX_ITERATIONS, RESOLUTION
+from fractal_core.config import MAX_ITERATIONS
 
 
 class TestJulia(unittest.TestCase):
@@ -38,6 +38,11 @@ class TestJulia(unittest.TestCase):
         grid = julia_set(-2, 2, -2, 2, c, 10, 10, 100)
         self.assertEqual(grid[5, 5], 100) # Center should not escape
         self.assertEqual(grid[0, 0], 0)   # corners (-2, -2) should escape immediately
+
+    def test_julia_escape_branch(self):
+        # specifically test an immediate escape to cover the line
+        res = julia(complex(3, 3), complex(0, 0), max_iterations=10)
+        self.assertEqual(res, 0)
 
 
 if __name__ == '__main__':
