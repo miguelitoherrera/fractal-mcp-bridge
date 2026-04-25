@@ -53,3 +53,48 @@ def test_read_index(mock_file):
     assert response.text == "<html><body>Test</body></html>"
     assert response.headers["content-type"] == "text/html; charset=utf-8"
     mock_file.assert_called_once_with("static/index.html", "r")
+
+@patch("src.interactive_server.mandelbrot_set")
+@patch("src.interactive_server.grid_to_image_bytes")
+@patch("builtins.open", new_callable=mock_open)
+def test_save_mandelbrot(mock_file, mock_grid_to_image, mock_mandelbrot):
+    mock_mandelbrot.return_value = [[0, 0], [0, 0]]
+    mock_grid_to_image.return_value = b"fake_image_data"
+
+    payload = {
+        "fractal_type": "mandelbrot",
+        "x_min": -2.0, "x_max": 1.0, "y_min": -1.5, "y_max": 1.5,
+        "max_iterations": 50, "resolution": 10,
+        "colormap": "Inferno", "reverse_colormap": False,
+        "c_real": 0.0, "c_imag": 0.0,
+        "filename": "test_mandelbrot.jpg"
+    }
+
+    response = client.post("/save", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+    mock_file().write.assert_called_once_with(b"fake_image_data")
+
+@patch("src.interactive_server.julia_set")
+@patch("src.interactive_server.grid_to_image_bytes")
+@patch("builtins.open", new_callable=mock_open)
+def test_save_julia(mock_file, mock_grid_to_image, mock_julia):
+    mock_julia.return_value = [[0, 0], [0, 0]]
+    mock_grid_to_image.return_value = b"fake_image_data"
+
+    payload = {
+        "fractal_type": "julia",
+        "x_min": -2.0, "x_max": 2.0, "y_min": -2.0, "y_max": 2.0,
+        "max_iterations": 50, "resolution": 10,
+        "colormap": "Inferno", "reverse_colormap": False,
+        "c_real": -0.4, "c_imag": 0.6,
+        "filename": "test_julia"
+    }
+
+    response = client.post("/save", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+    assert response.json()["filename"] == "test_julia.jpg"
+    mock_file().write.assert_called_once_with(b"fake_image_data")

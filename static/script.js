@@ -73,8 +73,9 @@ function render() {
     });
 
     const url = `/render?${params.toString()}`;
+    console.log("Calling API:", url);
     fractalImg.src = url;
-    
+
     coordsDisplay.textContent = `X: [${state.x_min.toFixed(6)}, ${state.x_max.toFixed(6)}] Y: [${state.y_min.toFixed(6)}, ${state.y_max.toFixed(6)}]`;
     suggestFilename();
     saveStatus.textContent = "";
@@ -88,23 +89,23 @@ fractalImg.onclick = (e) => {
     const rect = fractalImg.getBoundingClientRect();
     const px = (e.clientX - rect.left) / rect.width;
     const py = (e.clientY - rect.top) / rect.height;
-    
+
     // Map click to complex plane
     const clickX = state.x_min + px * (state.x_max - state.x_min);
     const clickY = state.y_min + py * (state.y_max - state.y_min);
-    
+
     const zoom = parseFloat(document.getElementById('zoomFactor').value);
-    
+
     // Calculate new width and height
     const width = (state.x_max - state.x_min) / zoom;
     const height = (state.y_max - state.y_min) / zoom;
-    
+
     // Set new bounds centered on click
     state.x_min = clickX - width / 2;
     state.x_max = clickX + width / 2;
     state.y_min = clickY - height / 2;
     state.y_max = clickY + height / 2;
-    
+
     render();
 };
 
@@ -137,6 +138,7 @@ saveBtn.onclick = async () => {
         filename: saveFilenameInput.value
     };
 
+    console.log("Calling API: /save", payload);
     try {
         const response = await fetch('/save', {
             method: 'POST',

@@ -51,7 +51,7 @@ async def render_fractal(
     image_bytes = grid_to_image_bytes(
         grid, max_iterations, fmt="jpeg", quality=95, colormap=colormap, reverse=reverse_colormap
     )
-    
+
     return StreamingResponse(io.BytesIO(image_bytes), media_type="image/jpeg")
 
 @app.post("/save")
