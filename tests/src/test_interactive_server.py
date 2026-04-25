@@ -13,7 +13,7 @@ def test_render_mandelbrot(mock_grid_to_image, mock_mandelbrot):
     mock_mandelbrot.return_value = [[0, 0], [0, 0]]
     mock_grid_to_image.return_value = b"fake_image_data"
     
-    response = client.get("/render?type=mandelbrot&resolution=10&max_iterations=50")
+    response = client.get("/render?fractal_type=mandelbrot&resolution=10&max_iterations=50")
     
     assert response.status_code == 200
     assert response.headers["content-type"] == "image/jpeg"
@@ -30,7 +30,7 @@ def test_render_julia(mock_grid_to_image, mock_julia):
     mock_julia.return_value = [[0, 0], [0, 0]]
     mock_grid_to_image.return_value = b"fake_image_data"
     
-    response = client.get("/render?type=julia&c_real=-0.4&c_imag=0.6&resolution=10&max_iterations=50")
+    response = client.get("/render?fractal_type=julia&c_real=-0.4&c_imag=0.6&resolution=10&max_iterations=50")
     
     assert response.status_code == 200
     assert response.headers["content-type"] == "image/jpeg"
@@ -42,7 +42,7 @@ def test_render_julia(mock_grid_to_image, mock_julia):
     )
 
 def test_render_invalid_type():
-    response = client.get("/render?type=invalid_type")
+    response = client.get("/render?fractal_type=invalid_type")
     # FastAPI returns 422 Unprocessable Entity when query param validation fails
     assert response.status_code == 422
 

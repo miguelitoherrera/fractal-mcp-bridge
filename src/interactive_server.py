@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Query
 from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 import io
 import os
 from fractal_core.mandelbrot import mandelbrot_set
@@ -9,12 +10,27 @@ from utils.image import grid_to_image_bytes
 
 app = FastAPI(title="Fractal Interactive Explorer")
 
-# Ensure static directory exists
+# Ensure directories exist
 os.makedirs("static", exist_ok=True)
+os.makedirs("images", exist_ok=True)
+
+class SaveRequest(BaseModel):
+    fractal_type: str
+    x_min: float
+    x_max: float
+    y_min: float
+    y_max: float
+    max_iterations: int
+    resolution: int
+    colormap: str
+    reverse_colormap: bool
+    c_real: float
+    c_imag: float
+    filename: str
 
 @app.get("/render")
 async def render_fractal(
-    fractal_type: str = Query("mandelbrot", alias="type", pattern="^(mandelbrot|julia)$"),
+    fractal_type: str = Query("mandelbrot", pattern="^(mandelbrot|julia)$"),
     x_min: float = Query(-2.0),
     x_max: float = Query(1.0),
     y_min: float = Query(-1.5),
@@ -37,6 +53,28 @@ async def render_fractal(
     )
     
     return StreamingResponse(io.BytesIO(image_bytes), media_type="image/jpeg")
+
+@app.post("/save")
+async def save_fractal(req: SaveRequest):
+    if req.fractal_type == "mandelbrot":
+        grid = mandelbrot_set(req.x_min, req.x_max, req.y_min, req.y_max, req.resolution, req.resolution, req.max_iterations)
+    else:
+        c = complex(req.c_real, req.c_imag)
+        grid = julia_set(req.x_min, req.x_max, req.y_min, req.y_max, c, req.resolution, req.resolution, req.max_iterations)
+
+    image_bytes = grid_to_image_bytes(
+        grid, req.max_iterations, fmt="jpeg", quality=95, colormap=req.colormap, reverse=req.reverse_colormap
+    )
+
+    filename = req.filename
+    if not (filename.lower().endswith(".jpg") or filename.lower().endswith(".jpeg")):
+        filename += ".jpg"
+
+    file_path = os.path.join("images", filename)
+    with open(file_path, "wb") as f:
+        f.write(image_bytes)
+
+    return {"status": "success", "filename": filename, "path": file_path}
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
