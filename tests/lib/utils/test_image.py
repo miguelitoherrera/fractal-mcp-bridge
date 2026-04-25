@@ -5,10 +5,11 @@ from utils.image import grid_to_image_bytes, load_bokeh_palette, _hex_to_rgb_arr
 
 def test_grid_to_image_bytes_jpeg():
     # Create a dummy 10x10 grid with values representing iterations
-    # 0 = inside, other values = escaped
+    # 0 = escaped immediately (far exterior), other values represent slower escapes
+    # max_iterations represents points that never escaped (core)
     grid = np.zeros((10, 10), dtype=float)
     grid[0:5, 0:5] = 50.0 # Some escapes
-    grid[5:10, 5:10] = 100.0 # Later escapes
+    grid[5:10, 5:10] = 100.0 # Never escaped (core)
     
     max_iter = 100
     
@@ -26,8 +27,8 @@ def test_grid_to_image_bytes_jpeg():
     assert img.mode == "RGB"
 
 def test_grid_to_image_bytes_png():
-    grid = np.ones((5, 5), dtype=float) * 20
-    grid[2, 2] = 0.0 # One inside point
+    grid = np.ones((5, 5), dtype=float) * 10
+    grid[2, 2] = 0.0 # Escaped immediately
     
     png_bytes = grid_to_image_bytes(
         grid, max_iterations=20, fmt="png", quality=100, colormap="Viridis", reverse=True
