@@ -14,7 +14,7 @@
             <div class="row">
                 <div class="control-group">
                     <label>Fractal Type</label>
-                    <select id="type">
+                    <select id="fractal_type">
                         <option value="mandelbrot">Mandelbrot</option>
                         <option value="julia">Julia</option>
                     </select>
@@ -71,6 +71,15 @@
                 <button id="updateBtn">Update / Render</button>
                 <button id="resetBtn" class="secondary">Reset View</button>
             </div>
+
+            <div class="row" style="border-top: 1px solid #333; padding-top: 20px; margin-top: 10px;">
+                <div class="control-group" style="flex-grow: 1;">
+                    <label>Save Filename (in images/)</label>
+                    <input type="text" id="saveFilename" placeholder="filename.jpg" style="width: 100%;">
+                </div>
+                <button id="saveBtn" class="secondary">Save Image</button>
+            </div>
+            <div id="saveStatus" style="font-size: 0.8rem; margin-top: -10px; min-height: 1.2em; color: #3498db;"></div>
         </div>
 
         <div class="viewer">
