@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query
 from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import io
 import os
 from fractal_core.mandelbrot import mandelbrot_set
@@ -41,6 +42,9 @@ async def render_fractal(
 async def read_index():
     with open("static/index.html", "r") as f:
         return f.read()
+
+# Mount the static directory to serve other files (styles.css, script.js)
+app.mount("/", StaticFiles(directory="static"), name="static")
 
 if __name__ == "__main__":  # pragma: no cover
     import uvicorn
