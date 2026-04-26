@@ -1,20 +1,17 @@
 from fastapi import FastAPI, Query
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import io
-import os
+from pathlib import Path
 from fractal_core.mandelbrot import mandelbrot_set
 from fractal_core.julia import julia_set
 from utils.image import grid_to_image_bytes
 
-app = FastAPI(title="Fractal Interactive Explorer")
+app = FastAPI(title="Fractal Explorer")
+Path("images").mkdir(exist_ok=True)
 
-# Ensure directories exist
-os.makedirs("static", exist_ok=True)
-os.makedirs("images", exist_ok=True)
-
-class SaveRequest(BaseModel):
+class FractalParams(BaseModel):
     fractal_type: str
     x_min: float
     x_max: float
@@ -26,62 +23,56 @@ class SaveRequest(BaseModel):
     reverse_colormap: bool
     c_real: float
     c_imag: float
-    filename: str
+    filename: str = ""
+
+def generate_image(p: FractalParams) -> bytes:
+    """Consolidated logic to compute fractal grid and return JPEG bytes."""
+    if p.fractal_type == "mandelbrot":
+        grid = mandelbrot_set(p.x_min, p.x_max, p.y_min, p.y_max, p.resolution, p.resolution, p.max_iterations)
+    else:
+        grid = julia_set(p.x_min, p.x_max, p.y_min, p.y_max, complex(p.c_real, p.c_imag), p.resolution, p.resolution, p.max_iterations)
+    return grid_to_image_bytes(grid, p.max_iterations, fmt="jpeg", quality=95, colormap=p.colormap, reverse=p.reverse_colormap)
 
 @app.get("/render")
-async def render_fractal(
+async def render(
     fractal_type: str = Query("mandelbrot", pattern="^(mandelbrot|julia)$"),
-    x_min: float = Query(-2.0),
-    x_max: float = Query(1.0),
-    y_min: float = Query(-1.5),
-    y_max: float = Query(1.5),
-    max_iterations: int = Query(100),
-    resolution: int = Query(800),
-    colormap: str = Query("Inferno"),
-    reverse_colormap: bool = Query(False),
-    c_real: float = Query(-0.7),
-    c_imag: float = Query(0.27015),
+    x_min: float = -2.0,
+    x_max: float = 1.0,
+    y_min: float = -1.5,
+    y_max: float = 1.5,
+    max_iterations: int = 100,
+    resolution: int = 800,
+    colormap: str = "Inferno",
+    reverse_colormap: bool = False,
+    c_real: float = -0.7,
+    c_imag: float = 0.27
 ):
-    if fractal_type == "mandelbrot":
-        grid = mandelbrot_set(x_min, x_max, y_min, y_max, resolution, resolution, max_iterations)
-    else:
-        c = complex(c_real, c_imag)
-        grid = julia_set(x_min, x_max, y_min, y_max, c, resolution, resolution, max_iterations)
-
-    image_bytes = grid_to_image_bytes(
-        grid, max_iterations, fmt="jpeg", quality=95, colormap=colormap, reverse=reverse_colormap
+    p = FractalParams(
+        fractal_type=fractal_type,
+        x_min=x_min,
+        x_max=x_max,
+        y_min=y_min,
+        y_max=y_max,
+        max_iterations=max_iterations,
+        resolution=resolution,
+        colormap=colormap,
+        reverse_colormap=reverse_colormap,
+        c_real=c_real,
+        c_imag=c_imag
     )
-
-    return StreamingResponse(io.BytesIO(image_bytes), media_type="image/jpeg")
+    return StreamingResponse(io.BytesIO(generate_image(p)), media_type="image/jpeg")
 
 @app.post("/save")
-async def save_fractal(req: SaveRequest):
-    if req.fractal_type == "mandelbrot":
-        grid = mandelbrot_set(req.x_min, req.x_max, req.y_min, req.y_max, req.resolution, req.resolution, req.max_iterations)
-    else:
-        c = complex(req.c_real, req.c_imag)
-        grid = julia_set(req.x_min, req.x_max, req.y_min, req.y_max, c, req.resolution, req.resolution, req.max_iterations)
+async def save(p: FractalParams):
+    img_bytes = generate_image(p)
+    filename = p.filename if p.filename.lower().endswith((".jpg", ".jpeg")) else f"{p.filename}.jpg"
+    (Path("images") / filename).write_bytes(img_bytes)
+    return {"status": "success", "filename": filename}
 
-    image_bytes = grid_to_image_bytes(
-        grid, req.max_iterations, fmt="jpeg", quality=95, colormap=req.colormap, reverse=req.reverse_colormap
-    )
+@app.get("/")
+async def index():
+    return FileResponse("static/index.html")
 
-    filename = req.filename
-    if not (filename.lower().endswith(".jpg") or filename.lower().endswith(".jpeg")):
-        filename += ".jpg"
-
-    file_path = os.path.join("images", filename)
-    with open(file_path, "wb") as f:
-        f.write(image_bytes)
-
-    return {"status": "success", "filename": filename, "path": file_path}
-
-@app.get("/", response_class=HTMLResponse)
-async def read_index():
-    with open("static/index.html", "r") as f:
-        return f.read()
-
-# Mount the static directory to serve other files (styles.css, script.js)
 app.mount("/", StaticFiles(directory="static"), name="static")
 
 if __name__ == "__main__":  # pragma: no cover
