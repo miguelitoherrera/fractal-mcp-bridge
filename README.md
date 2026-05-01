@@ -15,7 +15,7 @@ layer:
   - `server.py`: MCP server implementation that exposes the library as tools for AI agents:
     - `generate_julia_image`: a tool that generates the Julia Set in the complex plane
     - `generate_mandelbrot_image`: a tool that generates the Mandelbrot Set complex plane
-  - `fractal_app.py`: a clean "assembler" that plugs in the explorer router and mounts the static UI files
+- `src/fractal_app.py`: a clean "assembler" that plugs in the explorer router and mounts the static UI files
 
 ## 🚀 Local Setup & Development
 To ensure the environment correctly resolves the internal package mappings, you must perform an editable installation.
@@ -46,7 +46,7 @@ Open the browser link provided by the inspector to test the `generate_mandelbrot
 ### 3. Unit Tests
 You can use this convenient executable to run unit tests with coverage. From the repository root, run:
 ```bash
-bin/run-unit-tests
+bin/run-tests
 ```
 
 ## Fractal Web Explorer
