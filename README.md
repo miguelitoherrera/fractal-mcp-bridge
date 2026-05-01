@@ -49,11 +49,11 @@ You can use this convenient executable to run unit tests with coverage. From the
 bin/run-unit-tests
 ```
 
-## Interactive Web Explorer
+## Fractal Web Explorer
 If you want to interactively explore the Mandelbrot and Julia sets in more detail, you can also spin up the
 Fractal Web Explorer. From the repository root, run:
 ```bash
-bin/run-interactive-server
+bin/run-fractal-app
 ```
 Open the browser link provided in the terminal.
 
