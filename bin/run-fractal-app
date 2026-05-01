@@ -1,5 +1,4 @@
 #!/bin/bash
 # Navigate to project root and launch the interactive server
 cd "$(dirname "$0")/.."
-export PYTHONPATH="lib:src:$PYTHONPATH"
-python src/interactive_server.py "$@"
+PYTHONPATH="lib:src:$PYTHONPATH" python src/fractal_app.py "$@"
