@@ -9,9 +9,13 @@ The repository uses a source-layout to maintain clear separation between core ma
 layer:
 
 - `lib/fractal_core`: High-performance Numba-accelerated math for fractal math generation.
-- `src/bridge`: MCP server implementation (`server.py`) that exposes the library as tools for AI agents:
-  - `generate_julia_image`: a tool that generates the Julia Set in the complex plane
-  - `generate_mandelbrot_image`: a tool that generates the Mandelbrot Set complex plane
+- `lib/utils`: image and other misc utils used by the code.
+- `src/api`: contains a dedicated FastAPI router for an internal web explorer's backend logic (/render, /save).
+- `src/bridge`:
+  - `server.py`: MCP server implementation that exposes the library as tools for AI agents:
+    - `generate_julia_image`: a tool that generates the Julia Set in the complex plane
+    - `generate_mandelbrot_image`: a tool that generates the Mandelbrot Set complex plane
+  - `fractal_app.py`: a clean "assembler" that plugs in the explorer router and mounts the static UI files
 
 ## 🚀 Local Setup & Development
 To ensure the environment correctly resolves the internal package mappings, you must perform an editable installation.
