@@ -17,8 +17,9 @@ def test_generate_image_mandelbrot():
         colormap="Inferno", reverse_colormap=False,
         c_real=0.0, c_imag=0.0
     )
-    with patch("fractal_core.mandelbrot.mandelbrot_set") as mock_mandel, \
-         patch("utils.image.grid_to_image_bytes") as mock_img:
+    # We patch where the functions are USED in src.api.explorer
+    with patch("src.api.explorer.mandelbrot_set") as mock_mandel, \
+         patch("src.api.explorer.grid_to_image_bytes") as mock_img:
         mock_mandel.return_value = []
         mock_img.return_value = b"fake_data"
         
@@ -26,8 +27,8 @@ def test_generate_image_mandelbrot():
         assert result == b"fake_data"
         mock_mandel.assert_called_once()
 
-@patch("fractal_core.mandelbrot.mandelbrot_set")
-@patch("utils.image.grid_to_image_bytes")
+@patch("src.api.explorer.mandelbrot_set")
+@patch("src.api.explorer.grid_to_image_bytes")
 def test_router_render_mandelbrot(mock_img, mock_mandel):
     mock_mandel.return_value = []
     mock_img.return_value = b"render_data"
@@ -36,8 +37,8 @@ def test_router_render_mandelbrot(mock_img, mock_mandel):
     assert response.status_code == 200
     assert response.content == b"render_data"
 
-@patch("fractal_core.julia.julia_set")
-@patch("utils.image.grid_to_image_bytes")
+@patch("src.api.explorer.julia_set")
+@patch("src.api.explorer.grid_to_image_bytes")
 def test_router_render_julia(mock_img, mock_julia):
     mock_julia.return_value = []
     mock_img.return_value = b"julia_data"
@@ -46,8 +47,8 @@ def test_router_render_julia(mock_img, mock_julia):
     assert response.status_code == 200
     assert response.content == b"julia_data"
 
-@patch("fractal_core.mandelbrot.mandelbrot_set")
-@patch("utils.image.grid_to_image_bytes")
+@patch("src.api.explorer.mandelbrot_set")
+@patch("src.api.explorer.grid_to_image_bytes")
 @patch.object(Path, "write_bytes")
 def test_router_save(mock_write, mock_img, mock_mandel):
     mock_mandel.return_value = []

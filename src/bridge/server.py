@@ -13,7 +13,7 @@ mcp = FastMCP("FractalBridge")
 def _generate_fractal_response(grid, fmt, quality, colormap, reverse_colormap, filename_prefix, x_min, x_max, y_min, y_max, max_iterations):
     img_bytes = grid_to_image_bytes(
         grid,
-        max_iterations,
+        max_iterations=max_iterations,
         fmt=fmt,
         quality=quality,
         colormap=colormap,
@@ -62,7 +62,7 @@ def generate_mandelbrot_image(
     """
     width = resolution
     height = round(width * (y_max - y_min) / (x_max - x_min))
-    grid = mandelbrot_set(x_min, x_max, y_min, y_max, width, height, max_iterations)
+    grid = mandelbrot_set(x_min, x_max, y_min, y_max, width, height, max_iterations=max_iterations)
 
     return _generate_fractal_response(
         grid=grid,
@@ -102,7 +102,7 @@ def generate_julia_image(
     height = round(width * (y_max - y_min) / (x_max - x_min))
 
     # Calls the imported function directly from the virtual link
-    grid = julia_set(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
+    grid = julia_set(x_min, x_max, y_min, y_max, c, width, height, max_iterations=max_iterations)
 
     return _generate_fractal_response(
         grid=grid,
