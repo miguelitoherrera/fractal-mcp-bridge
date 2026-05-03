@@ -1,12 +1,13 @@
 import numpy as np
 import numba
+from fractal_core.config import MAX_ITERATIONS
 
 
 @numba.njit(fastmath=True)
 def julia(
     z_initial: complex,
     c: complex,
-    max_iterations: int,
+    max_iterations: int = MAX_ITERATIONS,
 ):
     """
     Checks if a starting complex number 'z_initial' escapes under iteration
@@ -50,7 +51,7 @@ def julia_set(
     c: complex,
     width: int,
     height: int,
-    max_iterations,
+    max_iterations: int = MAX_ITERATIONS,
 ):
     """
     Generates and displays an image of the Julia set.
@@ -77,5 +78,5 @@ def julia_set(
         z_imag = y_min + y * y_step
         for x in range(width):
             z_initial = complex(x_min + x * x_step, z_imag)
-            grid[y, x] = julia(z_initial, c, max_iterations)
+            grid[y, x] = julia(z_initial, c, max_iterations=max_iterations)
     return grid

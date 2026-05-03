@@ -3,9 +3,11 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import io
 from pathlib import Path
-import fractal_core.mandelbrot
-import fractal_core.julia
-import utils.image
+
+from fractal_core.mandelbrot import mandelbrot_set
+from fractal_core.julia import julia_set
+from fractal_core.config import MAX_ITERATIONS, RESOLUTION, X_MIN, X_MAX, Y_MIN, Y_MAX
+from utils.image import grid_to_image_bytes
 
 router = APIRouter()
 
@@ -26,20 +28,20 @@ class FractalParams(BaseModel):
 def generate_image(p: FractalParams) -> bytes:
     """Consolidated logic to compute fractal grid and return JPEG bytes."""
     if p.fractal_type == "mandelbrot":
-        grid = fractal_core.mandelbrot.mandelbrot_set(p.x_min, p.x_max, p.y_min, p.y_max, p.resolution, p.resolution, p.max_iterations)
+        grid = mandelbrot_set(p.x_min, p.x_max, p.y_min, p.y_max, p.resolution, p.resolution, p.max_iterations)
     else:
-        grid = fractal_core.julia.julia_set(p.x_min, p.x_max, p.y_min, p.y_max, complex(p.c_real, p.c_imag), p.resolution, p.resolution, p.max_iterations)
-    return utils.image.grid_to_image_bytes(grid, p.max_iterations, fmt="jpeg", quality=95, colormap=p.colormap, reverse=p.reverse_colormap)
+        grid = julia_set(p.x_min, p.x_max, p.y_min, p.y_max, complex(p.c_real, p.c_imag), p.resolution, p.resolution, p.max_iterations)
+    return grid_to_image_bytes(grid, p.max_iterations, fmt="jpeg", quality=95, colormap=p.colormap, reverse=p.reverse_colormap)
 
 @router.get("/render")
 async def render(
     fractal_type: str = Query("mandelbrot", pattern="^(mandelbrot|julia)$"),
-    x_min: float = -2.0,
-    x_max: float = 1.0,
-    y_min: float = -1.5,
-    y_max: float = 1.5,
-    max_iterations: int = 100,
-    resolution: int = 800,
+    x_min: float = X_MIN,
+    x_max: float = X_MAX,
+    y_min: float = Y_MIN,
+    y_max: float = Y_MAX,
+    max_iterations: int = MAX_ITERATIONS,
+    resolution: int = RESOLUTION,
     colormap: str = "Inferno",
     reverse_colormap: bool = False,
     c_real: float = -0.7,

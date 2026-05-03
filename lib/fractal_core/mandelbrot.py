@@ -2,12 +2,13 @@
 
 import numpy as np
 import numba
+from fractal_core.config import MAX_ITERATIONS
 
 
 @numba.njit(fastmath=True)
 def mandelbrot(
     c: complex,
-    max_iterations: int,
+    max_iterations: int = MAX_ITERATIONS,
 ):
     """
     Checks if a single complex number 'c' is in the Mandelbrot set.
@@ -49,7 +50,7 @@ def mandelbrot_set(
     y_max: float,
     width: int,
     height: int,
-    max_iterations: int,
+    max_iterations: int = MAX_ITERATIONS,
 ):
     """
     Creates a grid of escape values for complex points in the window
@@ -76,5 +77,5 @@ def mandelbrot_set(
         c_imag = y_min + y * y_step
         for x in range(width):
             c = complex(x_min + x * x_step, c_imag)
-            grid[y, x] = mandelbrot(c, max_iterations)
+            grid[y, x] = mandelbrot(c, max_iterations=max_iterations)
     return grid
