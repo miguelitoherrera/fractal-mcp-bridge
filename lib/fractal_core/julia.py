@@ -1,16 +1,18 @@
 import numba
-from fractal_core.config import MAX_ITERATIONS
 
 
 @numba.njit(fastmath=True)
 def julia(
     z_initial: complex,
     c: complex,
-    max_iterations: int = MAX_ITERATIONS,
+    max_iterations: int,
 ):
     """
     Checks if a starting complex number 'z_initial' escapes under iteration
     with a fixed constant 'c'.
+    
+    The iteration follows the formula: z_{n+1} = z_n^2 + c, starting with z_0 = z_initial.
+    The sequence is computed for a fixed 'c' and varying starting points 'z_initial'.
 
     Args:
         z_initial(complex): The complex number for the starting point (z0).
