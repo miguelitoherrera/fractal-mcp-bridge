@@ -1,6 +1,5 @@
 """these are the functions used in the mandelbrot algorithm"""
 
-import numpy as np
 import numba
 from fractal_core.config import MAX_ITERATIONS
 
@@ -39,43 +38,3 @@ def mandelbrot(
             return i
 
     return max_iterations
-
-
-# Parallelization happens here by using numba.prange for the rows.
-@numba.njit(parallel=True, fastmath=True)
-def mandelbrot_set(
-    x_min: float,
-    x_max: float,
-    y_min: float,
-    y_max: float,
-    width: int,
-    height: int,
-    max_iterations: int = MAX_ITERATIONS,
-):
-    """
-    Creates a grid of escape values for complex points in the window
-    (x_min, x_max) x (y_min, y_max).
-
-    Args:
-        x_min(float): the min value for the real-axis window
-        x_max(float): the max value for the real-axis window
-        y_min(float): the min value for the imaginary-axis window
-        y_max(float): the max value for the imaginary-axis window
-        width(int): pixel width of the output grid
-        height(int): pixel height of the output grid
-        max_iterations(int): max iterations before escaping
-    """
-    x_step = (x_max - x_min) / width
-    y_step = (y_max - y_min) / height
-
-    # Use dtype=np.uint16 or uint32 based on max_iterations for better cache locality 
-    # instead of the default float64 returned by np.zeros
-    grid = np.empty((height, width), dtype=np.uint32)
-    
-    for y in numba.prange(height):
-        # Move c_imag loop hoisting
-        c_imag = y_min + y * y_step
-        for x in range(width):
-            c = complex(x_min + x * x_step, c_imag)
-            grid[y, x] = mandelbrot(c, max_iterations=max_iterations)
-    return grid
