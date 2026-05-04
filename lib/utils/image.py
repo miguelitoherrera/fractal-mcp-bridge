@@ -1,46 +1,91 @@
+RESOLUTION = 800
+X_MIN = -2.0
+X_MAX = 1.0
+Y_MIN = -1.5
+Y_MAX = 1.5
+
 import io
 from PIL import Image
 import numpy as np
-from bokeh.palettes import all_palettes, Inferno256
+import numba
+from bokeh.palettes import all_palettes
+from fractal_core.mandelbrot import mandelbrot
+from fractal_core.julia import julia
+from fractal_core.config import MAX_ITERATIONS
 
+# Parallel grid generation logic relocated from fractal_core
 
-def _hex_to_rgb_array(hex_colors: list[str]) -> np.ndarray:
-    """Convert a list of hex strings to a Nx3 uint8 numpy array."""
-    # Convert '#RRGGBB' strings into tuples of integers: (R, G, B)
-    rgb_list = []
-    for hex_code in hex_colors:
-        # Skip the '#' character and parse each 2-character hex pair
-        r = int(hex_code[1:3], 16)
-        g = int(hex_code[3:5], 16)
-        b = int(hex_code[5:7], 16)
-        rgb_list.append((r, g, b))
-        
-    return np.array(rgb_list, dtype=np.uint8)
+@numba.njit(parallel=True, fastmath=True)
+def generate_mandelbrot_grid(
+    x_min: float,
+    x_max: float,
+    y_min: float,
+    y_max: float,
+    width: int,
+    height: int,
+    max_iterations: int = MAX_ITERATIONS,
+):
+    """Creates a grid of escape values for the Mandelbrot set in the complex plane"""
+    x_step = (x_max - x_min) / width
+    y_step = (y_max - y_min) / height
+    grid = np.empty((height, width), dtype=np.uint32)
+    
+    for y in numba.prange(height):
+        c_imag = y_min + y * y_step
+        for x in range(width):
+            c = complex(x_min + x * x_step, c_imag)
+            grid[y, x] = mandelbrot(c, max_iterations=max_iterations)
+    return grid
+
+@numba.njit(parallel=True, fastmath=True)
+def generate_julia_grid(
+    x_min: float,
+    x_max: float,
+    y_min: float,
+    y_max: float,
+    c: complex,
+    width: int,
+    height: int,
+    max_iterations: int = MAX_ITERATIONS,
+):
+    """Creates a grid of escape values for the Julia set in the complex plane"""
+    x_step = (x_max - x_min) / width
+    y_step = (y_max - y_min) / height
+    grid = np.empty((height, width), dtype=np.uint32)
+    
+    for y in numba.prange(height):
+        z_imag = y_min + y * y_step
+        for x in range(width):
+            z_initial = complex(x_min + x * x_step, z_imag)
+            grid[y, x] = julia(z_initial, c, max_iterations=max_iterations)
+    return grid
 
 
 def load_bokeh_palette(name: str) -> np.ndarray:
     """
     Load a named Bokeh palette and return an (256, 3) uint8 RGB array.
-    Falls back to Inferno if the name is not found.
+    Falls back to Turbo if the name is not found.
     """
-    family = all_palettes.get(name) or all_palettes.get(name.capitalize())
-    
-    # Fallback if palette doesn't exist
-    if family is None:
-        return _hex_to_rgb_array(Inferno256)
+    family = all_palettes.get(name) or all_palettes.get(name.capitalize()) or all_palettes["Turbo"]
         
     size = 256 if 256 in family else max(family.keys())
     hex_colors = family[size]
-    arr = _hex_to_rgb_array(hex_colors)
-    
-    # Resize to exactly 256 entries via linear interpolation if needed
+
+    # Convert hex colors to a Nx3 uint8 numpy array.
+    rgb_list = []
+    for hex_code in hex_colors:
+        r = int(hex_code[1:3], 16)
+        g = int(hex_code[3:5], 16)
+        b = int(hex_code[5:7], 16)
+        rgb_list.append((r, g, b))
+    arr = np.array(rgb_list, dtype=np.uint8)
+
     if len(arr) != 256:
         indices = np.linspace(0, len(arr) - 1, 256)
         arr = np.stack([
             np.interp(indices, np.arange(len(arr)), arr[:, c]).astype(np.uint8)
             for c in range(3)
         ], axis=1)
-        
     return arr
 
 

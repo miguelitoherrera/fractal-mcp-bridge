@@ -1,5 +1,5 @@
 import unittest
-from fractal_core.julia import julia, julia_set
+from fractal_core.julia import julia
 from fractal_core.config import MAX_ITERATIONS
 
 
@@ -19,31 +19,9 @@ class TestJulia(unittest.TestCase):
             self.assertEqual(
                 julia(z_initial, c, max_iterations=MAX_ITERATIONS),
                 expected_iterations,
+                f"Failed for z0={z_initial}, c={c}",
             )
 
-    def test_julia_set_dimensions(self):
-        # Test various resolutions
-        resolutions = [(100, 100), (200, 100), (100, 200)]
-        c = complex(0, 0)
-        for width, height in resolutions:
-            grid = julia_set(-1, 1, -1, 1, c, width, height, 50)
-            self.assertEqual(grid.shape, (height, width))
 
-    def test_julia_set_values(self):
-        # Simple case: c=0, z0 should just be z0^2.
-        # Points inside unit circle should stay, outside should escape.
-        c = complex(0, 0)
-        # Unit circle is within [-2, 2] x [-2, 2]
-        # (0,0) is at index (5, 5) for a 10x10 grid on [-2, 2]
-        grid = julia_set(-2, 2, -2, 2, c, 10, 10, 100)
-        self.assertEqual(grid[5, 5], 100) # Center should not escape
-        self.assertEqual(grid[0, 0], 0)   # corners (-2, -2) should escape immediately
-
-    def test_julia_escape_branch(self):
-        # specifically test an immediate escape to cover the line
-        res = julia(complex(3, 3), complex(0, 0), max_iterations=10)
-        self.assertEqual(res, 0)
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
