@@ -71,7 +71,7 @@ def load_bokeh_palette(name: str) -> np.ndarray:
     size = 256 if 256 in family else max(family.keys())
     hex_colors = family[size]
 
-    """Convert hex colors to to a Nx3 uint8 numpy array."""
+    # Convert hex colors to a Nx3 uint8 numpy array.
     rgb_list = []
     for hex_code in hex_colors:
         r = int(hex_code[1:3], 16)
@@ -97,16 +97,46 @@ def grid_to_image_bytes(
         colormap: str = "Inferno",
         reverse: bool = False,
 ) -> bytes:
-    """Convert escape-iteration grid for a given fractal to a JPEG/PNG byte string"""
+    """
+    Convert escape-iteration grid to a JPEG/PNG byte string using a named
+    Bokeh palette.
+
+    Parameters
+    ----------
+    grid          : 2-D array of escape iterations
+    max_iterations: the max_iterations value used when computing grid
+    fmt           : "jpeg" or "png"
+    quality       : JPEG quality (ignored for PNG)
+    colormap      : name of a Bokeh palette (case-sensitive, e.g. "Viridis")
+    reverse       : if True, flip the palette direction
+
+    Notes
+    -----
+    In the fractal algorithms, points that escape immediately return the iteration index i. We map
+    points that NEVER escape (grid == max_iterations) to the last palette index. Points that escape
+    at i=0 (immediate escape) will map to palette index 0.
+    """
     palette = load_bokeh_palette(colormap)
     if reverse:
         palette = palette[::-1]
+
+    # Avoid zero division and mathematical errors in log scaling by forcing 0 to 1 temporarily
     safe_grid = np.where(grid == 0, 1, grid)
+
+    # Scale from 0 to 1
     t = np.clip(safe_grid / max_iterations, 0.0, 1.0)
+
+    # Logarithmic scaling spreads out the colors near the fractal boundaries
     t_smooth = np.log1p(t * 9) / np.log(10)
+
+    # Map the 0-1 range to palette indices 1-255
     idx = np.clip((t_smooth * 254 + 1).astype(np.int32), 1, 255)
+
+    # Force points that escaped immediately to use index 0 (black)
     idx[grid == 0] = 0
+
     rgb = palette[idx]
+
     img = Image.fromarray(rgb, mode="RGB")
     buf = io.BytesIO()
     if fmt == "jpeg":
