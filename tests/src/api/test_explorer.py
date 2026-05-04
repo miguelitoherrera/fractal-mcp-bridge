@@ -23,7 +23,7 @@ class TestExplorerAPI(unittest.TestCase):
                 x_min=-2.0, x_max=1.0, y_min=-1.5, y_max=1.5,
                 max_iterations=10, resolution=10,
                 colormap="Inferno", reverse_colormap=False,
-                c_real=0.0, c_imag=0.0
+                julia_c=0j
             )
             self.assertEqual(result, b"fake_data")
             mock_mandel.assert_called_once()
@@ -35,7 +35,7 @@ class TestExplorerAPI(unittest.TestCase):
                 x_min=-2.0, x_max=1.0, y_min=-1.5, y_max=1.5,
                 max_iterations=10, resolution=10,
                 colormap="Inferno", reverse_colormap=False,
-                c_real=0.0, c_imag=0.0
+                julia_c=0j
             )
 
     @patch("src.api.explorer.generate_mandelbrot_grid")
@@ -72,6 +72,24 @@ class TestExplorerAPI(unittest.TestCase):
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["filename"], "test.jpg")
+        mock_write.assert_called_once_with(b"save_data")
+
+    @patch("src.api.explorer.generate_julia_grid")
+    @patch("src.api.explorer.grid_to_image_bytes")
+    @patch.object(Path, "write_bytes")
+    def test_router_save_complex_string(self, mock_write, mock_img, mock_julia):
+        mock_julia.return_value = []
+        mock_img.return_value = b"save_data"
+        
+        # Test parsing complex number from string
+        payload = {
+            "fractal_type": "julia",
+            "julia_c": "-0.7 + 0.27j",
+            "filename": "julia_test"
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["filename"], "julia_test.jpg")
         mock_write.assert_called_once_with(b"save_data")
 
 

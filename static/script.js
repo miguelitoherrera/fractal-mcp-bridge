@@ -68,8 +68,7 @@ function render() {
         colormap: state.colormap,
         reverse_colormap: state.reverse_colormap,
         resolution: state.resolution,
-        c_real: state.c_real,
-        c_imag: state.c_imag
+        julia_c: `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`
     });
 
     const url = `/render?${params.toString()}`;
@@ -135,6 +134,7 @@ saveBtn.onclick = async () => {
     const payload = {
         ...state,
         max_iterations: state.iterations,
+        julia_c: `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`,
         filename: saveFilenameInput.value
     };
 

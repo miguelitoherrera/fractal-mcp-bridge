@@ -26,9 +26,7 @@ class TestImageUtils(unittest.TestCase):
         grid[5:10, 5:10] = 100
         
         max_iter = 100
-        jpeg_bytes = grid_to_image_bytes(
-            grid, max_iterations=max_iter, fmt="jpeg", quality=80, colormap="Inferno", reverse=False
-        )
+        jpeg_bytes = grid_to_image_bytes(grid, max_iter, "jpeg", 80, "Inferno", False)
         
         self.assertIsInstance(jpeg_bytes, bytes)
         img = Image.open(io.BytesIO(jpeg_bytes))
@@ -39,9 +37,7 @@ class TestImageUtils(unittest.TestCase):
         grid = np.ones((5, 5), dtype=np.uint32) * 10
         grid[2, 2] = 0
         
-        png_bytes = grid_to_image_bytes(
-            grid, max_iterations=20, fmt="png", quality=100, colormap="Viridis", reverse=True
-        )
+        png_bytes = grid_to_image_bytes(grid, 20, "png", 100, "Viridis", True)
         
         self.assertIsInstance(png_bytes, bytes)
         img = Image.open(io.BytesIO(png_bytes))
@@ -51,8 +47,8 @@ class TestImageUtils(unittest.TestCase):
     def test_grid_to_image_bytes_colormap(self):
         grid = np.linspace(1, 10, 100, dtype=np.uint32).reshape((10, 10))
         
-        bytes_inferno = grid_to_image_bytes(grid, max_iterations=10, fmt="png", quality=90, colormap="Inferno")
-        bytes_viridis = grid_to_image_bytes(grid, max_iterations=10, fmt="png", quality=90, colormap="Viridis")
+        bytes_inferno = grid_to_image_bytes(grid, 10, "png", 90, "Inferno")
+        bytes_viridis = grid_to_image_bytes(grid, 10, "png", 90, "Viridis")
         
         self.assertNotEqual(bytes_inferno, bytes_viridis)
 

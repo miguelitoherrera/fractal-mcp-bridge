@@ -1,9 +1,3 @@
-RESOLUTION = 800
-X_MIN = -2.0
-X_MAX = 1.0
-Y_MIN = -1.5
-Y_MAX = 1.5
-
 import io
 from PIL import Image
 import numpy as np
@@ -11,7 +5,14 @@ import numba
 from bokeh.palettes import all_palettes
 from fractal_core.mandelbrot import mandelbrot
 from fractal_core.julia import julia
-from fractal_core.config import MAX_ITERATIONS
+
+# Configuration Constants
+RESOLUTION = 800
+MAX_ITERATIONS = 100
+X_MIN = -2.0
+X_MAX = 1.0
+Y_MIN = -1.5
+Y_MAX = 1.5
 
 # Parallel grid generation logic relocated from fractal_core
 
@@ -23,7 +24,7 @@ def generate_mandelbrot_grid(
     y_max: float,
     width: int,
     height: int,
-    max_iterations: int = MAX_ITERATIONS,
+    max_iterations: int,
 ):
     """Creates a grid of escape values for the Mandelbrot set in the complex plane"""
     x_step = (x_max - x_min) / width
@@ -34,7 +35,7 @@ def generate_mandelbrot_grid(
         c_imag = y_min + y * y_step
         for x in range(width):
             c = complex(x_min + x * x_step, c_imag)
-            grid[y, x] = mandelbrot(c, max_iterations=max_iterations)
+            grid[y, x] = mandelbrot(c, max_iterations)
     return grid
 
 @numba.njit(parallel=True, fastmath=True)
@@ -46,7 +47,7 @@ def generate_julia_grid(
     c: complex,
     width: int,
     height: int,
-    max_iterations: int = MAX_ITERATIONS,
+    max_iterations: int,
 ):
     """Creates a grid of escape values for the Julia set in the complex plane"""
     x_step = (x_max - x_min) / width
@@ -57,7 +58,7 @@ def generate_julia_grid(
         z_imag = y_min + y * y_step
         for x in range(width):
             z_initial = complex(x_min + x * x_step, z_imag)
-            grid[y, x] = julia(z_initial, c, max_iterations=max_iterations)
+            grid[y, x] = julia(z_initial, c, max_iterations)
     return grid
 
 

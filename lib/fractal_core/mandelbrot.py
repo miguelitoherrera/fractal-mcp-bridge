@@ -1,16 +1,19 @@
 """these are the functions used in the mandelbrot algorithm"""
 
 import numba
-from fractal_core.config import MAX_ITERATIONS
 
 
 @numba.njit(fastmath=True)
 def mandelbrot(
     c: complex,
-    max_iterations: int = MAX_ITERATIONS,
-):
+    max_iterations: int,
+) -> int:
+
     """
     Checks if a single complex number 'c' is in the Mandelbrot set.
+    
+    The iteration follows the formula: z_{n+1} = z_n^2 + c, starting with z_0 = 0.
+    A point 'c' is in the set if the sequence remains bounded (abs(z) <= 2.0).
 
     Args:
         c(complex): The complex number for the starting point.

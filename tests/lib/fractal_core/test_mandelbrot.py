@@ -1,22 +1,22 @@
 import unittest
 from fractal_core.mandelbrot import mandelbrot
-from fractal_core.config import MAX_ITERATIONS
 
 
 class TestMandelbrot(unittest.TestCase):
     def test_mandelbrot(self):
+        expected_max_iterations = 100
         test_params = [
             # c, expected_iterations
-            [complex(0, 0), MAX_ITERATIONS],
-            [complex(0, 1), MAX_ITERATIONS],
+            [complex(0, 0), expected_max_iterations],
+            [complex(0, 1), expected_max_iterations],
             [complex(1, 1), 1],
             [complex(0.5, 0.5), 4],
-            [complex(-2, 0), MAX_ITERATIONS],
+            [complex(-2, 0), expected_max_iterations],
             [complex(2.1, 0), 0],
         ]
         for c, expected_iterations in test_params:
             self.assertEqual(
-                mandelbrot(c, max_iterations=MAX_ITERATIONS),
+                mandelbrot(c, expected_max_iterations),
                 expected_iterations,
                 f"Failed for c={c}",
             )
