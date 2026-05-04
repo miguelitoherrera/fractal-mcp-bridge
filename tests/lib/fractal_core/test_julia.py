@@ -17,7 +17,7 @@ class TestJulia(unittest.TestCase):
         ]
         for z_initial, c, expected_iterations in test_params:
             self.assertEqual(
-                julia(z_initial, c, MAX_ITERATIONS),
+                julia(z_initial, c, max_iterations=MAX_ITERATIONS),
                 expected_iterations,
                 f"Failed for z0={z_initial}, c={c}",
             )

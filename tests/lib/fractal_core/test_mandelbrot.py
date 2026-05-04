@@ -16,7 +16,7 @@ class TestMandelbrot(unittest.TestCase):
         ]
         for c, expected_iterations in test_params:
             self.assertEqual(
-                mandelbrot(c, MAX_ITERATIONS),
+                mandelbrot(c, max_iterations=MAX_ITERATIONS),
                 expected_iterations,
                 f"Failed for c={c}",
             )

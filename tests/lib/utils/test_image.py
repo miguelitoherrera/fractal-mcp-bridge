@@ -27,7 +27,7 @@ class TestImageUtils(unittest.TestCase):
         
         max_iter = 100
         jpeg_bytes = grid_to_image_bytes(
-            grid, max_iter, fmt="jpeg", quality=80, colormap="Inferno", reverse=False
+            grid, max_iterations=max_iter, fmt="jpeg", quality=80, colormap="Inferno", reverse=False
         )
         
         self.assertIsInstance(jpeg_bytes, bytes)
@@ -51,8 +51,8 @@ class TestImageUtils(unittest.TestCase):
     def test_grid_to_image_bytes_colormap(self):
         grid = np.linspace(1, 10, 100, dtype=np.uint32).reshape((10, 10))
         
-        bytes_inferno = grid_to_image_bytes(grid, 10, "png", 90, colormap="Inferno")
-        bytes_viridis = grid_to_image_bytes(grid, 10, "png", 90, colormap="Viridis")
+        bytes_inferno = grid_to_image_bytes(grid, max_iterations=10, fmt="png", quality=90, colormap="Inferno")
+        bytes_viridis = grid_to_image_bytes(grid, max_iterations=10, fmt="png", quality=90, colormap="Viridis")
         
         self.assertNotEqual(bytes_inferno, bytes_viridis)
 
@@ -73,7 +73,6 @@ class TestImageUtils(unittest.TestCase):
         palette_lower = load_bokeh_palette("viridis")
         palette_capital = load_bokeh_palette("Viridis")
         np.testing.assert_array_equal(palette_lower, palette_capital)
-
 
 if __name__ == "__main__":
     unittest.main()
