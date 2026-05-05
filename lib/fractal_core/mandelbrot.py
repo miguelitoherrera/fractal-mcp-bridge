@@ -1,6 +1,7 @@
 """these are the functions used in the mandelbrot algorithm"""
 
 import numba
+import numpy as np
 
 
 @numba.njit(fastmath=True)
@@ -41,3 +42,26 @@ def mandelbrot(
             return i
 
     return max_iterations
+
+
+@numba.njit(parallel=True, fastmath=True)
+def generate_mandelbrot_grid(
+    x_min: float,
+    x_max: float,
+    y_min: float,
+    y_max: float,
+    width: int,
+    height: int,
+    max_iterations: int,
+):
+    """Creates a grid of escape values for the Mandelbrot set in the complex plane"""
+    x_step = (x_max - x_min) / width
+    y_step = (y_max - y_min) / height
+    grid = np.empty((height, width), dtype=np.uint32)
+    
+    for y in numba.prange(height):
+        c_imag = y_min + y * y_step
+        for x in range(width):
+            c = complex(x_min + x * x_step, c_imag)
+            grid[y, x] = mandelbrot(c, max_iterations)
+    return grid

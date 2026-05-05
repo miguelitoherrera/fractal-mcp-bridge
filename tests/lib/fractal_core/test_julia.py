@@ -1,5 +1,6 @@
 import unittest
-from fractal_core.julia import julia
+import numpy as np
+from fractal_core.julia import julia, generate_julia_grid
 
 
 class TestJulia(unittest.TestCase):
@@ -21,6 +22,12 @@ class TestJulia(unittest.TestCase):
                 expected_iterations,
                 f"Failed for z0={z_initial}, c={c}",
             )
+
+    def test_generate_julia_grid(self):
+        res = 10
+        grid = generate_julia_grid(-2.0, 2.0, -2.0, 2.0, complex(0, 0), res, res, max_iterations=10)
+        self.assertEqual(grid.shape, (res, res))
+        self.assertEqual(grid.dtype, np.uint32)
 
 
 if __name__ == "__main__":

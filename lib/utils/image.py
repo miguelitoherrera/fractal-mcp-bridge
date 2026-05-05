@@ -1,66 +1,7 @@
 import io
 from PIL import Image
 import numpy as np
-import numba
 from bokeh.palettes import all_palettes
-from fractal_core.mandelbrot import mandelbrot
-from fractal_core.julia import julia
-
-# Configuration Constants
-RESOLUTION = 800
-MAX_ITERATIONS = 100
-X_MIN = -2.0
-X_MAX = 1.0
-Y_MIN = -1.5
-Y_MAX = 1.5
-
-# Parallel grid generation logic relocated from fractal_core
-
-@numba.njit(parallel=True, fastmath=True)
-def generate_mandelbrot_grid(
-    x_min: float,
-    x_max: float,
-    y_min: float,
-    y_max: float,
-    width: int,
-    height: int,
-    max_iterations: int,
-):
-    """Creates a grid of escape values for the Mandelbrot set in the complex plane"""
-    x_step = (x_max - x_min) / width
-    y_step = (y_max - y_min) / height
-    grid = np.empty((height, width), dtype=np.uint32)
-    
-    for y in numba.prange(height):
-        c_imag = y_min + y * y_step
-        for x in range(width):
-            c = complex(x_min + x * x_step, c_imag)
-            grid[y, x] = mandelbrot(c, max_iterations)
-    return grid
-
-@numba.njit(parallel=True, fastmath=True)
-def generate_julia_grid(
-    x_min: float,
-    x_max: float,
-    y_min: float,
-    y_max: float,
-    c: complex,
-    width: int,
-    height: int,
-    max_iterations: int,
-):
-    """Creates a grid of escape values for the Julia set in the complex plane"""
-    x_step = (x_max - x_min) / width
-    y_step = (y_max - y_min) / height
-    grid = np.empty((height, width), dtype=np.uint32)
-    
-    for y in numba.prange(height):
-        z_imag = y_min + y * y_step
-        for x in range(width):
-            z_initial = complex(x_min + x * x_step, z_imag)
-            grid[y, x] = julia(z_initial, c, max_iterations)
-    return grid
-
 
 def load_bokeh_palette(name: str) -> np.ndarray:
     """
@@ -93,21 +34,17 @@ def load_bokeh_palette(name: str) -> np.ndarray:
 def grid_to_image_bytes(
         grid,
         max_iterations: int,
-        fmt: str,
-        quality: int,
         colormap: str = "Inferno",
         reverse: bool = False,
 ) -> bytes:
     """
-    Convert escape-iteration grid to a JPEG/PNG byte string using a named
-    Bokeh palette.
+    Convert escape-iteration grid to a JPEG byte string using a named
+    Bokeh palette. Hardcoded to JPEG with 95 quality.
 
     Parameters
     ----------
     grid          : 2-D array of escape iterations
     max_iterations: the max_iterations value used when computing grid
-    fmt           : "jpeg" or "png"
-    quality       : JPEG quality (ignored for PNG)
     colormap      : name of a Bokeh palette (case-sensitive, e.g. "Viridis")
     reverse       : if True, flip the palette direction
 
@@ -140,8 +77,5 @@ def grid_to_image_bytes(
 
     img = Image.fromarray(rgb, mode="RGB")
     buf = io.BytesIO()
-    if fmt == "jpeg":
-        img.save(buf, format="JPEG", quality=quality)
-    else:
-        img.save(buf, format="PNG")
+    img.save(buf, format="JPEG", quality=95)
     return buf.getvalue()

@@ -1,4 +1,5 @@
 import numba
+import numpy as np
 
 
 @numba.njit(fastmath=True)
@@ -40,3 +41,27 @@ def julia(
             return i
 
     return max_iterations
+
+
+@numba.njit(parallel=True, fastmath=True)
+def generate_julia_grid(
+    x_min: float,
+    x_max: float,
+    y_min: float,
+    y_max: float,
+    c: complex,
+    width: int,
+    height: int,
+    max_iterations: int,
+):
+    """Creates a grid of escape values for the Julia set in the complex plane"""
+    x_step = (x_max - x_min) / width
+    y_step = (y_max - y_min) / height
+    grid = np.empty((height, width), dtype=np.uint32)
+    
+    for y in numba.prange(height):
+        z_imag = y_min + y * y_step
+        for x in range(width):
+            z_initial = complex(x_min + x * x_step, z_imag)
+            grid[y, x] = julia(z_initial, c, max_iterations)
+    return grid
