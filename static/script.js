@@ -8,8 +8,8 @@ let state = {
     iterations: 200,
     colormap: 'Turbo',
     reverse_colormap: false,
-    c_real: -0.74543,
-    c_imag: 0.11301,
+    c_real: -0.7,
+    c_imag: 0.27,
     resolution: 1600
 };
 
@@ -22,17 +22,14 @@ const saveStatus = document.getElementById('saveStatus');
 
 function suggestFilename() {
     const xRange = state.x_max - state.x_min;
-    const yRange = state.y_max - state.y_min;
     const xCenter = state.x_min + xRange / 2;
-    const yCenter = state.y_min + yRange / 2;
-    // zoom level relative to initial view width of 3.0
-    const zoom = (3.0 / xRange).toFixed(1);
+    const yCenter = state.y_min + (state.y_max - state.y_min) / 2;
 
-    let name = `${state.fractal_type}_x${xCenter.toFixed(4)}_y${yCenter.toFixed(4)}_z${zoom}_${state.colormap.toLowerCase()}`;
+    let name = `${state.fractal_type}_x${xCenter.toFixed(4)}_y${yCenter.toFixed(4)}`;
     if (state.fractal_type === 'julia') {
-        name = `julia_c${state.c_real.toFixed(3)}_${state.c_imag.toFixed(3)}_x${xCenter.toFixed(4)}_y${yCenter.toFixed(4)}_${state.colormap.toLowerCase()}`;
+        name = `julia_c${state.c_real.toFixed(3)}_${state.c_imag.toFixed(3)}_x${xCenter.toFixed(4)}_y${yCenter.toFixed(4)}`;
     }
-    saveFilenameInput.value = name + ".jpg";
+    saveFilenameInput.value = name + "_" + state.colormap.toLowerCase() + ".jpg";
 }
 
 function updateStateFromUI() {
@@ -57,7 +54,7 @@ function updateStateFromUI() {
 function render() {
     loader.classList.add('active');
 
-    const params = new URLSearchParams({
+    const paramsObj = {
         fractal_type: state.fractal_type,
         x_min: state.x_min,
         x_max: state.x_max,
@@ -66,9 +63,14 @@ function render() {
         max_iterations: state.iterations,
         colormap: state.colormap,
         reverse_colormap: state.reverse_colormap,
-        resolution: state.resolution,
-        julia_c: `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`
-    });
+        resolution: state.resolution
+    };
+
+    if (state.fractal_type === 'julia') {
+        paramsObj.julia_c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
+    }
+
+    const params = new URLSearchParams(paramsObj);
 
     const url = `/render?${params.toString()}`;
     console.log("Calling API:", url);
@@ -130,11 +132,21 @@ saveBtn.onclick = async () => {
     saveStatus.style.color = "#3498db";
 
     const payload = {
-        ...state,
+        fractal_type: state.fractal_type,
+        x_min: state.x_min,
+        x_max: state.x_max,
+        y_min: state.y_min,
+        y_max: state.y_max,
         max_iterations: state.iterations,
-        julia_c: `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`,
+        colormap: state.colormap,
+        reverse_colormap: state.reverse_colormap,
+        resolution: state.resolution,
         filename: saveFilenameInput.value
     };
+
+    if (state.fractal_type === 'julia') {
+        payload.julia_c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
+    }
 
     console.log("Calling API: /save", payload);
     try {

@@ -3,8 +3,9 @@ from fastapi.responses import StreamingResponse
 import io
 from pathlib import Path
 from renderer import (
-    render_fractal, RESOLUTION, X_MIN, X_MAX, Y_MIN, Y_MAX, MAX_ITERATIONS,
-    DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, suggest_filename
+    render_fractal, suggest_filename,
+    RESOLUTION, X_MIN, X_MAX, Y_MIN, Y_MAX, MAX_ITERATIONS,
+    DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, DEFAULT_JULIA_C
 )
 
 router = APIRouter()
@@ -23,7 +24,7 @@ async def render(
     resolution: int = RESOLUTION,
     colormap: str = DEFAULT_COLORMAP,
     reverse_colormap: bool = DEFAULT_REVERSE_COLORMAP,
-    julia_c: complex = -0.7 + 0.27j
+    julia_c: complex | None = None
 ):
     result = render_fractal(
         fractal_type, x_min, x_max, y_min, y_max,
@@ -45,10 +46,13 @@ async def save(data: dict = Body(...)):
     colormap = data.get("colormap", DEFAULT_COLORMAP)
     reverse_colormap = data.get("reverse_colormap", DEFAULT_REVERSE_COLORMAP)
     
-    # Strictly expect julia_c
-    c = data.get("julia_c", -0.7 + 0.27j)
+    # Strictly expect julia_c only if fractal_type is julia
+    c = data.get("julia_c")
     if isinstance(c, str):
         c = complex(c.replace(" ", ""))
+    
+    if c is None and fractal_type == JULIA:
+        c = DEFAULT_JULIA_C
 
     filename = data.get("filename")
     if not filename:
