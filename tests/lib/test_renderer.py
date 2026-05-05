@@ -1,7 +1,14 @@
 import unittest
-from renderer import render_fractal, FractalResult
+from renderer import render_fractal, FractalResult, suggest_filename
 
 class TestRenderer(unittest.TestCase):
+    def test_suggest_filename_mandelbrot(self):
+        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", 0j)
+        self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo.jpg")
+
+    def test_suggest_filename_julia(self):
+        name = suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", complex(-0.7, 0.27))
+        self.assertEqual(name, "julia_c-0.700_0.270_x0.0000_y0.0000_viridis.jpg")
     def test_render_mandelbrot(self):
         result = render_fractal("mandelbrot", resolution=100)
         self.assertIsInstance(result, FractalResult)
