@@ -5,8 +5,8 @@ This module provides a FastMCP server that exposes fractal generation tools (Man
 from fastmcp import FastMCP
 import base64
 from renderer import (
-    render_fractal, RESOLUTION, MAX_ITERATIONS, DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP,
-    suggest_filename
+    render_fractal, suggest_filename,
+    RESOLUTION, MAX_ITERATIONS, DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, DEFAULT_JULIA_C
 )
 
 
@@ -41,12 +41,9 @@ def generate_mandelbrot_image(
         "mandelbrot", x_min, x_max, y_min, y_max,
         resolution, max_iterations, colormap, reverse_colormap
     )
-    
-    filename = suggest_filename("mandelbrot", x_min, x_max, y_min, y_max, colormap, 0j)
-
     return {
         "type": "file",
-        "filename": filename,
+        "filename": suggest_filename("mandelbrot", x_min, x_max, y_min, y_max, colormap),
         "mime_type": "image/jpeg",
         "data": base64.b64encode(result.image_bytes).decode("utf-8"),
         "mean_escape": result.mean_escape,
@@ -61,7 +58,7 @@ def generate_julia_image(
         x_max: float,
         y_min: float,
         y_max: float,
-        julia_c: complex = -0.7 + 0.27j,
+        julia_c: complex = DEFAULT_JULIA_C,
         resolution: int = RESOLUTION,
         max_iterations: int = MAX_ITERATIONS,
         colormap: str = DEFAULT_COLORMAP,
@@ -86,12 +83,9 @@ def generate_julia_image(
         resolution, max_iterations, colormap, reverse_colormap,
         julia_c=julia_c
     )
-    
-    filename = suggest_filename("julia", x_min, x_max, y_min, y_max, colormap, julia_c)
-
     return {
         "type": "file",
-        "filename": filename,
+        "filename": suggest_filename("julia", x_min, x_max, y_min, y_max, colormap, julia_c),
         "mime_type": "image/jpeg",
         "data": base64.b64encode(result.image_bytes).decode("utf-8"),
         "mean_escape": result.mean_escape,

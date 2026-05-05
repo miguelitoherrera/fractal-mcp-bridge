@@ -9,6 +9,7 @@ RESOLUTION = 800
 MAX_ITERATIONS = 100
 DEFAULT_COLORMAP = "Turbo"
 DEFAULT_REVERSE_COLORMAP = False
+DEFAULT_JULIA_C = -0.7 + 0.27j
 X_MIN = -2.0
 X_MAX = 1.0
 Y_MIN = -1.5
@@ -28,15 +29,16 @@ def suggest_filename(
     y_min: float,
     y_max: float,
     colormap: str,
-    julia_c: complex
+    julia_c: complex = None
 ) -> str:
     """Generate a descriptive filename based on fractal parameters."""
     x_range = x_max - x_min
     x_center = x_min + x_range / 2
     y_center = y_min + (y_max - y_min) / 2
-    
+
     name = f"{fractal_type}_x{x_center:.4f}_y{y_center:.4f}"
-    if fractal_type == "julia":
+
+    if fractal_type == "julia" and julia_c is not None:
         name = f"{fractal_type}_c{julia_c.real:.3f}_{julia_c.imag:.3f}_x{x_center:.4f}_y{y_center:.4f}"
 
     return f"{name}_{colormap.lower()}.jpg"
@@ -51,7 +53,7 @@ def render_fractal(
     max_iterations: int = MAX_ITERATIONS,
     colormap: str = DEFAULT_COLORMAP,
     reverse_colormap: bool = DEFAULT_REVERSE_COLORMAP,
-    julia_c: complex = -0.7 + 0.27j,
+    julia_c: complex = None,
 ) -> FractalResult:
     """
     Unified orchestration for rendering fractals.
@@ -60,13 +62,15 @@ def render_fractal(
     # Calculate height based on aspect ratio to prevent stretching
     width = resolution
     height = round(width * (y_max - y_min) / (x_max - x_min))
-    
+
     if fractal_type == "mandelbrot":
         grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
     elif fractal_type == "julia":
-        grid = generate_julia_grid(x_min, x_max, y_min, y_max, julia_c, width, height, max_iterations)
+        c = julia_c if julia_c is not None else DEFAULT_JULIA_C
+        grid = generate_julia_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
     else:
         raise ValueError(f"Unsupported fractal type: {fractal_type}")
+
         
     mean_escape = float(np.mean(grid))
     
