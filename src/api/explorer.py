@@ -2,55 +2,12 @@ from fastapi import APIRouter, Query, Body
 from fastapi.responses import StreamingResponse
 import io
 from pathlib import Path
-
-from utils.image import (
-    grid_to_image_bytes, generate_mandelbrot_grid, generate_julia_grid,
-    RESOLUTION, X_MIN, X_MAX, Y_MIN, Y_MAX, MAX_ITERATIONS
-)
+from renderer import render_fractal, RESOLUTION, X_MIN, X_MAX, Y_MIN, Y_MAX, MAX_ITERATIONS
 
 router = APIRouter()
 
 MANDELBROT = "mandelbrot"
 JULIA = "julia"
-
-def generate_image(
-    fractal_type: str,
-    x_min: float,
-    x_max: float,
-    y_min: float,
-    y_max: float,
-    max_iterations: int,
-    resolution: int,
-    colormap: str,
-    reverse_colormap: bool,
-    julia_c: complex,
-) -> bytes:
-    """
-    Consolidated logic to compute a fractal grid and return its JPEG representation.
-
-    Args:
-        fractal_type: The type of fractal to render ("mandelbrot" or "julia").
-        x_min, x_max: Bounds for the real axis.
-        y_min, y_max: Bounds for the imaginary axis.
-        max_iterations: The escape threshold for calculation.
-        resolution: Pixel width/height for the output grid.
-        colormap: Name of the Bokeh palette to apply.
-        reverse_colormap: Whether to flip the color palette.
-        julia_c: The complex constant 'c' used only for Julia set calculation.
-
-    Returns:
-        bytes: The rendered JPEG image data.
-
-    Raises:
-        ValueError: If the fractal_type is unsupported.
-    """
-    if fractal_type == MANDELBROT:
-        grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, resolution, resolution, max_iterations)
-    elif fractal_type == JULIA:
-        grid = generate_julia_grid(x_min, x_max, y_min, y_max, julia_c, resolution, resolution, max_iterations)
-    else:
-        raise ValueError(f"Unsupported fractal type: {fractal_type}")
-    return grid_to_image_bytes(grid, max_iterations, "jpeg", 95, colormap, reverse_colormap)
 
 @router.get("/render")
 async def render(
@@ -65,12 +22,12 @@ async def render(
     reverse_colormap: bool = False,
     julia_c: complex = -0.7 + 0.27j
 ):
-    img_bytes = generate_image(
+    result = render_fractal(
         fractal_type, x_min, x_max, y_min, y_max,
         max_iterations, resolution, colormap, reverse_colormap,
         julia_c
     )
-    return StreamingResponse(io.BytesIO(img_bytes), media_type="image/jpeg")
+    return StreamingResponse(io.BytesIO(result.image_bytes), media_type="image/jpeg")
 
 @router.post("/save")
 async def save(data: dict = Body(...)):
@@ -92,7 +49,7 @@ async def save(data: dict = Body(...)):
 
     filename = data.get("filename", "fractal.jpg")
 
-    img_bytes = generate_image(
+    result = render_fractal(
         fractal_type, x_min, x_max, y_min, y_max,
         max_iterations, resolution, colormap, reverse_colormap,
         c
@@ -101,5 +58,5 @@ async def save(data: dict = Body(...)):
     if not filename.lower().endswith((".jpg", ".jpeg")):
         filename += ".jpg"
         
-    (Path("images") / filename).write_bytes(img_bytes)
+    (Path("images") / filename).write_bytes(result.image_bytes)
     return {"status": "success", "filename": filename}

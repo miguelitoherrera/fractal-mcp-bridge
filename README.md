@@ -4,15 +4,20 @@
 This repository serves as an AI agent backend, connecting the Model Context Protocol (MCP) to a high-performance
 Python library for Mandelbrot and Julia sets.
 
-## 🛠 Project Structure
-The repository uses a source-layout to maintain clear separation between core mathematical logic and the MCP service
-layer:
+## 🏗 Project Architecture
+The repository follows a strict three-tier architecture to maintain clear separation between core mathematical logic, image processing, and service orchestration:
 
-- `lib/fractal_core`: High-performance Numba-accelerated math for fractal math generation.
-- `lib/utils`: image and other misc utils used by the code.
-- `src/api/explorer.oy`: a dedicated FastAPI router for an internal web explorer's backend logic (/render, /save).
-- `src/bridge/server.py`: MCP server implementation that exposes the library as tools for AI agents:
-- `src/fractal_app.py`: a clean "assembler" that plugs in the explorer router and mounts the static UI files
+- **1. Math Layer (`lib/fractal_core`)**: 
+  - `mandelbrot.py` & `julia.py`: Pure, Numba-accelerated mathematical functions for calculating fractal escape grids. This layer is strictly computational and has no knowledge of image formats or resolutions.
+- **2. Imaging Layer (`lib/utils/image.py`)**: 
+  - Specialized logic for converting numerical escape grids into colorful images. It handles colormap application (using Bokeh palettes) and logarithmic scaling. Hardcoded to produce high-quality JPEG output.
+- **3. Orchestration Layer (`lib/renderer.py`)**: 
+  - The unified "brain" of the library. It manages coordinate defaults, calculates aspect ratios to prevent image stretching, and orchestrates the flow between the Math and Imaging layers. It returns a standardized `FractalResult` dataclass.
+
+### Service Layer
+- **FastAPI Bridge (`src/api/explorer.py`)**: A dedicated router for the web explorer backend, providing `/render` and `/save` endpoints.
+- **MCP Bridge (`src/bridge/server.py`)**: FastMCP server implementation that exposes the library as tools for AI agents.
+- **Application Assembler (`src/fractal_app.py`)**: Plugs in the API routes and mounts the static UI.
 
 ## 🚀 Local Setup & Development
 To ensure the environment correctly resolves the internal package mappings, you must perform an editable installation.
@@ -24,11 +29,10 @@ To ensure the environment correctly resolves the internal package mappings, you 
 ### 2. Installation
 From the repository root, run:
 ```bash
-pip install -r requirements.txt.
-````
+pip install -r requirements.txt
+```
 
-From the repository root, run the following command, which uses the `pyproject.toml` to map `lib.fractal_core`
-and `src.bridge` modules to your Python environment.
+From the repository root, run the following command, which uses the `pyproject.toml` to map the internal modules to your Python environment.
 ```bash
 pip install -e .
 ```
@@ -40,7 +44,7 @@ npx @modelcontextprotocol/inspector /absolute/path/to/python src/bridge/server.p
 ```
 Open the browser link provided by the inspector to test the `generate_mandelbrot` and `generate_julia` tools.
 
-### 3. Unit Tests
+### 4. Unit Tests
 You can use this convenient executable to run unit tests with coverage. From the repository root, run:
 ```bash
 bin/run-tests

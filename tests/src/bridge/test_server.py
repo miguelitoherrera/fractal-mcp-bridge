@@ -3,14 +3,16 @@ from unittest.mock import patch, MagicMock
 import numpy as np
 import base64
 from src.bridge.server import mcp
+from renderer import FractalResult
 
 class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
     async def test_generate_mandelbrot_image(self):
-        with patch("src.bridge.server.generate_mandelbrot_grid") as mock_grid, \
-             patch("src.bridge.server.grid_to_image_bytes") as mock_img:
-            
-            mock_grid.return_value = np.zeros((10, 10), dtype=np.uint32)
-            mock_img.return_value = b"fake_image_data"
+        with patch("src.bridge.server.render_fractal") as mock_render:
+            mock_render.return_value = FractalResult(
+                image_bytes=b"fake_image_data",
+                mean_escape=5.0,
+                grid_shape=(10, 10)
+            )
             
             # Call the tool via FastMCP
             result = await mcp.call_tool("generate_mandelbrot_image", {
@@ -18,15 +20,8 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
                 "resolution": 10, "max_iterations": 10
             })
             
-            # result is a ToolResult. content[0] should be TextContent containing our dict (json-encoded)
-            # or the dict itself depending on how FastMCP handles local calls.
-            # In current FastMCP versions, call_tool returns the object if it's a dict.
-            # However, to be safe and robust, let's verify the key properties we expect.
-            
-            # If FastMCP returns the dict directly in some contexts:
             res_dict = result
             if hasattr(result, "content"):
-                # Handle standard MCP ToolResult wrapper
                 import json
                 res_dict = json.loads(result.content[0].text)
 
@@ -37,13 +32,15 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
             # Verify the data was base64 encoded correctly
             decoded_data = base64.b64decode(res_dict["data"])
             self.assertEqual(decoded_data, b"fake_image_data")
+            mock_render.assert_called_once()
 
     async def test_generate_julia_image(self):
-        with patch("src.bridge.server.generate_julia_grid") as mock_grid, \
-             patch("src.bridge.server.grid_to_image_bytes") as mock_img:
-            
-            mock_grid.return_value = np.zeros((10, 10), dtype=np.uint32)
-            mock_img.return_value = b"fake_image_data"
+        with patch("src.bridge.server.render_fractal") as mock_render:
+            mock_render.return_value = FractalResult(
+                image_bytes=b"fake_image_data",
+                mean_escape=5.0,
+                grid_shape=(10, 10)
+            )
             
             result = await mcp.call_tool("generate_julia_image", {
                 "x_min": -2.0, "x_max": 2.0, "y_min": -2.0, "y_max": 2.0,
@@ -59,6 +56,7 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(res_dict["type"], "file")
             self.assertIn("julia_", res_dict["filename"])
             self.assertEqual(res_dict["shape"], [10, 10])
+            mock_render.assert_called_once()
 
 if __name__ == "__main__":
     unittest.main()

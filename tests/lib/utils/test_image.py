@@ -2,53 +2,27 @@ import unittest
 import numpy as np
 from PIL import Image
 import io
-from utils.image import (
-    grid_to_image_bytes, load_bokeh_palette,
-    generate_mandelbrot_grid, generate_julia_grid
-)
+from utils.image import grid_to_image_bytes, load_bokeh_palette
 
 class TestImageUtils(unittest.TestCase):
-    def test_generate_mandelbrot_grid(self):
-        res = 10
-        grid = generate_mandelbrot_grid(-2.0, 1.0, -1.5, 1.5, res, res, max_iterations=10)
-        self.assertEqual(grid.shape, (res, res))
-        self.assertEqual(grid.dtype, np.uint32)
-
-    def test_generate_julia_grid(self):
-        res = 10
-        grid = generate_julia_grid(-2.0, 2.0, -2.0, 2.0, complex(0, 0), res, res, max_iterations=10)
-        self.assertEqual(grid.shape, (res, res))
-        self.assertEqual(grid.dtype, np.uint32)
-
-    def test_grid_to_image_bytes_jpeg(self):
+    def test_grid_to_image_bytes(self):
         grid = np.zeros((10, 10), dtype=np.uint32)
         grid[0:5, 0:5] = 50 
         grid[5:10, 5:10] = 100
         
         max_iter = 100
-        jpeg_bytes = grid_to_image_bytes(grid, max_iter, "jpeg", 80, "Inferno", False)
+        jpeg_bytes = grid_to_image_bytes(grid, max_iter, "Inferno", False)
         
         self.assertIsInstance(jpeg_bytes, bytes)
         img = Image.open(io.BytesIO(jpeg_bytes))
         self.assertEqual(img.format, "JPEG")
         self.assertEqual(img.size, (10, 10))
 
-    def test_grid_to_image_bytes_png(self):
-        grid = np.ones((5, 5), dtype=np.uint32) * 10
-        grid[2, 2] = 0
-        
-        png_bytes = grid_to_image_bytes(grid, 20, "png", 100, "Viridis", True)
-        
-        self.assertIsInstance(png_bytes, bytes)
-        img = Image.open(io.BytesIO(png_bytes))
-        self.assertEqual(img.format, "PNG")
-        self.assertEqual(img.size, (5, 5))
-
     def test_grid_to_image_bytes_colormap(self):
         grid = np.linspace(1, 10, 100, dtype=np.uint32).reshape((10, 10))
         
-        bytes_inferno = grid_to_image_bytes(grid, 10, "png", 90, "Inferno")
-        bytes_viridis = grid_to_image_bytes(grid, 10, "png", 90, "Viridis")
+        bytes_inferno = grid_to_image_bytes(grid, 10, "Inferno")
+        bytes_viridis = grid_to_image_bytes(grid, 10, "Viridis")
         
         self.assertNotEqual(bytes_inferno, bytes_viridis)
 
