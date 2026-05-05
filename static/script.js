@@ -15,7 +15,6 @@ let state = {
 
 const fractalImg = document.getElementById('fractalImg');
 const loader = document.getElementById('loader');
-const coordsDisplay = document.getElementById('coordsDisplay');
 const juliaParams = document.getElementById('julia-params');
 const saveFilenameInput = document.getElementById('saveFilename');
 const saveBtn = document.getElementById('saveBtn');
@@ -75,7 +74,6 @@ function render() {
     console.log("Calling API:", url);
     fractalImg.src = url;
 
-    coordsDisplay.textContent = `X: [${state.x_min.toFixed(6)}, ${state.x_max.toFixed(6)}] Y: [${state.y_min.toFixed(6)}, ${state.y_max.toFixed(6)}]`;
     suggestFilename();
     saveStatus.textContent = "";
 }

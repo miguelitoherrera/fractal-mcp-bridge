@@ -32,10 +32,10 @@ def load_bokeh_palette(name: str) -> np.ndarray:
 
 
 def grid_to_image_bytes(
-        grid,
+        grid: np.ndarray,
         max_iterations: int,
-        colormap: str = "Inferno",
-        reverse: bool = False,
+        colormap: str,
+        reverse_colormap: bool,
 ) -> bytes:
     """
     Convert escape-iteration grid to a JPEG byte string using a named
@@ -43,10 +43,10 @@ def grid_to_image_bytes(
 
     Parameters
     ----------
-    grid          : 2-D array of escape iterations
-    max_iterations: the max_iterations value used when computing grid
-    colormap      : name of a Bokeh palette (case-sensitive, e.g. "Viridis")
-    reverse       : if True, flip the palette direction
+    grid            : 2-D array of escape iterations
+    max_iterations  : the max_iterations value used when computing grid
+    colormap        : name of a Bokeh palette (case-sensitive, e.g. "Viridis")
+    reverse_colormap: if True, flip the palette direction
 
     Notes
     -----
@@ -55,7 +55,7 @@ def grid_to_image_bytes(
     at i=0 (immediate escape) will map to palette index 0.
     """
     palette = load_bokeh_palette(colormap)
-    if reverse:
+    if reverse_colormap:
         palette = palette[::-1]
 
     # Avoid zero division and mathematical errors in log scaling by forcing 0 to 1 temporarily

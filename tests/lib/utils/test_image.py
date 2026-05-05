@@ -21,10 +21,18 @@ class TestImageUtils(unittest.TestCase):
     def test_grid_to_image_bytes_colormap(self):
         grid = np.linspace(1, 10, 100, dtype=np.uint32).reshape((10, 10))
         
-        bytes_inferno = grid_to_image_bytes(grid, 10, "Inferno")
-        bytes_viridis = grid_to_image_bytes(grid, 10, "Viridis")
+        bytes_inferno = grid_to_image_bytes(grid, 10, "Inferno", False)
+        bytes_viridis = grid_to_image_bytes(grid, 10, "Viridis", False)
         
         self.assertNotEqual(bytes_inferno, bytes_viridis)
+
+    def test_grid_to_image_bytes_reverse(self):
+        grid = np.linspace(1, 10, 100, dtype=np.uint32).reshape((10, 10))
+
+        bytes_normal = grid_to_image_bytes(grid, 10, "Inferno", False)
+        bytes_reversed = grid_to_image_bytes(grid, 10, "Inferno", True)
+        
+        self.assertNotEqual(bytes_normal, bytes_reversed)
 
     def test_load_bokeh_palette_existing_256(self):
         palette = load_bokeh_palette("Viridis")

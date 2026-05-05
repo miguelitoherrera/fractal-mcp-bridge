@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch
 from pathlib import Path
 from src.api.explorer import router
-from renderer import FractalResult
+from renderer import FractalResult, DEFAULT_COLORMAP, X_MIN, X_MAX, Y_MIN, Y_MAX
 
 class TestExplorerAPI(unittest.TestCase):
     @classmethod
@@ -55,6 +55,28 @@ class TestExplorerAPI(unittest.TestCase):
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["filename"], "test.jpg")
+        mock_write.assert_called_once_with(b"save_data")
+
+    @patch("src.api.explorer.render_fractal")
+    @patch.object(Path, "write_bytes")
+    def test_router_save_suggest_filename(self, mock_write, mock_render):
+        mock_render.return_value = FractalResult(
+            image_bytes=b"save_data",
+            mean_escape=1.0,
+            grid_shape=(10, 10)
+        )
+        
+        # No filename provided
+        payload = {
+            "fractal_type": "mandelbrot"
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 200)
+        
+        # Expected filename based on default coords and turbo colormap
+        # x_center = -0.5, y_center = 0
+        expected = f"mandelbrot_x-0.5000_y0.0000_{DEFAULT_COLORMAP.lower()}.jpg"
+        self.assertEqual(response.json()["filename"], expected)
         mock_write.assert_called_once_with(b"save_data")
 
     @patch("src.api.explorer.render_fractal")

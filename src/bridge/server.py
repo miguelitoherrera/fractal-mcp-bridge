@@ -5,7 +5,8 @@ This module provides a FastMCP server that exposes fractal generation tools (Man
 from fastmcp import FastMCP
 import base64
 from renderer import (
-    render_fractal, RESOLUTION, MAX_ITERATIONS
+    render_fractal, RESOLUTION, MAX_ITERATIONS, DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP,
+    suggest_filename
 )
 
 
@@ -20,8 +21,8 @@ def generate_mandelbrot_image(
         y_max: float,
         resolution: int = RESOLUTION,
         max_iterations: int = MAX_ITERATIONS,
-        colormap: str = "Inferno",
-        reverse_colormap: bool = False,
+        colormap: str = DEFAULT_COLORMAP,
+        reverse_colormap: bool = DEFAULT_REVERSE_COLORMAP,
 ):
     """
     Render a Mandelbrot set image.
@@ -40,10 +41,12 @@ def generate_mandelbrot_image(
         "mandelbrot", x_min, x_max, y_min, y_max,
         resolution, max_iterations, colormap, reverse_colormap
     )
+    
+    filename = suggest_filename("mandelbrot", x_min, x_max, y_min, y_max, colormap, 0j)
 
     return {
         "type": "file",
-        "filename": f"mandelbrot_{x_min}_{x_max}_{y_min}_{y_max}_{colormap}.jpg",
+        "filename": filename,
         "mime_type": "image/jpeg",
         "data": base64.b64encode(result.image_bytes).decode("utf-8"),
         "mean_escape": result.mean_escape,
@@ -61,8 +64,8 @@ def generate_julia_image(
         julia_c: complex = -0.7 + 0.27j,
         resolution: int = RESOLUTION,
         max_iterations: int = MAX_ITERATIONS,
-        colormap: str = "Inferno",
-        reverse_colormap: bool = False,
+        colormap: str = DEFAULT_COLORMAP,
+        reverse_colormap: bool = DEFAULT_REVERSE_COLORMAP,
 ):
     """
     Render a Julia set image for a given complex constant c.
@@ -83,10 +86,12 @@ def generate_julia_image(
         resolution, max_iterations, colormap, reverse_colormap,
         julia_c=julia_c
     )
+    
+    filename = suggest_filename("julia", x_min, x_max, y_min, y_max, colormap, julia_c)
 
     return {
         "type": "file",
-        "filename": f"julia_{x_min}_{x_max}_{y_min}_{y_max}_{colormap}.jpg",
+        "filename": filename,
         "mime_type": "image/jpeg",
         "data": base64.b64encode(result.image_bytes).decode("utf-8"),
         "mean_escape": result.mean_escape,
