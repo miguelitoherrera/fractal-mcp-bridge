@@ -5,7 +5,7 @@ from unittest.mock import patch
 from pathlib import Path
 from fractal_mcp.api.explorer import router
 from fractal_mcp.renderer import (
-    FractalResult, DEFAULT_COLORMAP, X_MIN, X_MAX, Y_MIN, Y_MAX, DEFAULT_JULIA_C
+    DEFAULT_COLORMAP, X_MIN, X_MAX, Y_MIN, Y_MAX, DEFAULT_JULIA_C
 )
 
 class TestExplorerAPI(unittest.TestCase):
@@ -17,11 +17,7 @@ class TestExplorerAPI(unittest.TestCase):
 
     @patch("fractal_mcp.api.explorer.render_fractal")
     def test_router_render_mandelbrot(self, mock_render):
-        mock_render.return_value = FractalResult(
-            image_bytes=b"render_data",
-            mean_escape=5.5,
-            grid_shape=(10, 10)
-        )
+        mock_render.return_value = b"render_data"
         
         response = self.client.get("/render?fractal_type=mandelbrot")
         self.assertEqual(response.status_code, 200)
@@ -30,11 +26,7 @@ class TestExplorerAPI(unittest.TestCase):
 
     @patch("fractal_mcp.api.explorer.render_fractal")
     def test_router_render_julia(self, mock_render):
-        mock_render.return_value = FractalResult(
-            image_bytes=b"julia_data",
-            mean_escape=4.2,
-            grid_shape=(10, 10)
-        )
+        mock_render.return_value = b"julia_data"
         
         response = self.client.get("/render?fractal_type=julia")
         self.assertEqual(response.status_code, 200)
@@ -44,11 +36,7 @@ class TestExplorerAPI(unittest.TestCase):
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_router_save_no_ext(self, mock_write, mock_render):
-        mock_render.return_value = FractalResult(
-            image_bytes=b"save_data",
-            mean_escape=1.0,
-            grid_shape=(10, 10)
-        )
+        mock_render.return_value = b"save_data"
         
         payload = {
             "fractal_type": "mandelbrot",
@@ -62,11 +50,7 @@ class TestExplorerAPI(unittest.TestCase):
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_router_save_suggest_filename(self, mock_write, mock_render):
-        mock_render.return_value = FractalResult(
-            image_bytes=b"save_data",
-            mean_escape=1.0,
-            grid_shape=(10, 10)
-        )
+        mock_render.return_value = b"save_data"
         
         # No filename provided
         payload = {
@@ -84,11 +68,7 @@ class TestExplorerAPI(unittest.TestCase):
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_router_save_julia_default_c(self, mock_write, mock_render):
-        mock_render.return_value = FractalResult(
-            image_bytes=b"save_data",
-            mean_escape=1.0,
-            grid_shape=(10, 10)
-        )
+        mock_render.return_value = b"save_data"
         
         # Julia type but NO julia_c provided
         payload = {
@@ -104,11 +84,7 @@ class TestExplorerAPI(unittest.TestCase):
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_router_save_complex_string(self, mock_write, mock_render):
-        mock_render.return_value = FractalResult(
-            image_bytes=b"save_data",
-            mean_escape=1.0,
-            grid_shape=(10, 10)
-        )
+        mock_render.return_value = b"save_data"
         
         # Test parsing complex number from string
         payload = {

@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-import numpy as np
 from fractal_mcp.core.mandelbrot import generate_mandelbrot_grid
 from fractal_mcp.core.julia import generate_julia_grid
 from fractal_mcp.utils.image import grid_to_image_bytes
@@ -14,13 +12,6 @@ X_MIN = -2.0
 X_MAX = 1.0
 Y_MIN = -1.5
 Y_MAX = 1.5
-
-@dataclass
-class FractalResult:
-    """Contract for fractal rendering results."""
-    image_bytes: bytes
-    mean_escape: float
-    grid_shape: tuple[int, int]
 
 def suggest_filename(
     fractal_type: str,
@@ -54,10 +45,10 @@ def render_fractal(
     colormap: str = DEFAULT_COLORMAP,
     reverse_colormap: bool = DEFAULT_REVERSE_COLORMAP,
     julia_c: complex = None,
-) -> FractalResult:
+) -> bytes:
     """
     Unified orchestration for rendering fractals.
-    Calculates aspect ratio, generates the grid, computes metadata, and converts to image bytes.
+    Calculates aspect ratio, generates the grid, and converts to image bytes.
     """
     # Calculate height based on aspect ratio to prevent stretching
     width = resolution
@@ -71,15 +62,6 @@ def render_fractal(
     else:
         raise ValueError(f"Unsupported fractal type: {fractal_type}")
 
-        
-    mean_escape = float(np.mean(grid))
-    
-    img_bytes = grid_to_image_bytes(
+    return grid_to_image_bytes(
         grid, max_iterations, colormap, reverse_colormap
-    )
-    
-    return FractalResult(
-        image_bytes=img_bytes,
-        mean_escape=round(mean_escape, 2),
-        grid_shape=grid.shape
     )
