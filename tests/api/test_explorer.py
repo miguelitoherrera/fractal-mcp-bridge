@@ -3,8 +3,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 from pathlib import Path
-from src.api.explorer import router
-from renderer import FractalResult, DEFAULT_COLORMAP, X_MIN, X_MAX, Y_MIN, Y_MAX
+from fractal_mcp.api.explorer import router
+from fractal_mcp.renderer import (
+    FractalResult, DEFAULT_COLORMAP, X_MIN, X_MAX, Y_MIN, Y_MAX, DEFAULT_JULIA_C
+)
 
 class TestExplorerAPI(unittest.TestCase):
     @classmethod
@@ -13,7 +15,7 @@ class TestExplorerAPI(unittest.TestCase):
         app.include_router(router)
         cls.client = TestClient(app)
 
-    @patch("src.api.explorer.render_fractal")
+    @patch("fractal_mcp.api.explorer.render_fractal")
     def test_router_render_mandelbrot(self, mock_render):
         mock_render.return_value = FractalResult(
             image_bytes=b"render_data",
@@ -26,7 +28,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.content, b"render_data")
         mock_render.assert_called_once()
 
-    @patch("src.api.explorer.render_fractal")
+    @patch("fractal_mcp.api.explorer.render_fractal")
     def test_router_render_julia(self, mock_render):
         mock_render.return_value = FractalResult(
             image_bytes=b"julia_data",
@@ -39,7 +41,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.content, b"julia_data")
         mock_render.assert_called_once()
 
-    @patch("src.api.explorer.render_fractal")
+    @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_router_save_no_ext(self, mock_write, mock_render):
         mock_render.return_value = FractalResult(
@@ -57,7 +59,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.json()["filename"], "test.jpg")
         mock_write.assert_called_once_with(b"save_data")
 
-    @patch("src.api.explorer.render_fractal")
+    @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_router_save_suggest_filename(self, mock_write, mock_render):
         mock_render.return_value = FractalResult(
@@ -79,7 +81,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.json()["filename"], expected)
         mock_write.assert_called_once_with(b"save_data")
 
-    @patch("src.api.explorer.render_fractal")
+    @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_router_save_julia_default_c(self, mock_write, mock_render):
         mock_render.return_value = FractalResult(
@@ -99,7 +101,7 @@ class TestExplorerAPI(unittest.TestCase):
         # julia_c-0.700_0.270_x0.0000_y0.0000_turbo.jpg
         self.assertIn("julia_c-0.700_0.270", response.json()["filename"])
 
-    @patch("src.api.explorer.render_fractal")
+    @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_router_save_complex_string(self, mock_write, mock_render):
         mock_render.return_value = FractalResult(

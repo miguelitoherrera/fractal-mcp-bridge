@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from fractal_core.mandelbrot import mandelbrot, generate_mandelbrot_grid
+from fractal_mcp.core.mandelbrot import mandelbrot, generate_mandelbrot_grid
 
 
 class TestMandelbrot(unittest.TestCase):

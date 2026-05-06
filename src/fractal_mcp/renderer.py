@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 import numpy as np
-from fractal_core.mandelbrot import generate_mandelbrot_grid
-from fractal_core.julia import generate_julia_grid
-from utils.image import grid_to_image_bytes
+from fractal_mcp.core.mandelbrot import generate_mandelbrot_grid
+from fractal_mcp.core.julia import generate_julia_grid
+from fractal_mcp.utils.image import grid_to_image_bytes
 
 # Default Rendering Constants
 RESOLUTION = 800

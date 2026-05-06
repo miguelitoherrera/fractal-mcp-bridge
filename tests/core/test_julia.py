@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from fractal_core.julia import julia, generate_julia_grid
+from fractal_mcp.core.julia import julia, generate_julia_grid
 
 
 class TestJulia(unittest.TestCase):

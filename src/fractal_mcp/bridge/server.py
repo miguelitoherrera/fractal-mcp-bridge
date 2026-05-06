@@ -4,7 +4,7 @@ This module provides a FastMCP server that exposes fractal generation tools (Man
 
 from fastmcp import FastMCP
 import base64
-from renderer import (
+from fractal_mcp.renderer import (
     render_fractal, suggest_filename,
     RESOLUTION, MAX_ITERATIONS, DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, DEFAULT_JULIA_C
 )
