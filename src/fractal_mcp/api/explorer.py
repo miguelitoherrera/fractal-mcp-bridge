@@ -27,12 +27,12 @@ async def render(
     reverse_colormap: bool = DEFAULT_REVERSE_COLORMAP,
     julia_c: complex | None = None
 ):
-    result = render_fractal(
+    img_bytes = render_fractal(
         fractal_type, x_min, x_max, y_min, y_max,
         resolution, max_iterations, colormap, reverse_colormap,
         julia_c
     )
-    return StreamingResponse(io.BytesIO(result.image_bytes), media_type="image/jpeg")
+    return StreamingResponse(io.BytesIO(img_bytes), media_type="image/jpeg")
 
 @router.post("/save")
 async def save(data: dict = Body(...)):
@@ -58,15 +58,15 @@ async def save(data: dict = Body(...)):
     filename = data.get("filename")
     if not filename:
         filename = suggest_filename(fractal_type, x_min, x_max, y_min, y_max, colormap, c)
+    
+    if not filename.lower().endswith((".jpg", ".jpeg")):
+        filename += ".jpg"
 
-    result = render_fractal(
+    img_bytes = render_fractal(
         fractal_type, x_min, x_max, y_min, y_max,
         resolution, max_iterations, colormap, reverse_colormap,
         c
     )
-    
-    if not filename.lower().endswith((".jpg", ".jpeg")):
-        filename += ".jpg"
         
-    (Path("images") / filename).write_bytes(result.image_bytes)
+    (Path("images") / filename).write_bytes(img_bytes)
     return {"status": "success", "filename": filename}
