@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [tool.setuptools.package-dir]
-# This tells Python (for example) that the "fractal_core" package is inside the "lib" folder
-fractal_core = "lib/fractal_core"
-bridge = "src/bridge"
-utils = "lib/utils"
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]

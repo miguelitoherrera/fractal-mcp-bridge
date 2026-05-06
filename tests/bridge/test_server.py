@@ -2,12 +2,12 @@ import unittest
 from unittest.mock import patch, MagicMock
 import numpy as np
 import base64
-from src.bridge.server import mcp
-from renderer import FractalResult, DEFAULT_COLORMAP
+from fractal_mcp.bridge.server import mcp
+from fractal_mcp.renderer import FractalResult, DEFAULT_COLORMAP
 
 class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
     async def test_generate_mandelbrot_image(self):
-        with patch("src.bridge.server.render_fractal") as mock_render:
+        with patch("fractal_mcp.bridge.server.render_fractal") as mock_render:
             mock_render.return_value = FractalResult(
                 image_bytes=b"fake_image_data",
                 mean_escape=5.0,
@@ -38,7 +38,7 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
             mock_render.assert_called_once()
 
     async def test_generate_julia_image(self):
-        with patch("src.bridge.server.render_fractal") as mock_render:
+        with patch("fractal_mcp.bridge.server.render_fractal") as mock_render:
             mock_render.return_value = FractalResult(
                 image_bytes=b"fake_image_data",
                 mean_escape=5.0,

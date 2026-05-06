@@ -5,19 +5,19 @@ This repository serves as an AI agent backend, connecting the Model Context Prot
 Python library for Mandelbrot and Julia sets.
 
 ## 🏗 Project Architecture
-The repository follows a strict three-tier architecture to maintain clear separation between core mathematical logic, image processing, and service orchestration:
+The repository follows a standard Python "src layout" under a unified `fractal_mcp` package. This maintains clear separation between core mathematical logic, image processing, and service orchestration:
 
-- **1. Math Layer (`lib/fractal_core`)**: 
+- **Math Layer (`src/fractal_mcp/core`)**: 
   - `mandelbrot.py` & `julia.py`: Pure, Numba-accelerated mathematical functions for calculating fractal escape grids. This layer is strictly computational and has no knowledge of image formats or resolutions.
-- **2. Imaging Layer (`lib/utils/image.py`)**: 
+- **Imaging Layer (`src/fractal_mcp/utils`)**: 
   - Specialized logic for converting numerical escape grids into colorful images. It handles colormap application (using Bokeh palettes) and logarithmic scaling. Hardcoded to produce high-quality JPEG output.
-- **3. Orchestration Layer (`lib/renderer.py`)**: 
+- **Orchestration Layer (`src/fractal_mcp/renderer.py`)**: 
   - The unified "brain" of the library. It manages coordinate defaults, calculates aspect ratios to prevent image stretching, and orchestrates the flow between the Math and Imaging layers. It returns a standardized `FractalResult` dataclass.
 
 ### Service Layer
-- **FastAPI Bridge (`src/api/explorer.py`)**: A dedicated router for the web explorer backend, providing `/render` and `/save` endpoints.
-- **MCP Bridge (`src/bridge/server.py`)**: FastMCP server implementation that exposes the library as tools for AI agents.
-- **Application Assembler (`src/fractal_app.py`)**: Plugs in the API routes and mounts the static UI.
+- **FastAPI Bridge (`src/fractal_mcp/api`)**: A dedicated router for the web explorer backend, providing `/render` and `/save` endpoints.
+- **MCP Bridge (`src/fractal_mcp/bridge`)**: FastMCP server implementation that exposes the library as tools for AI agents.
+- **Application Assembler (`src/fractal_mcp/app.py`)**: Plugs in the API routes and serves the integrated `static/` UI.
 
 ## 🚀 Local Setup & Development
 To ensure the environment correctly resolves the internal package mappings, you must perform an editable installation.
@@ -40,7 +40,7 @@ pip install -e .
 ### 3. Smoke Testing
 You can manually verify the bridge and Numba-accelerated logic using the MCP Inspector:
 ```bash
-npx @modelcontextprotocol/inspector /absolute/path/to/python src/bridge/server.py
+npx @modelcontextprotocol/inspector /absolute/path/to/python src/fractal_mcp/bridge/server.py
 ```
 Open the browser link provided by the inspector to test the `generate_mandelbrot` and `generate_julia` tools.
 
@@ -66,7 +66,7 @@ To use this bridge as an AI Agent, update your `claude_desktop_config.json`:
     "fractal-bridge": {
       "command": "/absolute/path/to/python",
       "args": [
-        "/absolute/path/to/fractal-mcp-bridge/src/bridge/server.py"
+        "/absolute/path/to/fractal-mcp-bridge/src/fractal_mcp/bridge/server.py"
       ]
     }
   }
@@ -82,7 +82,7 @@ To use this bridge as an AI Agent, update your `settings.json`:
     "fractal-bridge": {
       "command": "/absolute/path/to/python",
       "args": [
-        "/absolute/path/to/fractal-mcp-bridge/src/bridge/server.py"
+        "/absolute/path/to/fractal-mcp-bridge/src/fractal_mcp/bridge/server.py"
       ]
     }
   }

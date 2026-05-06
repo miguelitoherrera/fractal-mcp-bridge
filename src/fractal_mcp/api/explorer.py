@@ -2,11 +2,12 @@ from fastapi import APIRouter, Query, Body
 from fastapi.responses import StreamingResponse
 import io
 from pathlib import Path
-from renderer import (
+from fractal_mcp.renderer import (
     render_fractal, suggest_filename,
     RESOLUTION, X_MIN, X_MAX, Y_MIN, Y_MAX, MAX_ITERATIONS,
     DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, DEFAULT_JULIA_C
 )
+
 
 router = APIRouter()
 

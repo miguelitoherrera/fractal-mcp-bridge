@@ -1,5 +1,5 @@
 import unittest
-from renderer import render_fractal, FractalResult, suggest_filename
+from fractal_mcp.renderer import render_fractal, FractalResult, suggest_filename
 
 class TestRenderer(unittest.TestCase):
     def test_suggest_filename_mandelbrot(self):

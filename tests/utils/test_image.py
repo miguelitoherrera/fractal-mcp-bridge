@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from PIL import Image
 import io
-from utils.image import grid_to_image_bytes, load_bokeh_palette
+from fractal_mcp.utils.image import grid_to_image_bytes, load_bokeh_palette
 
 class TestImageUtils(unittest.TestCase):
     def test_grid_to_image_bytes(self):

@@ -2,6 +2,10 @@
 # Navigate to project root
 cd "$(dirname "$0")/.."
 
-# Run tests with JIT disabled and project paths included
-NUMBA_DISABLE_JIT=1 PYTHONPATH="lib:src:$PYTHONPATH" \
-    pytest --cov=src --cov=lib --cov-report=term-missing --cov-report=html tests "$@"
+# Run tests with JIT disabled and project package included
+# No PYTHONPATH hack needed once installed, but -m pytest ensures src is in path
+NUMBA_DISABLE_JIT=1 python -m pytest \
+    --cov=fractal_mcp \
+    --cov-report=term-missing \
+    --cov-report=html \
+    tests "$@"
