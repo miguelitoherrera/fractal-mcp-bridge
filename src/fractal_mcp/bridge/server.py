@@ -48,7 +48,7 @@ def generate_mandelbrot_image(
     )
     
     if not filename:
-        filename = suggest_filename("mandelbrot", x_min, x_max, y_min, y_max, colormap)
+        filename = suggest_filename("mandelbrot", x_min, x_max, y_min, y_max, colormap, reverse_colormap)
     
     if not filename.lower().endswith((".jpg", ".jpeg")):
         filename += ".jpg"
@@ -98,7 +98,7 @@ def generate_julia_image(
     )
     
     if not filename:
-        filename = suggest_filename("julia", x_min, x_max, y_min, y_max, colormap, julia_c)
+        filename = suggest_filename("julia", x_min, x_max, y_min, y_max, colormap, reverse_colormap, julia_c)
     
     if not filename.lower().endswith((".jpg", ".jpeg")):
         filename += ".jpg"
