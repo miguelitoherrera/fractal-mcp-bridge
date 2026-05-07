@@ -7,12 +7,10 @@ Python library for Mandelbrot and Julia sets.
 ## 🏗 Project Architecture
 The repository follows a standard Python "src layout" under a unified `fractal_mcp` package. This maintains clear separation between core mathematical logic, image processing, and service orchestration:
 
-- **Math Layer (`src/fractal_mcp/core`)**: 
+- **Core Layer (`src/fractal_mcp/core`)**: 
   - `mandelbrot.py` & `julia.py`: Pure, Numba-accelerated mathematical functions for calculating fractal escape grids. This layer is strictly computational and has no knowledge of image formats or resolutions.
-- **Imaging Layer (`src/fractal_mcp/utils`)**: 
-  - Specialized logic for converting numerical escape grids into colorful images. It handles colormap application (using Bokeh palettes) and logarithmic scaling. Hardcoded to produce high-quality JPEG output.
-- **Orchestration Layer (`src/fractal_mcp/renderer.py`)**: 
-  - The unified "brain" of the library. It manages coordinate defaults, calculates aspect ratios to prevent image stretching, and orchestrates the flow between the Math and Imaging layers. It returns a standardized `FractalResult` dataclass.
+- **Orchestration & Imaging Layer (`src/fractal_mcp/renderer.py`)**: 
+  - The unified "brain" of the library. It manages coordinate defaults, calculates aspect ratios to prevent image stretching, and converts numerical escape grids into colorful JPEG images using Bokeh colormaps.
 
 ### Service Layer
 - **FastAPI Bridge (`src/fractal_mcp/api`)**: A dedicated router for the web explorer backend, providing `/render` and `/save` endpoints.
