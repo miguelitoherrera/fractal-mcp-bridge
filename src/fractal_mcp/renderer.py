@@ -16,6 +16,16 @@ X_MAX = 1.0
 Y_MIN = -1.5
 Y_MAX = 1.5
 
+def parse_complex(v: str | complex) -> complex:
+    """
+    Strictly parse complex numbers from strings or return the complex object.
+    Raises ValueError on failure.
+    """
+    if isinstance(v, complex):
+        return v
+    # Remove spaces and ensure it can be parsed by complex()
+    return complex(str(v).replace(" ", ""))
+
 def load_bokeh_palette(name: str) -> np.ndarray:
     """
     Load a named Bokeh palette and return an (256, 3) uint8 RGB array.
@@ -89,7 +99,7 @@ def suggest_filename(
     y_max: float,
     colormap: str,
     reverse_colormap: bool = False,
-    julia_c: complex = None
+    julia_c: complex | str | None = None
 ) -> str:
     """Generate a descriptive filename based on fractal parameters."""
     x_range = x_max - x_min
@@ -98,8 +108,9 @@ def suggest_filename(
 
     name = f"{fractal_type}_x{x_center:.4f}_y{y_center:.4f}"
 
-    if fractal_type == "julia" and julia_c is not None:
-        name = f"{fractal_type}_c{julia_c.real:.3f}_{julia_c.imag:.3f}_x{x_center:.4f}_y{y_center:.4f}"
+    if fractal_type == "julia":
+        c = parse_complex(julia_c) if julia_c is not None else DEFAULT_JULIA_C
+        name = f"{fractal_type}_c{c.real:.3f}_{c.imag:.3f}_x{x_center:.4f}_y{y_center:.4f}"
 
     reversed_suffix = "_reversed" if reverse_colormap else ""
     return f"{name}_{colormap.lower()}{reversed_suffix}.jpg"
@@ -114,7 +125,7 @@ def render_fractal(
     max_iterations: int = MAX_ITERATIONS,
     colormap: str = DEFAULT_COLORMAP,
     reverse_colormap: bool = DEFAULT_REVERSE_COLORMAP,
-    julia_c: complex = None,
+    julia_c: complex | str | None = None,
 ) -> bytes:
     """
     Unified orchestration for rendering fractals.
@@ -127,7 +138,7 @@ def render_fractal(
     if fractal_type == "mandelbrot":
         grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
     elif fractal_type == "julia":
-        c = julia_c if julia_c is not None else DEFAULT_JULIA_C
+        c = parse_complex(julia_c) if julia_c is not None else DEFAULT_JULIA_C
         grid = generate_julia_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
     else:
         raise ValueError(f"Unsupported fractal type: {fractal_type}")

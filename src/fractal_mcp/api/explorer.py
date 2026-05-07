@@ -4,7 +4,7 @@ import io
 from pathlib import Path
 from pydantic import BaseModel, field_validator
 from fractal_mcp.renderer import (
-    render_fractal, suggest_filename,
+    render_fractal, suggest_filename, parse_complex,
     RESOLUTION, X_MIN, X_MAX, Y_MIN, Y_MAX, MAX_ITERATIONS,
     DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, DEFAULT_JULIA_C
 )
@@ -30,11 +30,10 @@ class SaveRequest(BaseModel):
 
     @field_validator('julia_c', mode='before')
     @classmethod
-    def parse_complex(cls, v):
-        try:
-            return complex(v.replace(" ", ""))
-        except (ValueError, AttributeError, TypeError):
+    def parse_complex_field(cls, v):
+        if v is None:
             return None
+        return parse_complex(v)
 
 @router.get("/render")
 async def render(
