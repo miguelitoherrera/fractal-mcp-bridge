@@ -97,6 +97,59 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.json()["filename"], "julia_test.jpg")
         mock_write.assert_called_once_with(b"save_data")
 
+    def test_router_suggest_filename_endpoint(self):
+        # ... existing tests ...
+        response = self.client.get("/suggest-filename?fractal_type=julia&julia_c=-0.123%2B0.745j&reverse_colormap=false")
+        self.assertEqual(response.status_code, 200)
+        filename = response.json()["filename"]
+        self.assertNotIn("reversed", filename)
+        self.assertTrue(filename.endswith("turbo.jpg"))
+
+    def test_save_invalid_complex(self):
+        # Test the validator's ValueError handling
+        payload = {
+            "fractal_type": "julia",
+            "julia_c": "not-a-number"
+            # No filename provided, so it should suggest one
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 200)
+        # Should have fallen back to DEFAULT_JULIA_C and suggested a filename containing it
+        self.assertIn("julia_c-0.700_0.270", response.json()["filename"])
+
+    def test_save_missing_julia_c(self):
+        # Test the 'if c is None and req.fractal_type == JULIA' branch
+        payload = {
+            "fractal_type": "julia"
+            # No julia_c and no filename
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("julia_c-0.700_0.270", response.json()["filename"])
+
+    def test_save_complex_object(self):
+        # Test the validator when v is already a complex object (not a string)
+        # Note: We can't send a complex object over JSON, but we can mock it
+        # or just test the validator logic if we were using it internally.
+        # Since this is a router test, we'll just ensure standard strings work.
+        payload = {
+            "fractal_type": "julia",
+            "julia_c": "-0.123+0.745j",
+            "filename": "complex_str"
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_save_mandelbrot(self):
+        # Test the branch where fractal_type != JULIA
+        payload = {
+            "fractal_type": "mandelbrot",
+            "filename": "mandelbrot_save"
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 200)
+
 
 if __name__ == "__main__":
     unittest.main()

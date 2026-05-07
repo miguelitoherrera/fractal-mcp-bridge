@@ -20,50 +20,34 @@ const saveFilenameInput = document.getElementById('saveFilename');
 const saveBtn = document.getElementById('saveBtn');
 const saveStatus = document.getElementById('saveStatus');
 
-function suggestFilename() {
-    const xRange = state.x_max - state.x_min;
-    const xCenter = state.x_min + xRange / 2;
-    const yCenter = state.y_min + (state.y_max - state.y_min) / 2;
-
-    let name = `${state.fractal_type}_x${xCenter.toFixed(4)}_y${yCenter.toFixed(4)}`;
-    if (state.fractal_type === 'julia') {
-        name = `julia_c${state.c_real.toFixed(3)}_${state.c_imag.toFixed(3)}_x${xCenter.toFixed(4)}_y${yCenter.toFixed(4)}`;
-    }
-    saveFilenameInput.value = name + "_" + state.colormap.toLowerCase() + ".jpg";
-}
-
-function updateStateFromUI() {
-    const oldType = state.fractal_type;
+/**
+ * Sync the internal 'state' object with values from the UI.
+ */
+function syncStateFromUI() {
     state.fractal_type = document.getElementById('fractal_type').value;
     state.colormap = document.getElementById('colormap').value;
-    state.iterations = parseInt(document.getElementById('iterations').value);
-    state.resolution = parseInt(document.getElementById('resolution').value);
+    state.iterations = parseInt(document.getElementById('iterations').value) || 200;
+    state.resolution = parseInt(document.getElementById('resolution').value) || 1600;
     state.reverse_colormap = document.getElementById('reverse_colormap').checked;
-    state.c_real = parseFloat(document.getElementById('c_real').value);
-    state.c_imag = parseFloat(document.getElementById('c_imag').value);
+    state.c_real = parseFloat(document.getElementById('c_real').value) || 0;
+    state.c_imag = parseFloat(document.getElementById('c_imag').value) || 0;
 
     juliaParams.style.display = state.fractal_type === 'julia' ? 'flex' : 'none';
-
-    // If type changed, reset to type-specific defaults
-    if (oldType !== state.fractal_type) {
-        resetView();
-    }
-    suggestFilename();
+    console.log("UI Synced:", state);
 }
 
-function render() {
-    loader.classList.add('active');
-
+/**
+ * Fetch a suggested filename from the backend.
+ */
+async function suggestFilename() {
     const paramsObj = {
         fractal_type: state.fractal_type,
-        x_min: state.x_min,
-        x_max: state.x_max,
-        y_min: state.y_min,
-        y_max: state.y_max,
-        max_iterations: state.iterations,
+        x_min: state.x_min.toFixed(6),
+        x_max: state.x_max.toFixed(6),
+        y_min: state.y_min.toFixed(6),
+        y_max: state.y_max.toFixed(6),
         colormap: state.colormap,
-        reverse_colormap: state.reverse_colormap,
-        resolution: state.resolution
+        reverse_colormap: state.reverse_colormap ? 'true' : 'false'
     };
 
     if (state.fractal_type === 'julia') {
@@ -71,43 +55,78 @@ function render() {
     }
 
     const params = new URLSearchParams(paramsObj);
+    try {
+        const response = await fetch(`/suggest-filename?${params.toString()}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        saveFilenameInput.value = data.filename;
+        console.log("Filename suggested by API:", data.filename);
+    } catch (err) {
+        console.error("Failed to suggest filename:", err);
+    }
+}
 
-    const url = `/render?${params.toString()}`;
-    console.log("Calling API:", url);
-    fractalImg.src = url;
+/**
+ * Update the image and filename.
+ */
+async function updateUI(renderImage = true) {
+    syncStateFromUI();
 
-    suggestFilename();
+    if (renderImage) {
+        loader.classList.add('active');
+        const paramsObj = {
+            fractal_type: state.fractal_type,
+            x_min: state.x_min,
+            x_max: state.x_max,
+            y_min: state.y_min,
+            y_max: state.y_max,
+            max_iterations: state.iterations,
+            colormap: state.colormap,
+            reverse_colormap: state.reverse_colormap ? 'true' : 'false',
+            resolution: state.resolution,
+            _t: Date.now()
+        };
+
+        if (state.fractal_type === 'julia') {
+            paramsObj.julia_c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
+        }
+
+        const params = new URLSearchParams(paramsObj);
+        const url = `/render?${params.toString()}`;
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+            // Extract filename from header (primary sync)
+            const suggestedFilename = response.headers.get("X-Suggested-Filename") || response.headers.get("x-suggested-filename");
+            if (suggestedFilename) {
+                saveFilenameInput.value = suggestedFilename;
+                console.log("Filename synced from render header:", suggestedFilename);
+            }
+
+            const blob = await response.blob();
+            const objectURL = URL.createObjectURL(blob);
+            if (fractalImg.src.startsWith('blob:')) {
+                URL.revokeObjectURL(fractalImg.src);
+            }
+            fractalImg.src = objectURL;
+        } catch (err) {
+            console.error("Render failed:", err);
+            loader.classList.remove('active');
+            // If render fails, try to at least get a filename suggestion
+            await suggestFilename();
+        }
+    } else {
+        await suggestFilename();
+    }
+
     saveStatus.textContent = "";
 }
 
-fractalImg.onload = () => {
-    loader.classList.remove('active');
-};
-
-fractalImg.onclick = (e) => {
-    const rect = fractalImg.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width;
-    const py = (e.clientY - rect.top) / rect.height;
-
-    // Map click to complex plane
-    const clickX = state.x_min + px * (state.x_max - state.x_min);
-    const clickY = state.y_min + py * (state.y_max - state.y_min);
-
-    const zoom = parseFloat(document.getElementById('zoomFactor').value);
-
-    // Calculate new width and height
-    const width = (state.x_max - state.x_min) / zoom;
-    const height = (state.y_max - state.y_min) / zoom;
-
-    // Set new bounds centered on click
-    state.x_min = clickX - width / 2;
-    state.x_max = clickX + width / 2;
-    state.y_min = clickY - height / 2;
-    state.y_max = clickY + height / 2;
-
-    render();
-};
-
+/**
+ * Reset the view to defaults based on the current fractal type.
+ */
 function resetView() {
     if (state.fractal_type === 'mandelbrot') {
         state.x_min = -2.0;
@@ -120,27 +139,53 @@ function resetView() {
         state.y_min = -2.0;
         state.y_max = 2.0;
     }
+
     state.iterations = 200;
     state.resolution = 1600;
+    state.reverse_colormap = false;
+
     document.getElementById('iterations').value = 200;
     document.getElementById('resolution').value = 1600;
-    render();
+    document.getElementById('reverse_colormap').checked = false;
+
+    updateUI(true);
 }
 
+// Image load handler
+fractalImg.onload = () => {
+    loader.classList.remove('active');
+};
+
+// Zoom on click
+fractalImg.onclick = (e) => {
+    const rect = fractalImg.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+
+    const clickX = state.x_min + px * (state.x_max - state.x_min);
+    const clickY = state.y_min + py * (state.y_max - state.y_min);
+
+    const zoom = parseFloat(document.getElementById('zoomFactor').value) || 2;
+
+    const width = (state.x_max - state.x_min) / zoom;
+    const height = (state.y_max - state.y_min) / zoom;
+
+    state.x_min = clickX - width / 2;
+    state.x_max = clickX + width / 2;
+    state.y_min = clickY - height / 2;
+    state.y_max = clickY + height / 2;
+
+    updateUI(true);
+};
+
+// Save image handler
 saveBtn.onclick = async () => {
     saveStatus.textContent = "Saving to server...";
     saveStatus.style.color = "#3498db";
 
     const payload = {
-        fractal_type: state.fractal_type,
-        x_min: state.x_min,
-        x_max: state.x_max,
-        y_min: state.y_min,
-        y_max: state.y_max,
+        ...state,
         max_iterations: state.iterations,
-        colormap: state.colormap,
-        reverse_colormap: state.reverse_colormap,
-        resolution: state.resolution,
         filename: saveFilenameInput.value
     };
 
@@ -148,13 +193,10 @@ saveBtn.onclick = async () => {
         payload.julia_c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
     }
 
-    console.log("Calling API: /save", payload);
     try {
         const response = await fetch('/save', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
@@ -173,27 +215,35 @@ saveBtn.onclick = async () => {
     }
 };
 
-document.getElementById('updateBtn').onclick = () => {
-    updateStateFromUI();
-    render();
-};
-
+// Event Listeners
+document.getElementById('updateBtn').onclick = () => updateUI(true);
 document.getElementById('resetBtn').onclick = resetView;
 
-document.getElementById('fractal_type').onchange = updateStateFromUI;
-document.getElementById('colormap').onchange = () => { updateStateFromUI(); render(); };
-document.getElementById('reverse_colormap').onchange = () => { updateStateFromUI(); render(); };
+// Listen for changes on all controls
+['fractal_type', 'colormap', 'reverse_colormap', 'iterations', 'resolution', 'c_real', 'c_imag'].forEach(id => {
+    const el = document.getElementById(id);
+    // Use 'input' for almost everything for immediate feedback, 'change' for select/checkbox
+    const eventType = (el.tagName === 'SELECT' || el.type === 'checkbox') ? 'change' : 'input';
 
-const inputs = ['iterations', 'resolution', 'c_real', 'c_imag'];
-inputs.forEach(id => {
-    document.getElementById(id).addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            updateStateFromUI();
-            render();
+    el.addEventListener(eventType, () => {
+        if (id === 'fractal_type') {
+            syncStateFromUI();
+            resetView();
+        } else {
+            updateUI(true);
         }
     });
 });
 
-// Initial render
-updateStateFromUI();
-render();
+// Keydown listener for text inputs (Enter key)
+['iterations', 'resolution', 'c_real', 'c_imag'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            updateUI(true);
+        }
+    });
+});
+
+// Initial load
+syncStateFromUI();
+updateUI(true);

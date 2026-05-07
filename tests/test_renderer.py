@@ -7,12 +7,16 @@ from fractal_mcp.renderer import render_fractal, suggest_filename, grid_to_image
 
 class TestRenderer(unittest.TestCase):
     def test_suggest_filename_mandelbrot(self):
-        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", 0j)
+        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo")
         self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo.jpg")
 
     def test_suggest_filename_julia(self):
-        name = suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", complex(-0.7, 0.27))
+        name = suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", False, complex(-0.7, 0.27))
         self.assertEqual(name, "julia_c-0.700_0.270_x0.0000_y0.0000_viridis.jpg")
+
+    def test_suggest_filename_reversed(self):
+        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", True)
+        self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo_reversed.jpg")
         
     def test_render_mandelbrot(self):
         img_bytes = render_fractal("mandelbrot", resolution=100)
@@ -80,6 +84,7 @@ class TestRenderer(unittest.TestCase):
         palette_lower = load_bokeh_palette("viridis")
         palette_capital = load_bokeh_palette("Viridis")
         np.testing.assert_array_equal(palette_lower, palette_capital)
+
 
 if __name__ == "__main__":
     unittest.main()

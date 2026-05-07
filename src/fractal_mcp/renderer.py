@@ -6,8 +6,8 @@ from fractal_mcp.core.mandelbrot import generate_mandelbrot_grid
 from fractal_mcp.core.julia import generate_julia_grid
 
 # Default Rendering Constants
-RESOLUTION = 800
-MAX_ITERATIONS = 100
+RESOLUTION = 1600
+MAX_ITERATIONS = 200
 DEFAULT_COLORMAP = "Turbo"
 DEFAULT_REVERSE_COLORMAP = False
 DEFAULT_JULIA_C = -0.7 + 0.27j
@@ -88,6 +88,7 @@ def suggest_filename(
     y_min: float,
     y_max: float,
     colormap: str,
+    reverse_colormap: bool = False,
     julia_c: complex = None
 ) -> str:
     """Generate a descriptive filename based on fractal parameters."""
@@ -100,7 +101,8 @@ def suggest_filename(
     if fractal_type == "julia" and julia_c is not None:
         name = f"{fractal_type}_c{julia_c.real:.3f}_{julia_c.imag:.3f}_x{x_center:.4f}_y{y_center:.4f}"
 
-    return f"{name}_{colormap.lower()}.jpg"
+    reversed_suffix = "_reversed" if reverse_colormap else ""
+    return f"{name}_{colormap.lower()}{reversed_suffix}.jpg"
 
 def render_fractal(
     fractal_type: str,
