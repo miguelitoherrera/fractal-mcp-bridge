@@ -28,6 +28,12 @@ class TestRenderer(unittest.TestCase):
         self.assertIsInstance(img_bytes, bytes)
         self.assertGreater(len(img_bytes), 0)
 
+    def test_render_julia_string_parsing(self):
+        # Test that passing a string with spaces works
+        img_bytes = render_fractal("julia", resolution=100, julia_c="-0.8 + 0.156j")
+        self.assertIsInstance(img_bytes, bytes)
+        self.assertGreater(len(img_bytes), 0)
+
     def test_render_unsupported(self):
         with self.assertRaises(ValueError):
             render_fractal("invalid_fractal")

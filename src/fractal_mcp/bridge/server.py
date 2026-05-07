@@ -5,7 +5,7 @@ This module provides a FastMCP server that exposes fractal generation tools (Man
 from fastmcp import FastMCP
 from pathlib import Path
 from fractal_mcp.renderer import (
-    render_fractal, suggest_filename,
+    render_fractal, suggest_filename, parse_complex,
     RESOLUTION, MAX_ITERATIONS, DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, DEFAULT_JULIA_C
 )
 
@@ -69,7 +69,7 @@ def generate_julia_image(
         x_max: float,
         y_min: float,
         y_max: float,
-        julia_c: complex = DEFAULT_JULIA_C,
+        julia_c: str | complex | None = None,
         resolution: int = RESOLUTION,
         max_iterations: int = MAX_ITERATIONS,
         colormap: str = DEFAULT_COLORMAP,
@@ -84,7 +84,7 @@ def generate_julia_image(
         x_max: Maximum real value (horizontal axis).
         y_min: Minimum imaginary value (vertical axis).
         y_max: Maximum imaginary value (vertical axis).
-        julia_c: The complex constant 'c' (e.g., -0.7+0.27j).
+        julia_c: The complex constant 'c' (e.g., -0.7+0.27j). Defaults to -0.7+0.27j.
         resolution: Pixel width of the image (height is calculated via aspect ratio).
         max_iterations: Maximum iterations before a point is considered part of the set.
         colormap: Bokeh colormap name (e.g., "Inferno", "Viridis", "Turbo").
