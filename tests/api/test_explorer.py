@@ -109,10 +109,11 @@ class TestExplorerAPI(unittest.TestCase):
     def test_save_invalid_complex(self, mock_write, mock_render):
         mock_render.return_value = b"data"
         # Test the validator's ValueError handling
+        # Use a unique resolution to avoid cache hit from previous tests
         payload = {
             "fractal_type": "julia",
-            "julia_c": "not-a-number"
-            # No filename provided, so it should suggest one
+            "julia_c": "not-a-number",
+            "resolution": 123
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
@@ -128,6 +129,20 @@ class TestExplorerAPI(unittest.TestCase):
         payload = {
             "fractal_type": "julia"
             # No julia_c and no filename
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("julia_c-0.700_0.270", response.json()["filename"])
+        mock_render.assert_called_once()
+
+    @patch("fractal_mcp.api.explorer.render_fractal")
+    @patch.object(Path, "write_bytes")
+    def test_save_explicit_none_julia_c(self, mock_write, mock_render):
+        mock_render.return_value = b"data"
+        # Explicitly pass None (null) to trigger line 52 in explorer.py
+        payload = {
+            "fractal_type": "julia",
+            "julia_c": None
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)

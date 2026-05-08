@@ -1,5 +1,3 @@
-"""these are the functions used in the mandelbrot algorithm"""
-
 import numba
 import numpy as np
 
@@ -9,36 +7,30 @@ def mandelbrot(
     c: complex,
     max_iterations: int,
 ) -> int:
-
     """
-    Checks if a single complex number 'c' is in the Mandelbrot set.
-    
-    The iteration follows the formula: z_{n+1} = z_n^2 + c, starting with z_0 = 0.
-    A point 'c' is in the set if the sequence remains bounded (abs(z) <= 2.0).
+    Determines the escape count for a point in the Mandelbrot set.
 
     Args:
-        c(complex): The complex number for the starting point.
-        max_iterations(optional, int): The maximum number of iterations to perform.
+        c: Complex point to test.
+        max_iterations: Maximum iteration depth.
 
-    Returns: (int) The number of iterations until escape (max_iterations if it doesn't escape).
+    Returns:
+        Iteration count until escape, or max_iterations if bounded.
+
+    Notes:
+        Uses z = z^2 + c. Here, we start with z = 0 and change c.
     """
     z_real = 0.0
     z_imag = 0.0
-    z_real_sq = 0.0
-    z_imag_sq = 0.0
-    c_real = c.real
-    c_imag = c.imag
 
     for i in range(max_iterations):
-        # Calculate z^2 + c avoiding complex object creation overhead
-        z_imag = 2.0 * z_real * z_imag + c_imag
-        z_real = z_real_sq - z_imag_sq + c_real
-        
-        z_real_sq = z_real * z_real
-        z_imag_sq = z_imag * z_imag
-
-        # Check if abs(z) > 2.0  (equivalent to checking if abs(z)^2 > 4.0)
-        if z_real_sq + z_imag_sq > 4.0:
+        # z = z^2 + c
+        z_real, z_imag = (
+            z_real * z_real - z_imag * z_imag + c.real,
+            2.0 * z_real * z_imag + c.imag
+        )
+        # check if |z| > 2 (i.e. |z| squared > 4 for computational efficiency)
+        if z_real * z_real + z_imag * z_imag > 4.0:
             return i
 
     return max_iterations
@@ -53,15 +45,29 @@ def generate_mandelbrot_grid(
     width: int,
     height: int,
     max_iterations: int,
-):
-    """Creates a grid of escape values for the Mandelbrot set in the complex plane"""
+) -> np.ndarray:
+    """
+    Generates a grid of Mandelbrot set escape values.
+
+    Args:
+        x_min: Minimum real value.
+        x_max: Maximum real value.
+        y_min: Minimum imaginary value.
+        y_max: Maximum imaginary value.
+        width: Pixel width of the grid.
+        height: Pixel height of the grid.
+        max_iterations: Maximum iteration depth for each point.
+
+    Returns:
+        2D array of iteration counts (uint32).
+    """
     x_step = (x_max - x_min) / width
     y_step = (y_max - y_min) / height
     grid = np.empty((height, width), dtype=np.uint32)
     
     for y in numba.prange(height):
-        c_imag = y_min + y * y_step
         for x in range(width):
-            c = complex(x_min + x * x_step, c_imag)
+            c = complex(x_min + x * x_step, y_min + y * y_step)
             grid[y, x] = mandelbrot(c, max_iterations)
+            
     return grid
