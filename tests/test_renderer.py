@@ -2,12 +2,27 @@ import unittest
 import numpy as np
 from PIL import Image
 import io
-from fractal_mcp.renderer import render_fractal, suggest_filename, grid_to_image_bytes, load_bokeh_palette
+from fractal_mcp.renderer import (
+    render_fractal, suggest_filename, grid_to_image_bytes, load_bokeh_palette,
+    parse_complex, X_MIN, X_MAX, Y_MIN, Y_MAX, RESOLUTION, MAX_ITERATIONS, 
+    DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, DEFAULT_JULIA_C
+)
 
 
 class TestRenderer(unittest.TestCase):
+    def test_parse_complex_string(self):
+        # Coverage for string branch in parse_complex
+        c = parse_complex("-0.7 + 0.27j")
+        self.assertEqual(c, complex(-0.7, 0.27))
+
+    def test_parse_complex_object(self):
+        # Coverage for complex object branch in parse_complex
+        c_obj = complex(-0.7, 0.27)
+        c = parse_complex(c_obj)
+        self.assertEqual(c, c_obj)
+
     def test_suggest_filename_mandelbrot(self):
-        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo")
+        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", False, None)
         self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo.jpg")
 
     def test_suggest_filename_julia(self):
@@ -15,31 +30,51 @@ class TestRenderer(unittest.TestCase):
         self.assertEqual(name, "julia_c-0.700_0.270_x0.0000_y0.0000_viridis.jpg")
 
     def test_suggest_filename_reversed(self):
-        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", True)
+        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", True, None)
         self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo_reversed.jpg")
         
+    def test_suggest_filename_julia_none_c(self):
+        # Test that passing None raises ValueError for julia
+        with self.assertRaises(ValueError):
+            suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", False, None)
+
     def test_render_mandelbrot(self):
-        img_bytes = render_fractal("mandelbrot", resolution=100)
+        img_bytes = render_fractal(
+            "mandelbrot", X_MIN, X_MAX, Y_MIN, Y_MAX, 100, MAX_ITERATIONS, 
+            DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, None
+        )
         self.assertIsInstance(img_bytes, bytes)
         self.assertGreater(len(img_bytes), 0)
 
     def test_render_julia(self):
-        img_bytes = render_fractal("julia", resolution=100, julia_c=complex(-0.7, 0.27))
+        img_bytes = render_fractal(
+            "julia", X_MIN, X_MAX, Y_MIN, Y_MAX, 100, MAX_ITERATIONS, 
+            DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, complex(-0.7, 0.27)
+        )
         self.assertIsInstance(img_bytes, bytes)
         self.assertGreater(len(img_bytes), 0)
 
-    def test_render_julia_string_parsing(self):
-        # Test that passing a string with spaces works
-        img_bytes = render_fractal("julia", resolution=100, julia_c="-0.8 + 0.156j")
-        self.assertIsInstance(img_bytes, bytes)
-        self.assertGreater(len(img_bytes), 0)
+    def test_render_julia_none_c(self):
+        # Test that passing None raises ValueError
+        with self.assertRaises(ValueError):
+            render_fractal(
+                "julia", X_MIN, X_MAX, Y_MIN, Y_MAX, 100, MAX_ITERATIONS, 
+                DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, None
+            )
 
     def test_render_unsupported(self):
+        # To test the actual ValueError in render_fractal:
         with self.assertRaises(ValueError):
-            render_fractal("invalid_fractal")
+             render_fractal(
+                "invalid_fractal", X_MIN, X_MAX, Y_MIN, Y_MAX, 100, MAX_ITERATIONS, 
+                DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, None
+            )
 
     def test_aspect_ratio_calculation(self):
-        img_bytes = render_fractal("mandelbrot", x_min=0.0, x_max=2.0, y_min=0.0, y_max=1.0, resolution=100)
+        img_bytes = render_fractal(
+            "mandelbrot", 0.0, 2.0, 0.0, 1.0, 100, MAX_ITERATIONS, 
+            DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, None
+        )
         self.assertIsInstance(img_bytes, bytes)
         self.assertGreater(len(img_bytes), 0)
 

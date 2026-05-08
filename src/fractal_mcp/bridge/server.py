@@ -5,8 +5,8 @@ This module provides a FastMCP server that exposes fractal generation tools (Man
 from fastmcp import FastMCP
 from pathlib import Path
 from fractal_mcp.renderer import (
-    render_fractal, suggest_filename, parse_complex,
-    RESOLUTION, MAX_ITERATIONS, DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, DEFAULT_JULIA_C
+    render_fractal, suggest_filename,
+    RESOLUTION, MAX_ITERATIONS, DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP
 )
 
 
@@ -44,11 +44,13 @@ def generate_mandelbrot_image(
     """
     img_bytes = render_fractal(
         "mandelbrot", x_min, x_max, y_min, y_max,
-        resolution, max_iterations, colormap, reverse_colormap
+        resolution, max_iterations, colormap, reverse_colormap, julia_c=None
     )
     
     if not filename:
-        filename = suggest_filename("mandelbrot", x_min, x_max, y_min, y_max, colormap, reverse_colormap)
+        filename = suggest_filename(
+            "mandelbrot", x_min, x_max, y_min, y_max, colormap, reverse_colormap, julia_c=None
+        )
     
     if not filename.lower().endswith((".jpg", ".jpeg")):
         filename += ".jpg"
@@ -69,7 +71,7 @@ def generate_julia_image(
         x_max: float,
         y_min: float,
         y_max: float,
-        julia_c: str | complex | None = None,
+        julia_c: complex,
         resolution: int = RESOLUTION,
         max_iterations: int = MAX_ITERATIONS,
         colormap: str = DEFAULT_COLORMAP,
@@ -84,7 +86,7 @@ def generate_julia_image(
         x_max: Maximum real value (horizontal axis).
         y_min: Minimum imaginary value (vertical axis).
         y_max: Maximum imaginary value (vertical axis).
-        julia_c: The complex constant 'c' (e.g., -0.7+0.27j). Defaults to -0.7+0.27j.
+        julia_c: The complex constant 'c' as a complex object.
         resolution: Pixel width of the image (height is calculated via aspect ratio).
         max_iterations: Maximum iterations before a point is considered part of the set.
         colormap: Bokeh colormap name (e.g., "Inferno", "Viridis", "Turbo").
@@ -98,7 +100,7 @@ def generate_julia_image(
     )
     
     if not filename:
-        filename = suggest_filename("julia", x_min, x_max, y_min, y_max, colormap, reverse_colormap, julia_c)
+        filename = suggest_filename("julia", x_min, x_max, y_min, y_max, colormap, reverse_colormap, julia_c=julia_c)
     
     if not filename.lower().endswith((".jpg", ".jpeg")):
         filename += ".jpg"
