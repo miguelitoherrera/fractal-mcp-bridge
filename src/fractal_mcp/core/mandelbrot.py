@@ -16,6 +16,9 @@ def mandelbrot(
 
     Returns:
         Iteration count until escape, or max_iterations if bounded.
+
+    Notes:
+        Uses z = z^2 + c. Here, we start with z = 0 and change c.
     """
     z_real = 0.0
     z_imag = 0.0

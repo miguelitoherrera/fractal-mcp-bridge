@@ -18,6 +18,9 @@ def julia(
 
     Returns:
         Iteration count until escape, or max_iterations if bounded.
+
+    Notes:
+        Uses z = z^2 + c. Here, we fix c and change the starting z.
     """
     z_real = z_initial.real
     z_imag = z_initial.imag
