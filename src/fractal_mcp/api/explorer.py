@@ -15,6 +15,23 @@ router = APIRouter()
 MANDELBROT = "mandelbrot"
 JULIA = "julia"
 
+# Simple one-item cache for the last rendered image to avoid redundant calculations
+class LastRenderCache:
+    def __init__(self):
+        self.params = None
+        self.image_bytes = None
+
+    def matches(self, **kwargs) -> bool:
+        if self.params is None:
+            return False
+        return all(kwargs.get(k) == v for k, v in self.params.items())
+
+    def update(self, params: dict, image_bytes: bytes):
+        self.params = params
+        self.image_bytes = image_bytes
+
+_render_cache = LastRenderCache()
+
 class SaveRequest(BaseModel):
     fractal_type: str = MANDELBROT
     x_min: float = X_MIN
@@ -33,7 +50,10 @@ class SaveRequest(BaseModel):
     def parse_complex_field(cls, v):
         if v is None:
             return None
-        return parse_complex(v)
+        try:
+            return parse_complex(v)
+        except ValueError:
+            return None
 
 @router.get("/render")
 async def render(
@@ -49,11 +69,32 @@ async def render(
     julia_c: complex | None = None
 ):
     print(f"DEBUG: /render {fractal_type} rev={reverse_colormap} cmap={colormap}")
-    img_bytes = render_fractal(
-        fractal_type, x_min, x_max, y_min, y_max,
-        resolution, max_iterations, colormap, reverse_colormap,
-        julia_c
-    )
+    
+    # Collect current parameters for cache checking
+    current_params = {
+        "fractal_type": fractal_type,
+        "x_min": x_min,
+        "x_max": x_max,
+        "y_min": y_min,
+        "y_max": y_max,
+        "max_iterations": max_iterations,
+        "resolution": resolution,
+        "colormap": colormap,
+        "reverse_colormap": reverse_colormap,
+        "julia_c": julia_c
+    }
+
+    # Check cache first
+    if _render_cache.matches(**current_params):
+        print("DEBUG: Using cached image bytes for /render")
+        img_bytes = _render_cache.image_bytes
+    else:
+        img_bytes = render_fractal(
+            fractal_type, x_min, x_max, y_min, y_max,
+            resolution, max_iterations, colormap, reverse_colormap,
+            julia_c
+        )
+        _render_cache.update(current_params, img_bytes)
 
     # Suggest a filename to be sent as a header for UI synchronization
     filename = suggest_filename(
@@ -102,11 +143,32 @@ async def save(req: SaveRequest):
     if not filename.lower().endswith((".jpg", ".jpeg")):
         filename += ".jpg"
 
-    img_bytes = render_fractal(
-        req.fractal_type, req.x_min, req.x_max, req.y_min, req.y_max,
-        req.resolution, req.max_iterations, req.colormap, req.reverse_colormap,
-        c
-    )
+    # Sanity check: Can we use the cached image?
+    save_params = {
+        "fractal_type": req.fractal_type,
+        "x_min": req.x_min,
+        "x_max": req.x_max,
+        "y_min": req.y_min,
+        "y_max": req.y_max,
+        "max_iterations": req.max_iterations,
+        "resolution": req.resolution,
+        "colormap": req.colormap,
+        "reverse_colormap": req.reverse_colormap,
+        "julia_c": c
+    }
+
+    if _render_cache.matches(**save_params):
+        print(f"DEBUG: /save using cached image bytes for {filename}")
+        img_bytes = _render_cache.image_bytes
+    else:
+        print(f"DEBUG: /save cache miss - re-rendering {filename}")
+        img_bytes = render_fractal(
+            req.fractal_type, req.x_min, req.x_max, req.y_min, req.y_max,
+            req.resolution, req.max_iterations, req.colormap, req.reverse_colormap,
+            c
+        )
+        # Update cache with the new render
+        _render_cache.update(save_params, img_bytes)
         
     (Path("images") / filename).write_bytes(img_bytes)
     return {"status": "success", "filename": filename}

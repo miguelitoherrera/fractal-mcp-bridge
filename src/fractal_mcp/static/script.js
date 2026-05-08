@@ -1,4 +1,5 @@
 // State management
+console.log("Script v2 loaded - Auto-render disabled for numeric inputs. Press Enter to render.");
 let state = {
     fractal_type: 'mandelbrot',
     x_min: -2.0,
@@ -219,13 +220,10 @@ saveBtn.onclick = async () => {
 document.getElementById('updateBtn').onclick = () => updateUI(true);
 document.getElementById('resetBtn').onclick = resetView;
 
-// Listen for changes on all controls
-['fractal_type', 'colormap', 'reverse_colormap', 'iterations', 'resolution', 'c_real', 'c_imag'].forEach(id => {
+// Listen for changes on "instant" controls (selects and checkboxes)
+['fractal_type', 'colormap', 'reverse_colormap'].forEach(id => {
     const el = document.getElementById(id);
-    // Use 'input' for almost everything for immediate feedback, 'change' for select/checkbox
-    const eventType = (el.tagName === 'SELECT' || el.type === 'checkbox') ? 'change' : 'input';
-
-    el.addEventListener(eventType, () => {
+    el.addEventListener('change', () => {
         if (id === 'fractal_type') {
             syncStateFromUI();
             resetView();
@@ -235,7 +233,7 @@ document.getElementById('resetBtn').onclick = resetView;
     });
 });
 
-// Keydown listener for text inputs (Enter key)
+// Keydown listener for numeric inputs (Enter key triggers render)
 ['iterations', 'resolution', 'c_real', 'c_imag'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
