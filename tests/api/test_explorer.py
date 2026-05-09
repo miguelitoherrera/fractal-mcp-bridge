@@ -15,11 +15,27 @@ class TestExplorerAPI(unittest.TestCase):
         app.include_router(router)
         cls.client = TestClient(app)
 
+    def _get_default_params(self, **kwargs):
+        defaults = {
+            "x_min": X_MIN,
+            "x_max": X_MAX,
+            "y_min": Y_MIN,
+            "y_max": Y_MAX,
+            "max_iterations": 200,
+            "resolution": 1600,
+            "colormap": DEFAULT_COLORMAP,
+            "reverse_colormap": False
+        }
+        defaults.update(kwargs)
+        import urllib.parse
+        return urllib.parse.urlencode(defaults)
+
     @patch("fractal_mcp.api.explorer.render_fractal")
     def test_router_render_mandelbrot(self, mock_render):
         mock_render.return_value = b"render_data"
         
-        response = self.client.get("/render?fractal_type=mandelbrot")
+        params = self._get_default_params(fractal_type="mandelbrot")
+        response = self.client.get(f"/render?{params}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"render_data")
         mock_render.assert_called_once()
@@ -28,7 +44,9 @@ class TestExplorerAPI(unittest.TestCase):
     def test_router_render_julia(self, mock_render):
         mock_render.return_value = b"julia_data"
         
-        response = self.client.get("/render?fractal_type=julia")
+        # Must provide julia_c now
+        params = self._get_default_params(fractal_type="julia", julia_c="-0.7+0.27j")
+        response = self.client.get(f"/render?{params}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"julia_data")
         mock_render.assert_called_once()
@@ -40,7 +58,9 @@ class TestExplorerAPI(unittest.TestCase):
         
         payload = {
             "fractal_type": "mandelbrot",
-            "filename": "test"
+            "filename": "test",
+            "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
+            "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
@@ -54,7 +74,9 @@ class TestExplorerAPI(unittest.TestCase):
         
         # No filename provided
         payload = {
-            "fractal_type": "mandelbrot"
+            "fractal_type": "mandelbrot",
+            "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
+            "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
@@ -67,18 +89,20 @@ class TestExplorerAPI(unittest.TestCase):
 
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
-    def test_router_save_julia_default_c(self, mock_write, mock_render):
+    def test_router_save_julia_with_c(self, mock_write, mock_render):
         mock_render.return_value = b"save_data"
         
-        # Julia type but NO julia_c provided
+        # Julia type WITH julia_c provided
         payload = {
-            "fractal_type": "julia"
+            "fractal_type": "julia",
+            "julia_c": "-0.7+0.27j",
+            "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
+            "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
         
-        # Check that it used DEFAULT_JULIA_C (-0.7, 0.27)
-        # julia_c-0.700_0.270_x0.0000_y0.0000_turbo.jpg
+        # Check that it used the provided c
         self.assertIn("julia_c-0.700_0.270", response.json()["filename"])
 
     @patch("fractal_mcp.api.explorer.render_fractal")
@@ -90,7 +114,9 @@ class TestExplorerAPI(unittest.TestCase):
         payload = {
             "fractal_type": "julia",
             "julia_c": "-0.7 + 0.27j",
-            "filename": "julia_test"
+            "filename": "julia_test",
+            "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
+            "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
@@ -98,56 +124,55 @@ class TestExplorerAPI(unittest.TestCase):
         mock_write.assert_called_once_with(b"save_data")
 
     def test_router_suggest_filename_endpoint(self):
-        response = self.client.get("/suggest-filename?fractal_type=julia&julia_c=-0.123%2B0.745j&reverse_colormap=false")
+        params = self._get_default_params(fractal_type="julia", julia_c="-0.123+0.745j", reverse_colormap=False)
+        response = self.client.get(f"/suggest-filename?{params}")
         self.assertEqual(response.status_code, 200)
         filename = response.json()["filename"]
         self.assertNotIn("reversed", filename)
         self.assertTrue(filename.endswith("turbo.jpg"))
 
+    def test_router_suggest_filename_julia_with_c(self):
+        params = self._get_default_params(fractal_type="julia", julia_c="-0.7+0.27j")
+        response = self.client.get(f"/suggest-filename?{params}")
+        self.assertEqual(response.status_code, 200)
+        filename = response.json()["filename"]
+        self.assertIn("julia_c-0.700_0.270", filename)
+
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_save_invalid_complex(self, mock_write, mock_render):
-        mock_render.return_value = b"data"
-        # Test the validator's ValueError handling
-        # Use a unique resolution to avoid cache hit from previous tests
+        # Now returns 422 because we removed the try-except in the validator
         payload = {
             "fractal_type": "julia",
             "julia_c": "not-a-number",
             "resolution": 123
         }
         response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 200)
-        # Should have fallen back to DEFAULT_JULIA_C and suggested a filename containing it
-        self.assertIn("julia_c-0.700_0.270", response.json()["filename"])
-        mock_render.assert_called_once()
+        self.assertEqual(response.status_code, 422)
 
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_save_missing_julia_c(self, mock_write, mock_render):
-        mock_render.return_value = b"data"
-        # Test the 'if c is None and req.fractal_type == JULIA' branch
+        # Should raise ValueError in the endpoint now
         payload = {
-            "fractal_type": "julia"
-            # No julia_c and no filename
+            "fractal_type": "julia",
+            "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
+            "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("julia_c-0.700_0.270", response.json()["filename"])
-        mock_render.assert_called_once()
+        with self.assertRaises(ValueError):
+             self.client.post("/save", json=payload)
 
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_save_explicit_none_julia_c(self, mock_write, mock_render):
-        mock_render.return_value = b"data"
-        # Explicitly pass None (null) to trigger line 52 in explorer.py
         payload = {
             "fractal_type": "julia",
-            "julia_c": None
+            "julia_c": None,
+            "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
+            "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("julia_c-0.700_0.270", response.json()["filename"])
-        mock_render.assert_called_once()
+        with self.assertRaises(ValueError):
+            self.client.post("/save", json=payload)
 
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
@@ -156,7 +181,9 @@ class TestExplorerAPI(unittest.TestCase):
         payload = {
             "fractal_type": "julia",
             "julia_c": "-0.123+0.745j",
-            "filename": "complex_str"
+            "filename": "complex_str",
+            "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
+            "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
@@ -169,7 +196,9 @@ class TestExplorerAPI(unittest.TestCase):
         # Test the branch where fractal_type != JULIA
         payload = {
             "fractal_type": "mandelbrot",
-            "filename": "mandelbrot_save"
+            "filename": "mandelbrot_save",
+            "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
+            "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
@@ -178,33 +207,42 @@ class TestExplorerAPI(unittest.TestCase):
     @patch("fractal_mcp.api.explorer.render_fractal")
     def test_render_cache_hit(self, mock_render):
         mock_render.return_value = b"cached_data"
+        params = self._get_default_params(fractal_type="mandelbrot", resolution=100)
         # First render to populate cache
-        self.client.get("/render?fractal_type=mandelbrot&resolution=100")
+        self.client.get(f"/render?{params}")
         # Second render with same params should hit cache
-        response = self.client.get("/render?fractal_type=mandelbrot&resolution=100")
+        response = self.client.get(f"/render?{params}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"cached_data")
         # Should only be called ONCE
         mock_render.assert_called_once()
 
     def test_render_unsupported_fractal(self):
-        # The Query pattern regex ^(mandelbrot|julia)$ usually catches this at the FastAPI level (422)
-        response = self.client.get("/render?fractal_type=invalid")
-        self.assertEqual(response.status_code, 422)
+        # Now raises ValueError because Query validation is removed
+        params = self._get_default_params(fractal_type="invalid")
+        with self.assertRaises(ValueError):
+             self.client.get(f"/render?{params}")
 
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_save_cache_hit(self, mock_write, mock_render):
         mock_render.return_value = b"cached_data"
         # 1. Render once to populate cache
-        params = "fractal_type=mandelbrot&resolution=100"
+        params = self._get_default_params(fractal_type="mandelbrot", resolution=100)
         self.client.get(f"/render?{params}")
         
         # 2. Save with same params should hit cache
         payload = {
             "fractal_type": "mandelbrot",
             "resolution": 100,
-            "filename": "cache_hit_save"
+            "filename": "cache_hit_save",
+            "x_min": X_MIN,
+            "x_max": X_MAX,
+            "y_min": Y_MIN,
+            "y_max": Y_MAX,
+            "max_iterations": 200,
+            "colormap": DEFAULT_COLORMAP,
+            "reverse_colormap": False
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)

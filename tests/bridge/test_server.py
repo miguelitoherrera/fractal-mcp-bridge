@@ -80,6 +80,7 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
             
             result = await mcp.call_tool("generate_julia_image", {
                 "x_min": -2.0, "x_max": 2.0, "y_min": -2.0, "y_max": 2.0,
+                "julia_c": "0+0j",
                 "filename": "julia_custom"
             })
             
