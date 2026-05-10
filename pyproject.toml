@@ -7,9 +7,12 @@ name = "fractal-mcp-bridge"
 version = "0.1.0"
 dependencies = [
     "fastmcp",
+    "fastapi",
+    "uvicorn",
     "numpy",
     "numba",
-    "google-cloud-bigquery"
+    "Pillow",
+    "bokeh"
 ]
 
 [tool.setuptools.package-dir]

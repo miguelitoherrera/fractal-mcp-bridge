@@ -20,4 +20,4 @@ RUN pip install --no-cache-dir -e .
 EXPOSE 8080
 
 # Run the bridge server
-CMD ["python", "src/bridge/server.py"]
+CMD ["python", "src/fractal_mcp/bridge/server.py"]

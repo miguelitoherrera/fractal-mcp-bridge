@@ -4,10 +4,19 @@ from PIL import Image
 import io
 from fractal_mcp.renderer import (
     render_fractal, suggest_filename, grid_to_image_bytes, load_bokeh_palette,
-    parse_complex, X_MIN, X_MAX, Y_MIN, Y_MAX, RESOLUTION, MAX_ITERATIONS, 
-    DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, DEFAULT_JULIA_C
+    parse_complex
 )
 
+# Testing Constants (formerly from renderer.py)
+RESOLUTION = 1600
+MAX_ITERATIONS = 200
+DEFAULT_COLORMAP = "Turbo"
+DEFAULT_REVERSE_COLORMAP = False
+DEFAULT_JULIA_C = -0.7 + 0.27j
+X_MIN = -2.0
+X_MAX = 1.0
+Y_MIN = -1.5
+Y_MAX = 1.5
 
 class TestRenderer(unittest.TestCase):
     def test_parse_complex_string(self):

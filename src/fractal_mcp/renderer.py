@@ -5,17 +5,6 @@ from bokeh.palettes import all_palettes
 from fractal_mcp.core.mandelbrot import generate_mandelbrot_grid
 from fractal_mcp.core.julia import generate_julia_grid
 
-# Default Rendering Constants
-RESOLUTION = 1600
-MAX_ITERATIONS = 200
-DEFAULT_COLORMAP = "Turbo"
-DEFAULT_REVERSE_COLORMAP = False
-DEFAULT_JULIA_C = -0.7 + 0.27j
-X_MIN = -2.0
-X_MAX = 1.0
-Y_MIN = -1.5
-Y_MAX = 1.5
-
 def parse_complex(v: str | complex) -> complex:
     """
     Strictly parse complex numbers from strings or return the complex object.
@@ -99,7 +88,7 @@ def suggest_filename(
     y_max: float,
     colormap: str,
     reverse_colormap: bool,
-    julia_c: complex | None
+    julia_c: complex | None = None
 ) -> str:
     """Generate a descriptive filename based on fractal parameters."""
     x_range = x_max - x_min
@@ -126,7 +115,7 @@ def render_fractal(
     max_iterations: int,
     colormap: str,
     reverse_colormap: bool,
-    julia_c: complex | None,
+    julia_c: complex | None = None,
 ) -> bytes:
     """
     Unified orchestration for rendering fractals.
