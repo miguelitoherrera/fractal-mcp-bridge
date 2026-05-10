@@ -3,9 +3,7 @@ from fastapi.responses import StreamingResponse
 import io
 from pathlib import Path
 from pydantic import BaseModel, field_validator
-from fractal_mcp.renderer import (
-    render_fractal, suggest_filename, parse_complex
-)
+from fractal_mcp.renderer import render_fractal, suggest_filename, parse_complex
 
 
 router = APIRouter()
@@ -54,24 +52,21 @@ _render_cache = LastRenderCache()
 
 @router.get("/render")
 async def render(params: FractalParams = Depends()):
-    print(f"DEBUG: /render {params.fractal_type} rev={params.reverse_colormap} cmap={params.colormap}")
-
     # Check cache first
     if _render_cache.matches(params):
-        print("DEBUG: Using cached image bytes for /render")
         img_bytes = _render_cache.image_bytes
     else:
         img_bytes = render_fractal(
             params.fractal_type, params.x_min, params.x_max, params.y_min, params.y_max,
             params.resolution, params.max_iterations, params.colormap, params.reverse_colormap,
-            params.julia_c,
+            julia_c=params.julia_c
         )
         _render_cache.update(params, img_bytes)
 
     # Suggest a filename to be sent as a header for UI synchronization
     filename = suggest_filename(
         params.fractal_type, params.x_min, params.x_max, params.y_min, params.y_max, 
-        params.colormap, params.reverse_colormap, params.julia_c
+        params.colormap, params.reverse_colormap, julia_c=params.julia_c
     )
 
     return StreamingResponse(
@@ -85,10 +80,9 @@ async def render(params: FractalParams = Depends()):
 
 @router.get("/suggest-filename")
 async def get_suggested_filename(params: FractalParams = Depends()):
-    print(f"DEBUG: /suggest-filename rev={params.reverse_colormap} julia_c={params.julia_c}")
     filename = suggest_filename(
         params.fractal_type, params.x_min, params.x_max, params.y_min, params.y_max, 
-        params.colormap, params.reverse_colormap, params.julia_c
+        params.colormap, params.reverse_colormap, julia_c=params.julia_c
     )
     return {"filename": filename}
 
@@ -99,7 +93,7 @@ async def save(req: SaveRequest):
     if not filename:
         filename = suggest_filename(
             req.fractal_type, req.x_min, req.x_max, req.y_min, req.y_max,
-            req.colormap, req.reverse_colormap, req.julia_c
+            req.colormap, req.reverse_colormap, julia_c=req.julia_c
         )
     
     if not filename.lower().endswith((".jpg", ".jpeg")):
@@ -107,14 +101,12 @@ async def save(req: SaveRequest):
 
     # Sanity check: Can we use the cached image?
     if _render_cache.matches(req):
-        print(f"DEBUG: /save using cached image bytes for {filename}")
         img_bytes = _render_cache.image_bytes
     else:
-        print(f"DEBUG: /save cache miss - re-rendering {filename}")
         img_bytes = render_fractal(
             req.fractal_type, req.x_min, req.x_max, req.y_min, req.y_max,
             req.resolution, req.max_iterations, req.colormap, req.reverse_colormap,
-            req.julia_c
+            julia_c=req.julia_c
         )
         # Update cache with the new render
         _render_cache.update(req, img_bytes)

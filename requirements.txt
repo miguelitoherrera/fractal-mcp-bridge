@@ -6,10 +6,6 @@ pydantic # Required for MCP tool data validation
 fastapi # Web framework for building the interactive API
 uvicorn # ASGI server to run the FastAPI application
 
-# --- GCP Infrastructure ---
-google-cloud-bigquery # To push fractal data to BQ
-google-cloud-core # Base GCP client library logic
-
 # --- Core Math (Existing) ---
 numpy
 numba

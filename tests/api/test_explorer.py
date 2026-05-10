@@ -4,9 +4,16 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch
 from pathlib import Path
 from fractal_mcp.api.explorer import router
-from fractal_mcp.renderer import (
-    DEFAULT_COLORMAP, X_MIN, X_MAX, Y_MIN, Y_MAX, DEFAULT_JULIA_C
-)
+
+# Testing Constants (formerly from renderer.py)
+RESOLUTION = 1600
+MAX_ITERATIONS = 200
+DEFAULT_COLORMAP = "Turbo"
+DEFAULT_JULIA_C = -0.7 + 0.27j
+X_MIN = -2.0
+X_MAX = 1.0
+Y_MIN = -1.5
+Y_MAX = 1.5
 
 class TestExplorerAPI(unittest.TestCase):
     @classmethod
