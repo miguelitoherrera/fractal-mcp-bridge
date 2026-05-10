@@ -76,42 +76,33 @@ class TestExplorerAPI(unittest.TestCase):
 
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
-    def test_router_save_suggest_filename(self, mock_write, mock_render):
-        mock_render.return_value = b"save_data"
-        
-        # No filename provided
+    def test_router_save_missing_filename(self, mock_write, mock_render):
+        # No filename provided - should return 422 Unprocessable Entity
         payload = {
             "fractal_type": "mandelbrot",
             "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
             "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
         response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 200)
-        
-        # Expected filename based on default coords and turbo colormap
-        # x_center = -0.5, y_center = 0
-        expected = f"mandelbrot_x-0.5000_y0.0000_{DEFAULT_COLORMAP.lower()}.jpg"
-        self.assertEqual(response.json()["filename"], expected)
-        mock_write.assert_called_once_with(b"save_data")
+        self.assertEqual(response.status_code, 422)
 
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_router_save_julia_with_c(self, mock_write, mock_render):
         mock_render.return_value = b"save_data"
-        
+
         # Julia type WITH julia_c provided
         payload = {
             "fractal_type": "julia",
             "julia_c": "-0.7+0.27j",
+            "filename": "julia_custom",
             "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
             "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
-        
-        # Check that it used the provided c
-        self.assertIn("julia_c-0.700_0.270", response.json()["filename"])
-
+        self.assertEqual(response.json()["filename"], "julia_custom.jpg")
+        mock_write.assert_called_once_with(b"save_data")
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_router_save_complex_string(self, mock_write, mock_render):
@@ -160,26 +151,29 @@ class TestExplorerAPI(unittest.TestCase):
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_save_missing_julia_c(self, mock_write, mock_render):
-        # Should raise ValueError in the endpoint now
+        # Should return 422 because of Pydantic model_validator
         payload = {
             "fractal_type": "julia",
+            "filename": "missing_c",
             "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
             "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
-        with self.assertRaises(ValueError):
-             self.client.post("/save", json=payload)
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 422)
 
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")
     def test_save_explicit_none_julia_c(self, mock_write, mock_render):
+        # Should return 422 because of Pydantic model_validator
         payload = {
             "fractal_type": "julia",
             "julia_c": None,
+            "filename": "none_c",
             "x_min": X_MIN, "x_max": X_MAX, "y_min": Y_MIN, "y_max": Y_MAX,
             "max_iterations": 200, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": False
         }
-        with self.assertRaises(ValueError):
-            self.client.post("/save", json=payload)
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 422)
 
     @patch("fractal_mcp.api.explorer.render_fractal")
     @patch.object(Path, "write_bytes")

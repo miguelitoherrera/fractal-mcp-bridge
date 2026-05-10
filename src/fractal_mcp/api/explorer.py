@@ -2,11 +2,22 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 import io
 from pathlib import Path
-from pydantic import BaseModel, field_validator
-from fractal_mcp.renderer import render_fractal, suggest_filename, parse_complex
+from pydantic import BaseModel, field_validator, model_validator
+from fractal_mcp.renderer import render_fractal, suggest_filename, validate_fractal_params
 
 
 router = APIRouter()
+
+
+def parse_complex(v: str | complex) -> complex:
+    """
+    Strictly parse complex numbers from strings or return the complex object.
+    Used for web frontend input which may contain spaces.
+    """
+    if isinstance(v, complex):
+        return v
+    # Remove spaces and ensure it can be parsed by complex()
+    return complex(str(v).replace(" ", ""))
 
 
 class FractalParams(BaseModel):
@@ -26,8 +37,14 @@ class FractalParams(BaseModel):
     def parse_complex_field(cls, v):
         return parse_complex(v) if v is not None else None
 
+    @model_validator(mode='after')
+    def validate_params(self):
+        validate_fractal_params(self.fractal_type, self.julia_c)
+        return self
+
 class SaveRequest(FractalParams):
-    filename: str | None = None
+    filename: str
+
 
 # Simple one-item cache for the last rendered image to avoid redundant calculations
 class LastRenderCache:
@@ -90,12 +107,6 @@ async def get_suggested_filename(params: FractalParams = Depends()):
 @router.post("/save")
 async def save(req: SaveRequest):
     filename = req.filename
-    if not filename:
-        filename = suggest_filename(
-            req.fractal_type, req.x_min, req.x_max, req.y_min, req.y_max,
-            req.colormap, req.reverse_colormap, julia_c=req.julia_c
-        )
-    
     if not filename.lower().endswith((".jpg", ".jpeg")):
         filename += ".jpg"
 
