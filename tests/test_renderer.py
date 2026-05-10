@@ -3,8 +3,7 @@ import numpy as np
 from PIL import Image
 import io
 from fractal_mcp.renderer import (
-    render_fractal, suggest_filename, grid_to_image_bytes, load_bokeh_palette,
-    parse_complex
+    render_fractal, suggest_filename, grid_to_image_bytes, load_bokeh_palette
 )
 
 # Testing Constants (formerly from renderer.py)
@@ -19,17 +18,6 @@ Y_MIN = -1.5
 Y_MAX = 1.5
 
 class TestRenderer(unittest.TestCase):
-    def test_parse_complex_string(self):
-        # Coverage for string branch in parse_complex
-        c = parse_complex("-0.7 + 0.27j")
-        self.assertEqual(c, complex(-0.7, 0.27))
-
-    def test_parse_complex_object(self):
-        # Coverage for complex object branch in parse_complex
-        c_obj = complex(-0.7, 0.27)
-        c = parse_complex(c_obj)
-        self.assertEqual(c, c_obj)
-
     def test_suggest_filename_mandelbrot(self):
         name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", False, None)
         self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo.jpg")

@@ -5,15 +5,6 @@ from bokeh.palettes import all_palettes
 from fractal_mcp.core.mandelbrot import generate_mandelbrot_grid
 from fractal_mcp.core.julia import generate_julia_grid
 
-def parse_complex(v: str | complex) -> complex:
-    """
-    Strictly parse complex numbers from strings or return the complex object.
-    Raises ValueError on failure.
-    """
-    if isinstance(v, complex):
-        return v
-    # Remove spaces and ensure it can be parsed by complex()
-    return complex(str(v).replace(" ", ""))
 
 def load_bokeh_palette(name: str) -> np.ndarray:
     """
@@ -80,6 +71,14 @@ def grid_to_image_bytes(
     return buf.getvalue()
 
 
+def validate_fractal_params(fractal_type: str, julia_c: complex | None):
+    """Business logic for fractal parameter consistency."""
+    if fractal_type == "julia" and julia_c is None:
+        raise ValueError("julia_c must be provided for Julia fractals")
+    if fractal_type not in ["mandelbrot", "julia"]:
+        raise ValueError(f"Unsupported fractal type: {fractal_type}")
+
+
 def suggest_filename(
     fractal_type: str,
     x_min: float,
@@ -91,6 +90,8 @@ def suggest_filename(
     julia_c: complex | None = None
 ) -> str:
     """Generate a descriptive filename based on fractal parameters."""
+    validate_fractal_params(fractal_type, julia_c)
+    
     x_range = x_max - x_min
     x_center = x_min + x_range / 2
     y_center = y_min + (y_max - y_min) / 2
@@ -98,8 +99,6 @@ def suggest_filename(
     name = f"{fractal_type}_x{x_center:.4f}_y{y_center:.4f}"
 
     if fractal_type == "julia":
-        if julia_c is None:
-            raise ValueError("julia_c must be provided for Julia fractals")
         name = f"{fractal_type}_c{julia_c.real:.3f}_{julia_c.imag:.3f}_x{x_center:.4f}_y{y_center:.4f}"
 
     reversed_suffix = "_reversed" if reverse_colormap else ""
@@ -121,19 +120,15 @@ def render_fractal(
     Unified orchestration for rendering fractals.
     Calculates aspect ratio, generates the grid, and converts to image bytes.
     """
+    validate_fractal_params(fractal_type, julia_c)
+    
     # Calculate height based on aspect ratio to prevent stretching
     width = resolution
     height = round(width * (y_max - y_min) / (x_max - x_min))
 
     if fractal_type == "mandelbrot":
         grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
-    elif fractal_type == "julia":
-        if julia_c is None:
-            raise ValueError("julia_c must be provided for Julia fractals")
+    elif fractal_type ==  'julia':
         grid = generate_julia_grid(x_min, x_max, y_min, y_max, julia_c, width, height, max_iterations)
-    else:
-        raise ValueError(f"Unsupported fractal type: {fractal_type}")
 
-    return grid_to_image_bytes(
-        grid, max_iterations, colormap, reverse_colormap
-    )
+    return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
