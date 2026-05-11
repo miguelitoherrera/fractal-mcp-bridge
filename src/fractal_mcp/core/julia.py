@@ -7,9 +7,20 @@ def julia(
     z_initial: complex,
     c: complex,
     max_iterations: int,
-) -> int:
+) -> float:
     """
-    Determines the escape count for a point in the Julia set.
+    Determines the smooth escape count for a point in the Julia set.
+
+    Calculation Logic:
+        1. Iterative Mapping: We apply the function z_{n+1} = z_n^2 + c starting 
+           with a variable z_initial and a fixed complex constant 'c'.
+        2. Escape Time: We iterate until the point escapes the bailout radius 
+           (|z| > bailout) or we reach max_iterations.
+        3. Smooth Coloring (Renormalization): To prevent "staircase" color bands, 
+           we calculate a fractional escape value:
+           nu = n + 1 - log2(log(abs(z)) / log(bailout))
+           Simplified for bailout=256 (2^8): nu = n + 1 - log2(log2(|z|)).
+           This maps the escape speed to a continuous scale.
 
     Args:
         z_initial: Starting complex value.
@@ -17,25 +28,30 @@ def julia(
         max_iterations: Maximum iteration depth.
 
     Returns:
-        Iteration count until escape, or max_iterations if bounded.
-
-    Notes:
-        Uses z = z^2 + c. Here, we fix c and change the starting z.
+        Smooth iteration count (float) until escape, or max_iterations if bounded.
     """
     z_real = z_initial.real
     z_imag = z_initial.imag
 
+    # Using a larger bailout radius (2^8 = 256) for smoother coloring
+    bailout = 256.0
+    bailout_sq = bailout * bailout
+
     for i in range(max_iterations):
         # z = z^2 + c
-        z_real, z_imag = (
-            z_real * z_real - z_imag * z_imag + c.real,
-            2.0 * z_real * z_imag + c.imag
-        )
-        # check if |z| > 2 (i.e. |z| squared > 4 for computational efficiency)
-        if z_real * z_real + z_imag * z_imag > 4.0:
-            return i
+        z_real_sq = z_real * z_real
+        z_imag_sq = z_imag * z_imag
+        
+        if z_real_sq + z_imag_sq > bailout_sq:
+            # Smooth coloring formula: v = i + 1 - log2(log2(|z|))
+            z_abs_sq = z_real_sq + z_imag_sq
+            mu = i + 1 - np.log2(np.log2(z_abs_sq) / 2.0)
+            return mu
 
-    return max_iterations
+        z_imag = 2.0 * z_real * z_imag + c.imag
+        z_real = z_real_sq - z_imag_sq + c.real
+
+    return float(max_iterations)
 
 
 @numba.njit(parallel=True, fastmath=True)
@@ -50,7 +66,7 @@ def generate_julia_grid(
     max_iterations: int,
 ) -> np.ndarray:
     """
-    Generates a grid of Julia set escape values.
+    Generates a grid of Julia set escape values using smooth coloring.
 
     Args:
         x_min: Minimum real value.
@@ -63,11 +79,11 @@ def generate_julia_grid(
         max_iterations: Maximum iteration depth for each point.
 
     Returns:
-        2D array of iteration counts (uint32).
+        2D array of smooth iteration counts (float32).
     """
     x_step = (x_max - x_min) / width
     y_step = (y_max - y_min) / height
-    grid = np.empty((height, width), dtype=np.uint32)
+    grid = np.empty((height, width), dtype=np.float32)
     
     for y in numba.prange(height):
         for x in range(width):

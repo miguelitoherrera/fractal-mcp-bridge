@@ -34,6 +34,20 @@ function syncStateFromUI() {
     state.c_imag = parseFloat(document.getElementById('c_imag').value) || 0;
 
     juliaParams.style.display = state.fractal_type === 'julia' ? 'flex' : 'none';
+    
+    // Update Precision Indicator
+    const xRange = state.x_max - state.x_min;
+    const precisionPower = Math.floor(Math.log10(xRange));
+    document.getElementById('precision-val').innerHTML = `10<sup>${precisionPower}</sup>`;
+    
+    // IEEE 754 double precision limit is around 10^-15 to 10^-16
+    const warning = document.getElementById('precision-warning');
+    if (precisionPower <= -14) {
+        warning.style.display = 'inline';
+    } else {
+        warning.style.display = 'none';
+    }
+
     console.log("UI Synced:", state);
 }
 

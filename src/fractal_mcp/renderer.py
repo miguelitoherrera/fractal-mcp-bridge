@@ -8,13 +8,19 @@ from fractal_mcp.core.julia import generate_julia_grid
 
 def load_bokeh_palette(name: str) -> np.ndarray:
     """
-    Load a named Bokeh palette and return an (256, 3) uint8 RGB array.
-    Falls back to Turbo if the name is not found.
+    Load a named Bokeh palette and return a standardized (256, 3) uint8 RGB array.
+    The lookup is case-insensitive.
     """
-    family = all_palettes.get(name) or all_palettes.get(name.capitalize()) or all_palettes["Turbo"]
-        
-    size = 256 if 256 in family else max(family.keys())
-    hex_colors = family[size]
+    # Create a case-insensitive mapping of available palettes
+    lowered_palettes = {k.lower(): v for k, v in all_palettes.items()}
+    family = lowered_palettes.get(name.lower())
+
+    if not family:
+        raise KeyError(f"Palette '{name}' not found in Bokeh palettes.")
+
+    # Pick the largest available size in the family
+    max_size = max(family.keys())
+    hex_colors = family[max_size]
 
     # Convert hex colors to a Nx3 uint8 numpy array.
     rgb_list = []
@@ -25,6 +31,7 @@ def load_bokeh_palette(name: str) -> np.ndarray:
         rgb_list.append((r, g, b))
     arr = np.array(rgb_list, dtype=np.uint8)
 
+    # Standardize to exactly 256 colors using linear interpolation
     if len(arr) != 256:
         indices = np.linspace(0, len(arr) - 1, 256)
         arr = np.stack([
@@ -33,7 +40,6 @@ def load_bokeh_palette(name: str) -> np.ndarray:
         ], axis=1)
     return arr
 
-
 def grid_to_image_bytes(
         grid: np.ndarray,
         max_iterations: int,
@@ -41,27 +47,38 @@ def grid_to_image_bytes(
         reverse_colormap: bool,
 ) -> bytes:
     """
-    Convert escape-iteration grid to a JPEG byte string using a named
-    Bokeh palette. Hardcoded to JPEG with 95 quality.
+    Convert a smooth escape-iteration grid to a JPEG image.
+
+    Mapping Logic:
+        1. Linear Mapping: Since the input grid uses renormalized (smooth) escape 
+           values, the iteration space is already linearized. We no longer need 
+           logarithmic scaling.
+        2. Normalization: We map the range [1, max_iterations] to the palette 
+           range [0, 255].
+        3. Background Protection: Points that never escaped (grid >= max_iterations) 
+           are usually rendered as the first color in the palette (typically black 
+           in our convention).
+
+    Args:
+        grid: 2D float32 array of smooth iteration counts.
+        max_iterations: The threshold used during generation.
+        colormap: Name of the Bokeh colormap to apply.
+        reverse_colormap: Whether to flip the color scale.
+
+    Returns:
+        JPEG-encoded bytes of the resulting fractal image.
     """
     palette = load_bokeh_palette(colormap)
     if reverse_colormap:
         palette = palette[::-1]
 
-    # Avoid zero division and mathematical errors in log scaling by forcing 0 to 1 temporarily
-    safe_grid = np.where(grid == 0, 1, grid)
+    # We shift by 1.0 to ensure that the very first escape (at n=1) 
+    # starts near index 0. We clip to handle immediate escapes.
+    t = np.clip((grid - 1.0) / max_iterations, 0.0, 1.0)
 
-    # Scale from 0 to 1
-    t = np.clip(safe_grid / max_iterations, 0.0, 1.0)
-
-    # Logarithmic scaling spreads out the colors near the fractal boundaries
-    t_smooth = np.log1p(t * 9) / np.log(10)
-
-    # Map the 0-1 range to palette indices 1-255
-    idx = np.clip((t_smooth * 254 + 1).astype(np.int32), 1, 255)
-
-    # Force points that escaped immediately to use index 0 (black)
-    idx[grid == 0] = 0
+    # Map the 0-1 range to palette indices 0-255. 
+    # Because our palette is standardized to 256 colors, this is direct.
+    idx = (t * 255).astype(np.int32)
 
     rgb = palette[idx]
 
@@ -69,7 +86,6 @@ def grid_to_image_bytes(
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=95)
     return buf.getvalue()
-
 
 def validate_fractal_params(fractal_type: str, julia_c: complex | None):
     """Business logic for fractal parameter consistency."""
