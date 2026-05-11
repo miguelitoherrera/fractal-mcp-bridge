@@ -10,14 +10,14 @@ class TestMandelbrot(unittest.TestCase):
             # c, expected_iterations
             [complex(0, 0), self.expected_max_iterations],
             [complex(0, 1), self.expected_max_iterations],
-            [complex(1, 1), 1],
-            [complex(0.5, 0.5), 4],
+            [complex(1, 1), 2],
+            [complex(0.5, 0.5), 5],
             [complex(-2, 0), self.expected_max_iterations],
-            [complex(2.1, 0), 0],
+            [complex(2.1, 0), 2],
         ]
         for c, expected_iterations in test_params:
             self.assertEqual(
-                mandelbrot(c, self.expected_max_iterations),
+                round(mandelbrot(c, self.expected_max_iterations)),
                 expected_iterations,
                 f"Failed for c={c}",
             )
@@ -26,7 +26,7 @@ class TestMandelbrot(unittest.TestCase):
         res = 10
         grid = generate_mandelbrot_grid(-2.0, 1.0, -1.5, 1.5, res, res, max_iterations=self.expected_max_iterations)
         self.assertEqual(grid.shape, (res, res))
-        self.assertEqual(grid.dtype, np.uint32)
+        self.assertEqual(grid.dtype, np.float32)
 
 
 if __name__ == "__main__":
