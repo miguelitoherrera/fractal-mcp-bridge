@@ -7,7 +7,7 @@ from unittest.mock import patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from fractal_mcp.api.explorer import router
+from fractal_mcp.app.api.explorer import router
 
 # Testing Constants (formerly from renderer.py)
 RESOLUTION = 1600
@@ -21,7 +21,7 @@ Y_MAX = 1.5
 
 
 @patch.object(Path, "write_bytes")
-@patch("fractal_mcp.api.explorer.render_fractal")
+@patch("fractal_mcp.app.api.explorer.render_fractal")
 class TestExplorerAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
