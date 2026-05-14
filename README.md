@@ -42,10 +42,16 @@ npx @modelcontextprotocol/inspector /absolute/path/to/python src/fractal_mcp/bri
 ```
 Open the browser link provided by the inspector to test the `generate_mandelbrot` and `generate_julia` tools.
 
-### 4. Unit Tests
-You can use this convenient executable to run unit tests with coverage. From the repository root, run:
+### 4. Code Quality & Unit Tests
+To ensure high standards for code style, type safety, and correctness, use the unified check script. This script runs:
+1.  **Ruff Format**: Ensures consistent code styling.
+2.  **Ruff Lint**: Catches common errors and smells.
+3.  **Mypy**: Validates static types across the codebase.
+4.  **Pytest**: Executes unit tests with coverage reporting.
+
+From the repository root, run:
 ```bash
-bin/run-tests
+bin/run-checks
 ```
 
 ## Fractal Web Explorer

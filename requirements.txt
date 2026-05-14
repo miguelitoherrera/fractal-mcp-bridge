@@ -17,3 +17,5 @@ bokeh  # for palettes
 # --- Testing & Development ---
 pytest
 pytest-cov
+ruff
+mypy

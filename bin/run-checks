@@ -1,7 +1,19 @@
 #!/bin/bash
+set -e
+
 # Navigate to project root
 cd "$(dirname "$0")/.."
 
+echo "--- 🎨 Checking formatting (Ruff) ---"
+ruff format --check src tests
+
+echo "--- 🔍 Linting (Ruff) ---"
+ruff check src tests
+
+echo "--- 📝 Type checking (Mypy) ---"
+mypy src
+
+echo "--- 🧪 Running tests (Pytest) ---"
 # Run tests with JIT disabled and project package included
 # No PYTHONPATH hack needed once installed, but -m pytest ensures src is in path
 NUMBA_DISABLE_JIT=1 python -m pytest \
@@ -9,3 +21,5 @@ NUMBA_DISABLE_JIT=1 python -m pytest \
     --cov-report=term-missing \
     --cov-report=html \
     tests "$@"
+
+echo "--- ✅ All checks passed! ---"
