@@ -1,3 +1,4 @@
+# Unit tests for Mandelbrot set calculations.
 import unittest
 
 import numpy as np

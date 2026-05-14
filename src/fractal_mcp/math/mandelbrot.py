@@ -1,3 +1,4 @@
+# Numba-accelerated Mandelbrot set calculation.
 import numba
 import numpy as np
 

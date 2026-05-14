@@ -1,3 +1,4 @@
+# Tests for the explorer API endpoints.
 import unittest
 import urllib.parse
 from pathlib import Path

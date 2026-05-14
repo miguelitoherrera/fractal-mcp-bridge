@@ -1,3 +1,4 @@
+# Unit tests for Julia set calculations.
 import unittest
 
 import numpy as np
