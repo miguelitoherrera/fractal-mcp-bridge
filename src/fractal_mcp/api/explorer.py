@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
 import io
 from pathlib import Path
-from pydantic import BaseModel, field_validator, model_validator
-from fractal_mcp.renderer import render_fractal, suggest_filename, validate_fractal_params
+from typing import Any
 
+from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, field_validator, model_validator
+
+from fractal_mcp.renderer import render_fractal, suggest_filename, validate_fractal_params
 
 router = APIRouter()
 
@@ -32,15 +34,16 @@ class FractalParams(BaseModel):
     reverse_colormap: bool
     julia_c: complex | None = None
 
-    @field_validator('julia_c', mode='before')
+    @field_validator("julia_c", mode="before")
     @classmethod
-    def parse_complex_field(cls, v):
+    def parse_complex_field(cls, v: Any) -> complex | None:
         return parse_complex(v) if v is not None else None
 
-    @model_validator(mode='after')
-    def validate_params(self):
+    @model_validator(mode="after")
+    def validate_params(self) -> FractalParams:
         validate_fractal_params(self.fractal_type, self.julia_c)
         return self
+
 
 class SaveRequest(FractalParams):
     filename: str
@@ -48,64 +51,85 @@ class SaveRequest(FractalParams):
 
 # Simple one-item cache for the last rendered image to avoid redundant calculations
 class LastRenderCache:
-    def __init__(self):
-        self.params = None
-        self.image_bytes = None
+    def __init__(self) -> None:
+        self.params: dict[str, Any] | None = None
+        self.image_bytes: bytes | None = None
 
-    def _extract_params(self, p: FractalParams) -> dict:
+    def _extract_params(self, p: FractalParams) -> dict[str, Any]:
         """Internal helper to get rendering params from model."""
-        return p.model_dump(exclude={'filename'})
+        return p.model_dump(exclude={"filename"})
 
     def matches(self, params: FractalParams) -> bool:
         if self.params is None:
             return False
-        return self.params == self._extract_params(params)
+        return bool(self.params == self._extract_params(params))
 
-    def update(self, params: FractalParams, image_bytes: bytes):
+    def update(self, params: FractalParams, image_bytes: bytes) -> None:
         self.params = self._extract_params(params)
         self.image_bytes = image_bytes
 
+
 _render_cache = LastRenderCache()
 
+
 @router.get("/render")
-async def render(params: FractalParams = Depends()):
+async def render(params: FractalParams = Depends()) -> StreamingResponse:
     # Check cache first
     if _render_cache.matches(params):
         img_bytes = _render_cache.image_bytes
     else:
         img_bytes = render_fractal(
-            params.fractal_type, params.x_min, params.x_max, params.y_min, params.y_max,
-            params.resolution, params.max_iterations, params.colormap, params.reverse_colormap,
-            julia_c=params.julia_c
+            params.fractal_type,
+            params.x_min,
+            params.x_max,
+            params.y_min,
+            params.y_max,
+            params.resolution,
+            params.max_iterations,
+            params.colormap,
+            params.reverse_colormap,
+            julia_c=params.julia_c,
         )
         _render_cache.update(params, img_bytes)
 
+    assert img_bytes is not None
+
     # Suggest a filename to be sent as a header for UI synchronization
     filename = suggest_filename(
-        params.fractal_type, params.x_min, params.x_max, params.y_min, params.y_max, 
-        params.colormap, params.reverse_colormap, julia_c=params.julia_c
+        params.fractal_type,
+        params.x_min,
+        params.x_max,
+        params.y_min,
+        params.y_max,
+        params.colormap,
+        params.reverse_colormap,
+        julia_c=params.julia_c,
     )
 
     return StreamingResponse(
         io.BytesIO(img_bytes),
         media_type="image/jpeg",
-        headers={
-            "X-Suggested-Filename": filename,
-            "Access-Control-Expose-Headers": "X-Suggested-Filename"
-        }
+        headers={"X-Suggested-Filename": filename, "Access-Control-Expose-Headers": "X-Suggested-Filename"},
     )
 
+
 @router.get("/suggest-filename")
-async def get_suggested_filename(params: FractalParams = Depends()):
+async def get_suggested_filename(params: FractalParams = Depends()) -> dict[str, str]:
     filename = suggest_filename(
-        params.fractal_type, params.x_min, params.x_max, params.y_min, params.y_max, 
-        params.colormap, params.reverse_colormap, julia_c=params.julia_c
+        params.fractal_type,
+        params.x_min,
+        params.x_max,
+        params.y_min,
+        params.y_max,
+        params.colormap,
+        params.reverse_colormap,
+        julia_c=params.julia_c,
     )
     return {"filename": filename}
 
 
 @router.post("/save")
-async def save(req: SaveRequest):
+async def save(req: SaveRequest) -> dict[str, str]:
     filename = req.filename
     if not filename.lower().endswith((".jpg", ".jpeg")):
         filename += ".jpg"
@@ -115,12 +139,20 @@ async def save(req: SaveRequest):
         img_bytes = _render_cache.image_bytes
     else:
         img_bytes = render_fractal(
-            req.fractal_type, req.x_min, req.x_max, req.y_min, req.y_max,
-            req.resolution, req.max_iterations, req.colormap, req.reverse_colormap,
-            julia_c=req.julia_c
+            req.fractal_type,
+            req.x_min,
+            req.x_max,
+            req.y_min,
+            req.y_max,
+            req.resolution,
+            req.max_iterations,
+            req.colormap,
+            req.reverse_colormap,
+            julia_c=req.julia_c,
         )
         # Update cache with the new render
         _render_cache.update(req, img_bytes)
-        
+
+    assert img_bytes is not None
     (Path("images") / filename).write_bytes(img_bytes)
     return {"status": "success", "filename": filename}

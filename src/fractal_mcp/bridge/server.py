@@ -2,10 +2,12 @@
 This module provides a FastMCP server that exposes fractal generation tools (Mandelbrot and Julia sets) to MCP clients.
 """
 
-from fastmcp import FastMCP
 from pathlib import Path
-from fractal_mcp.renderer import render_fractal, suggest_filename
+from typing import Any
 
+from fastmcp import FastMCP
+
+from fractal_mcp.renderer import render_fractal, suggest_filename
 
 # Initialize the MCP server
 mcp = FastMCP("FractalBridge")
@@ -13,17 +15,18 @@ mcp = FastMCP("FractalBridge")
 # Ensure images directory exists
 Path("images").mkdir(exist_ok=True)
 
+
 @mcp.tool
 def generate_mandelbrot_image(
-        x_min: float,
-        x_max: float,
-        y_min: float,
-        y_max: float,
-        resolution: int,
-        max_iterations: int,
-        colormap: str,
-        reverse_colormap: bool,
-):
+    x_min: float,
+    x_max: float,
+    y_min: float,
+    y_max: float,
+    resolution: int,
+    max_iterations: int,
+    colormap: str,
+    reverse_colormap: bool,
+) -> dict[str, Any]:
     """
     Render a Mandelbrot set image and save it to a file.
 
@@ -38,13 +41,12 @@ def generate_mandelbrot_image(
         reverse_colormap: If true, reverses the color palette.
     """
     img_bytes = render_fractal(
-        "mandelbrot", x_min, x_max, y_min, y_max,
-        resolution, max_iterations, colormap, reverse_colormap
+        "mandelbrot", x_min, x_max, y_min, y_max, resolution, max_iterations, colormap, reverse_colormap
     )
-    
+
     filename = suggest_filename("mandelbrot", x_min, x_max, y_min, y_max, colormap, reverse_colormap)
     (Path("images") / filename).write_bytes(img_bytes)
-    
+
     return {
         "type": "file",
         "path": str(Path("images") / filename),
@@ -55,16 +57,16 @@ def generate_mandelbrot_image(
 
 @mcp.tool
 def generate_julia_image(
-        x_min: float,
-        x_max: float,
-        y_min: float,
-        y_max: float,
-        julia_c: complex,
-        resolution: int,
-        max_iterations: int,
-        colormap: str,
-        reverse_colormap: bool,
-):
+    x_min: float,
+    x_max: float,
+    y_min: float,
+    y_max: float,
+    julia_c: complex,
+    resolution: int,
+    max_iterations: int,
+    colormap: str,
+    reverse_colormap: bool,
+) -> dict[str, Any]:
     """
     Render a Julia set image for a given complex constant c and save it to a file.
 
@@ -80,11 +82,9 @@ def generate_julia_image(
         reverse_colormap: If true, reverses the color palette.
     """
     img_bytes = render_fractal(
-        "julia", x_min, x_max, y_min, y_max,
-        resolution, max_iterations, colormap, reverse_colormap,
-        julia_c=julia_c
+        "julia", x_min, x_max, y_min, y_max, resolution, max_iterations, colormap, reverse_colormap, julia_c=julia_c
     )
-    
+
     filename = suggest_filename("julia", x_min, x_max, y_min, y_max, colormap, reverse_colormap, julia_c=julia_c)
     (Path("images") / filename).write_bytes(img_bytes)
 
