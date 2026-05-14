@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 COPY . .
 
 # Install the project in editable mode.
-# This uses your pyproject.toml to map lib/fractal_core correctly.
+# This uses your pyproject.toml to map lib/fractal_math correctly.
 RUN pip install --no-cache-dir -e .
 
 # Cloud Run listens on 8080 by default
