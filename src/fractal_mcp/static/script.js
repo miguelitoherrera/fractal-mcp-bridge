@@ -231,7 +231,6 @@ saveBtn.onclick = async () => {
 };
 
 // Event Listeners
-document.getElementById('updateBtn').onclick = () => updateUI(true);
 document.getElementById('resetBtn').onclick = resetView;
 
 // Listen for changes on "instant" controls (selects and checkboxes)

@@ -15,7 +15,7 @@ The repository follows a standard Python "src layout" under a unified `fractal_m
 ### Service Layer
 - **FastAPI Bridge (`src/fractal_mcp/api`)**: A dedicated router for the web explorer backend, providing `/render` and `/save` endpoints.
 - **MCP Bridge (`src/fractal_mcp/bridge`)**: FastMCP server implementation that exposes the library as tools for AI agents.
-- **Application Assembler (`src/fractal_mcp/app.py`)**: Plugs in the API routes and serves the integrated `static/` UI.
+- **Application Assembler (`src/fractal_mcp/explorer_app.py`)**: Plugs in the API routes and serves the integrated `static/` UI.
 
 ## 🚀 Local Setup & Development
 To ensure the environment correctly resolves the internal package mappings, you must perform an editable installation.
@@ -52,7 +52,7 @@ bin/run-tests
 If you want to interactively explore the Mandelbrot and Julia sets in more detail, you can also spin up the
 Fractal Web Explorer. From the repository root, run:
 ```bash
-bin/run-fractal-app
+bin/run-fractal-explorer
 ```
 Open the browser link provided in the terminal.
 
