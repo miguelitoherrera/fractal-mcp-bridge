@@ -1,3 +1,4 @@
+# Integration tests for the FastAPI explorer application.
 import unittest
 from unittest.mock import MagicMock, patch
 

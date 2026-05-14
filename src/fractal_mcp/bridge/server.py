@@ -1,3 +1,4 @@
+# FastMCP server providing fractal generation tools.
 """MCP Bridge Server for Fractal Generation.
 This module provides a FastMCP server that exposes fractal generation tools (Mandelbrot and Julia sets) to MCP clients.
 """

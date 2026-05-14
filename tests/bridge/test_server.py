@@ -1,3 +1,4 @@
+# Tests for the FastMCP bridge server and tools.
 import unittest
 from unittest.mock import patch
 

@@ -1,3 +1,4 @@
+# Tests for the fractal rendering engine.
 import io
 import unittest
 

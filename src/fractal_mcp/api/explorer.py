@@ -1,3 +1,4 @@
+# FastAPI router for fractal exploration and image streaming.
 import io
 from pathlib import Path
 from typing import Any
