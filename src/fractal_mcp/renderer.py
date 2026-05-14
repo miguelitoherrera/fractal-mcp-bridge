@@ -1,9 +1,11 @@
 import io
-from PIL import Image
+
 import numpy as np
 from bokeh.palettes import all_palettes
-from fractal_mcp.math.mandelbrot import generate_mandelbrot_grid
+from PIL import Image
+
 from fractal_mcp.math.julia import generate_julia_grid
+from fractal_mcp.math.mandelbrot import generate_mandelbrot_grid
 
 
 def load_bokeh_palette(name: str) -> np.ndarray:
@@ -34,29 +36,27 @@ def load_bokeh_palette(name: str) -> np.ndarray:
     # Standardize to exactly 256 colors using linear interpolation
     if len(arr) != 256:
         indices = np.linspace(0, len(arr) - 1, 256)
-        arr = np.stack([
-            np.interp(indices, np.arange(len(arr)), arr[:, c]).astype(np.uint8)
-            for c in range(3)
-        ], axis=1)
+        arr = np.stack([np.interp(indices, np.arange(len(arr)), arr[:, c]).astype(np.uint8) for c in range(3)], axis=1)
     return arr
 
+
 def grid_to_image_bytes(
-        grid: np.ndarray,
-        max_iterations: int,
-        colormap: str,
-        reverse_colormap: bool,
+    grid: np.ndarray,
+    max_iterations: int,
+    colormap: str,
+    reverse_colormap: bool,
 ) -> bytes:
     """
     Convert a smooth escape-iteration grid to a JPEG image.
 
     Mapping Logic:
-        1. Linear Mapping: Since the input grid uses renormalized (smooth) escape 
-           values, the iteration space is already linearized. We no longer need 
+        1. Linear Mapping: Since the input grid uses renormalized (smooth) escape
+           values, the iteration space is already linearized. We no longer need
            logarithmic scaling.
-        2. Normalization: We map the range [1, max_iterations] to the palette 
+        2. Normalization: We map the range [1, max_iterations] to the palette
            range [0, 255].
-        3. Background Protection: Points that never escaped (grid >= max_iterations) 
-           are usually rendered as the first color in the palette (typically black 
+        3. Background Protection: Points that never escaped (grid >= max_iterations)
+           are usually rendered as the first color in the palette (typically black
            in our convention).
 
     Args:
@@ -72,11 +72,11 @@ def grid_to_image_bytes(
     if reverse_colormap:
         palette = palette[::-1]
 
-    # We shift by 1.0 to ensure that the very first escape (at n=1) 
+    # We shift by 1.0 to ensure that the very first escape (at n=1)
     # starts near index 0. We clip to handle immediate escapes.
     t = np.clip((grid - 1.0) / max_iterations, 0.0, 1.0)
 
-    # Map the 0-1 range to palette indices 0-255. 
+    # Map the 0-1 range to palette indices 0-255.
     # Because our palette is standardized to 256 colors, this is direct.
     idx = (t * 255).astype(np.int32)
 
@@ -87,7 +87,8 @@ def grid_to_image_bytes(
     img.save(buf, format="JPEG", quality=95)
     return buf.getvalue()
 
-def validate_fractal_params(fractal_type: str, julia_c: complex | None):
+
+def validate_fractal_params(fractal_type: str, julia_c: complex | None) -> None:
     """Business logic for fractal parameter consistency."""
     if fractal_type == "julia" and julia_c is None:
         raise ValueError("julia_c must be provided for Julia fractals")
@@ -103,11 +104,11 @@ def suggest_filename(
     y_max: float,
     colormap: str,
     reverse_colormap: bool,
-    julia_c: complex | None = None
+    julia_c: complex | None = None,
 ) -> str:
     """Generate a descriptive filename based on fractal parameters."""
     validate_fractal_params(fractal_type, julia_c)
-    
+
     x_range = x_max - x_min
     x_center = x_min + x_range / 2
     y_center = y_min + (y_max - y_min) / 2
@@ -115,10 +116,12 @@ def suggest_filename(
     name = f"{fractal_type}_x{x_center:.4f}_y{y_center:.4f}"
 
     if fractal_type == "julia":
+        assert julia_c is not None
         name = f"{fractal_type}_c{julia_c.real:.3f}_{julia_c.imag:.3f}_x{x_center:.4f}_y{y_center:.4f}"
 
     reversed_suffix = "_reversed" if reverse_colormap else ""
     return f"{name}_{colormap.lower()}{reversed_suffix}.jpg"
+
 
 def render_fractal(
     fractal_type: str,
@@ -137,14 +140,14 @@ def render_fractal(
     Calculates aspect ratio, generates the grid, and converts to image bytes.
     """
     validate_fractal_params(fractal_type, julia_c)
-    
+
     # Calculate height based on aspect ratio to prevent stretching
     width = resolution
     height = round(width * (y_max - y_min) / (x_max - x_min))
 
     if fractal_type == "mandelbrot":
         grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
-    elif fractal_type ==  'julia':
+    elif fractal_type == "julia":
         grid = generate_julia_grid(x_min, x_max, y_min, y_max, julia_c, width, height, max_iterations)
 
     return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)

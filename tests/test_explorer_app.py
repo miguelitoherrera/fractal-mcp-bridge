@@ -1,7 +1,10 @@
 import unittest
+from unittest.mock import MagicMock, patch
+
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
+
 from fractal_mcp.explorer_app import app
+
 
 class TestExplorerApp(unittest.TestCase):
     @classmethod
@@ -16,6 +19,7 @@ class TestExplorerApp(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             # Get expected static dir path from the app module
             from fractal_mcp.explorer_app import STATIC_DIR
+
             mock_fr.assert_called_once_with(STATIC_DIR / "index.html")
 
     def test_app_includes_explorer_routes(self):
@@ -28,6 +32,7 @@ class TestExplorerApp(unittest.TestCase):
         response = self.client.get("/render?fractal_type=invalid")
         # 422 means the endpoint was reached but validation failed
         self.assertEqual(response.status_code, 422)
+
 
 if __name__ == "__main__":
     unittest.main()

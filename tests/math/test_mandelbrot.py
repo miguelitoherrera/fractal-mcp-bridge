@@ -27,9 +27,7 @@ class TestMandelbrot(unittest.TestCase):
 
     def test_generate_mandelbrot_grid(self):
         res = 10
-        grid = generate_mandelbrot_grid(
-            -2.0, 1.0, -1.5, 1.5, res, res, max_iterations=self.expected_max_iterations
-        )
+        grid = generate_mandelbrot_grid(-2.0, 1.0, -1.5, 1.5, res, res, max_iterations=self.expected_max_iterations)
         self.assertEqual(grid.shape, (res, res))
         self.assertEqual(grid.dtype, np.float32)
 
