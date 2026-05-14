@@ -13,9 +13,16 @@ The repository follows a standard Python "src layout" under a unified `fractal_m
   - The unified "brain" of the library. It manages coordinate defaults, calculates aspect ratios to prevent image stretching, and converts numerical escape grids into colorful JPEG images using Bokeh colormaps.
 
 ### Service Layer
-- **FastAPI Bridge (`src/fractal_mcp/api`)**: A dedicated router for the web explorer backend, providing `/render` and `/save` endpoints.
+- **Fractal Explorer App (`src/fractal_mcp/app`)**: An encapsulated web application. Includes the FastAPI orchestrator (`main.py`), the API routing endpoints (`api/`), and the web assets (`static/`).
 - **MCP Bridge (`src/fractal_mcp/bridge`)**: FastMCP server implementation that exposes the library as tools for AI agents.
-- **Application Assembler (`src/fractal_mcp/explorer_app.py`)**: Plugs in the API routes and serves the integrated `static/` UI.
+
+## 🌍 Fractal Web Explorer
+If you want to interactively explore the Mandelbrot and Julia sets in more detail, you can spin up the encapsulated
+Fractal Web Explorer. From the repository root, run:
+```bash
+bin/run-fractal-web-explorer
+```
+Open the browser link provided in the terminal.
 
 ## 🚀 Local Setup & Development
 To ensure the environment correctly resolves the internal package mappings, you must perform an editable installation.
@@ -53,14 +60,6 @@ From the repository root, run:
 ```bash
 bin/run-checks
 ```
-
-## Fractal Web Explorer
-If you want to interactively explore the Mandelbrot and Julia sets in more detail, you can also spin up the
-Fractal Web Explorer. From the repository root, run:
-```bash
-bin/run-fractal-explorer
-```
-Open the browser link provided in the terminal.
 
 ## 🤖 Claude Desktop Integration
 To use this bridge as an AI Agent, update your `claude_desktop_config.json`:

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
-from fractal_mcp.explorer_app import app
+from fractal_mcp.app.main import app
 
 
 class TestExplorerApp(unittest.TestCase):
@@ -14,12 +14,12 @@ class TestExplorerApp(unittest.TestCase):
 
     def test_app_index_serving(self):
         """Verify that the app serves the index.html from static/."""
-        with patch("fractal_mcp.explorer_app.FileResponse") as mock_fr:
+        with patch("fractal_mcp.app.main.FileResponse") as mock_fr:
             mock_fr.return_value = MagicMock()
             response = self.client.get("/")
             self.assertEqual(response.status_code, 200)
             # Get expected static dir path from the app module
-            from fractal_mcp.explorer_app import STATIC_DIR
+            from fractal_mcp.app.main import STATIC_DIR
 
             mock_fr.assert_called_once_with(STATIC_DIR / "index.html")
 
