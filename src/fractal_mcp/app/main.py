@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from fractal_mcp.app.api.explorer import router
+from fractal_mcp.app.api.routes import router
 
 app = FastAPI(title="Fractal Explorer")
 
