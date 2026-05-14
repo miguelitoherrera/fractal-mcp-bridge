@@ -2,8 +2,8 @@ import io
 from PIL import Image
 import numpy as np
 from bokeh.palettes import all_palettes
-from fractal_mcp.core.mandelbrot import generate_mandelbrot_grid
-from fractal_mcp.core.julia import generate_julia_grid
+from fractal_mcp.math.mandelbrot import generate_mandelbrot_grid
+from fractal_mcp.math.julia import generate_julia_grid
 
 
 def load_bokeh_palette(name: str) -> np.ndarray:

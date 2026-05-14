@@ -5,9 +5,9 @@ This repository serves as an AI agent backend, connecting the Model Context Prot
 Python library for Mandelbrot and Julia sets.
 
 ## 🏗 Project Architecture
-The repository follows a standard Python "src layout" under a unified `fractal_mcp` package. This maintains clear separation between core mathematical logic, image processing, and service orchestration:
+The repository follows a standard Python "src layout" under a unified `fractal_mcp` package. This maintains clear separation between mathematical logic, image processing, and service orchestration:
 
-- **Core Layer (`src/fractal_mcp/core`)**: 
+- **Math Layer (`src/fractal_mcp/math`)**: 
   - `mandelbrot.py` & `julia.py`: Pure, Numba-accelerated mathematical functions for calculating fractal escape grids. This layer is strictly computational and has no knowledge of image formats or resolutions.
 - **Orchestration & Imaging Layer (`src/fractal_mcp/renderer.py`)**: 
   - The unified "brain" of the library. It manages coordinate defaults, calculates aspect ratios to prevent image stretching, and converts numerical escape grids into colorful JPEG images using Bokeh colormaps.

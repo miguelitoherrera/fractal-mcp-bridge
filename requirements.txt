@@ -6,7 +6,7 @@ pydantic # Required for MCP tool data validation
 fastapi # Web framework for building the interactive API
 uvicorn # ASGI server to run the FastAPI application
 
-# --- Core Math (Existing) ---
+# --- Math Layer (Numba/NumPy) ---
 numpy
 numba
 
