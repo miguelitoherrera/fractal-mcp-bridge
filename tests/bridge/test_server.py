@@ -1,6 +1,8 @@
 # Tests for the FastMCP bridge server and tools.
+import json
 import unittest
-from unittest.mock import patch
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 from fractal_mcp.bridge.server import mcp
 
@@ -8,11 +10,11 @@ from fractal_mcp.bridge.server import mcp
 @patch("fractal_mcp.bridge.server.Path.write_bytes")
 @patch("fractal_mcp.bridge.server.render_fractal")
 class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
-    async def test_generate_mandelbrot_image(self, mock_render, mock_write):
+    async def test_generate_mandelbrot_image(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
         mock_render.return_value = b"fake_image_data"
 
         # Call the tool via FastMCP
-        result = await mcp.call_tool(
+        result: Any = await mcp.call_tool(
             "generate_mandelbrot_image",
             {
                 "x_min": -2.0,
@@ -28,9 +30,9 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
 
         res_dict = result
         if hasattr(result, "content"):
-            import json
-
-            res_dict = json.loads(result.content[0].text)
+            content_item = result.content[0]
+            if hasattr(content_item, "text"):
+                res_dict = json.loads(content_item.text)
 
         self.assertEqual(res_dict["type"], "file")
         self.assertEqual(res_dict["colormap"], "Turbo")
@@ -42,10 +44,10 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
         mock_render.assert_called_once()
         mock_write.assert_called_once_with(b"fake_image_data")
 
-    async def test_generate_julia_image(self, mock_render, mock_write):
+    async def test_generate_julia_image(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
         mock_render.return_value = b"fake_image_data"
 
-        result = await mcp.call_tool(
+        result: Any = await mcp.call_tool(
             "generate_julia_image",
             {
                 "x_min": -2.0,
@@ -62,9 +64,9 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
 
         res_dict = result
         if hasattr(result, "content"):
-            import json
-
-            res_dict = json.loads(result.content[0].text)
+            content_item = result.content[0]
+            if hasattr(content_item, "text"):
+                res_dict = json.loads(content_item.text)
 
         self.assertEqual(res_dict["type"], "file")
         self.assertIn("images/julia_", res_dict["path"])
@@ -72,10 +74,10 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
         mock_render.assert_called_once()
         mock_write.assert_called_once_with(b"fake_image_data")
 
-    async def test_generate_exponential_image(self, mock_render, mock_write):
+    async def test_generate_exponential_image(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
         mock_render.return_value = b"fake_image_data"
 
-        result = await mcp.call_tool(
+        result: Any = await mcp.call_tool(
             "generate_exponential_image",
             {
                 "x_min": -2.0,
@@ -92,9 +94,9 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
 
         res_dict = result
         if hasattr(result, "content"):
-            import json
-
-            res_dict = json.loads(result.content[0].text)
+            content_item = result.content[0]
+            if hasattr(content_item, "text"):
+                res_dict = json.loads(content_item.text)
 
         self.assertEqual(res_dict["type"], "file")
         self.assertIn("images/exponential_", res_dict["path"])
