@@ -33,16 +33,16 @@ class FractalParams(BaseModel):
     resolution: int
     colormap: str
     reverse_colormap: bool
-    julia_c: complex | None = None
+    c: complex | None = None
 
-    @field_validator("julia_c", mode="before")
+    @field_validator("c", mode="before")
     @classmethod
     def parse_complex_field(cls, v: Any) -> complex | None:
         return parse_complex(v) if v is not None else None
 
     @model_validator(mode="after")
     def validate_params(self) -> FractalParams:
-        validate_fractal_params(self.fractal_type, self.julia_c)
+        validate_fractal_params(self.fractal_type, self.c)
         return self
 
 
@@ -89,7 +89,7 @@ async def render(params: FractalParams = Depends()) -> StreamingResponse:
             params.max_iterations,
             params.colormap,
             params.reverse_colormap,
-            julia_c=params.julia_c,
+            c=params.c,
         )
         _render_cache.update(params, img_bytes)
 
@@ -104,7 +104,7 @@ async def render(params: FractalParams = Depends()) -> StreamingResponse:
         params.y_max,
         params.colormap,
         params.reverse_colormap,
-        julia_c=params.julia_c,
+        c=params.c,
     )
 
     return StreamingResponse(
@@ -124,7 +124,7 @@ async def get_suggested_filename(params: FractalParams = Depends()) -> dict[str,
         params.y_max,
         params.colormap,
         params.reverse_colormap,
-        julia_c=params.julia_c,
+        c=params.c,
     )
     return {"filename": filename}
 
@@ -149,7 +149,7 @@ async def save(req: SaveRequest) -> dict[str, str]:
             req.max_iterations,
             req.colormap,
             req.reverse_colormap,
-            julia_c=req.julia_c,
+            c=req.c,
         )
         # Update cache with the new render
         _render_cache.update(req, img_bytes)

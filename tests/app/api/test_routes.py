@@ -57,10 +57,19 @@ class TestExplorerAPI(unittest.TestCase):
         mock_render.return_value = b"julia_data"
 
         # Must provide julia_c now
-        params = self._get_default_params(fractal_type="julia", julia_c="-0.7+0.27j")
+        params = self._get_default_params(fractal_type="julia", c="-0.7+0.27j")
         response = self.client.get(f"/render?{params}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"julia_data")
+        mock_render.assert_called_once()
+
+    def test_router_render_exponential(self, mock_render, _mock_write):
+        mock_render.return_value = b"expo_data"
+
+        params = self._get_default_params(fractal_type="exponential", c="1+0j")
+        response = self.client.get(f"/render?{params}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"expo_data")
         mock_render.assert_called_once()
 
     def test_router_save_no_ext(self, mock_render, mock_write):
@@ -105,7 +114,7 @@ class TestExplorerAPI(unittest.TestCase):
         # Julia type WITH julia_c provided
         payload = {
             "fractal_type": "julia",
-            "julia_c": "-0.7+0.27j",
+            "c": "-0.7+0.27j",
             "filename": "julia_custom",
             "x_min": X_MIN,
             "x_max": X_MAX,
@@ -127,7 +136,7 @@ class TestExplorerAPI(unittest.TestCase):
         # Test parsing complex number from string
         payload = {
             "fractal_type": "julia",
-            "julia_c": "-0.7 + 0.27j",
+            "c": "-0.7 + 0.27j",
             "filename": "julia_test",
             "x_min": X_MIN,
             "x_max": X_MAX,
@@ -144,7 +153,7 @@ class TestExplorerAPI(unittest.TestCase):
         mock_write.assert_called_once_with(b"save_data")
 
     def test_router_suggest_filename_endpoint(self, _mock_render, _mock_write):
-        params = self._get_default_params(fractal_type="julia", julia_c="-0.123+0.745j", reverse_colormap=False)
+        params = self._get_default_params(fractal_type="julia", c="-0.123+0.745j", reverse_colormap=False)
         response = self.client.get(f"/suggest-filename?{params}")
         self.assertEqual(response.status_code, 200)
         filename = response.json()["filename"]
@@ -152,7 +161,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertTrue(filename.endswith("turbo.jpg"))
 
     def test_router_suggest_filename_julia_with_c(self, _mock_render, _mock_write):
-        params = self._get_default_params(fractal_type="julia", julia_c="-0.7+0.27j")
+        params = self._get_default_params(fractal_type="julia", c="-0.7+0.27j")
         response = self.client.get(f"/suggest-filename?{params}")
         self.assertEqual(response.status_code, 200)
         filename = response.json()["filename"]
@@ -160,7 +169,7 @@ class TestExplorerAPI(unittest.TestCase):
 
     def test_save_invalid_complex(self, _mock_render, _mock_write):
         # Now returns 422 because we removed the try-except in the validator
-        payload = {"fractal_type": "julia", "julia_c": "not-a-number", "resolution": 123}
+        payload = {"fractal_type": "julia", "c": "not-a-number", "resolution": 123}
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 422)
 
@@ -203,7 +212,7 @@ class TestExplorerAPI(unittest.TestCase):
         mock_render.return_value = b"data"
         payload = {
             "fractal_type": "julia",
-            "julia_c": "-0.123+0.745j",
+            "c": "-0.123+0.745j",
             "filename": "complex_str",
             "x_min": X_MIN,
             "x_max": X_MAX,
