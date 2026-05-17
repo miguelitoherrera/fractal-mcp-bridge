@@ -9,7 +9,7 @@ from fractal_mcp.math.mandelbrot import generate_mandelbrot_grid, mandelbrot
 class TestMandelbrot(unittest.TestCase):
     expected_max_iterations = 100
 
-    def test_mandelbrot(self):
+    def test_mandelbrot(self) -> None:
         test_params = [
             # c, expected_iterations
             [complex(0, 0), self.expected_max_iterations],
@@ -26,7 +26,7 @@ class TestMandelbrot(unittest.TestCase):
                 f"Failed for c={c}",
             )
 
-    def test_generate_mandelbrot_grid(self):
+    def test_generate_mandelbrot_grid(self) -> None:
         res = 10
         grid = generate_mandelbrot_grid(-2.0, 1.0, -1.5, 1.5, res, res, max_iterations=self.expected_max_iterations)
         self.assertEqual(grid.shape, (res, res))

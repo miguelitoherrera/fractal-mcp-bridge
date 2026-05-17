@@ -9,7 +9,7 @@ from fractal_mcp.math.julia import generate_julia_grid, julia
 class TestJulia(unittest.TestCase):
     expected_max_iterations = 100
 
-    def test_julia(self):
+    def test_julia(self) -> None:
         test_params = [
             # z_initial, c, expected_iterations
             [
@@ -39,7 +39,7 @@ class TestJulia(unittest.TestCase):
                 f"Failed for z0={z_initial}, c={c}",
             )
 
-    def test_generate_julia_grid(self):
+    def test_generate_julia_grid(self) -> None:
         res = 10
         grid = generate_julia_grid(
             -2.0,

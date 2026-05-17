@@ -20,24 +20,24 @@ Y_MAX = 1.5
 
 
 class TestRenderer(unittest.TestCase):
-    def test_suggest_filename_mandelbrot(self):
+    def test_suggest_filename_mandelbrot(self) -> None:
         name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", False)
         self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo.jpg")
 
-    def test_suggest_filename_julia(self):
+    def test_suggest_filename_julia(self) -> None:
         name = suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", False, c=complex(-0.7, 0.27))
         self.assertEqual(name, "julia_c-0.700_0.270_x0.0000_y0.0000_viridis.jpg")
 
-    def test_suggest_filename_reversed(self):
+    def test_suggest_filename_reversed(self) -> None:
         name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", True)
         self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo_reversed.jpg")
 
-    def test_suggest_filename_julia_none_c(self):
+    def test_suggest_filename_julia_none_c(self) -> None:
         # Test that passing None raises ValueError for julia
         with self.assertRaises(ValueError):
             suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", False)
 
-    def test_render_mandelbrot(self):
+    def test_render_mandelbrot(self) -> None:
         img_bytes = render_fractal(
             "mandelbrot",
             X_MIN,
@@ -52,7 +52,7 @@ class TestRenderer(unittest.TestCase):
         self.assertIsInstance(img_bytes, bytes)
         self.assertGreater(len(img_bytes), 0)
 
-    def test_render_julia(self):
+    def test_render_julia(self) -> None:
         img_bytes = render_fractal(
             "julia",
             X_MIN,
@@ -68,7 +68,7 @@ class TestRenderer(unittest.TestCase):
         self.assertIsInstance(img_bytes, bytes)
         self.assertGreater(len(img_bytes), 0)
 
-    def test_render_julia_none_c(self):
+    def test_render_julia_none_c(self) -> None:
         # Test that passing None raises ValueError
         with self.assertRaises(ValueError):
             render_fractal(
@@ -83,7 +83,7 @@ class TestRenderer(unittest.TestCase):
                 DEFAULT_REVERSE_COLORMAP,
             )
 
-    def test_render_unsupported(self):
+    def test_render_unsupported(self) -> None:
         # To test the actual ValueError in render_fractal:
         with self.assertRaises(ValueError):
             render_fractal(
@@ -98,7 +98,7 @@ class TestRenderer(unittest.TestCase):
                 DEFAULT_REVERSE_COLORMAP,
             )
 
-    def test_aspect_ratio_calculation(self):
+    def test_aspect_ratio_calculation(self) -> None:
         img_bytes = render_fractal(
             "mandelbrot",
             0.0,
@@ -114,11 +114,11 @@ class TestRenderer(unittest.TestCase):
         self.assertGreater(len(img_bytes), 0)
 
     # Merged tests from test_image.py
-    def test_suggest_filename_exponential(self):
+    def test_suggest_filename_exponential(self) -> None:
         name = suggest_filename("exponential", -2.0, 1.0, -1.5, 1.5, "Turbo", False, c=complex(1.0, 0.0))
         self.assertEqual(name, "exponential_c1.000_0.000_x-0.5000_y0.0000_turbo.jpg")
 
-    def test_render_exponential(self):
+    def test_render_exponential(self) -> None:
         img_bytes = render_fractal(
             "exponential",
             X_MIN,
@@ -134,7 +134,7 @@ class TestRenderer(unittest.TestCase):
         self.assertIsInstance(img_bytes, bytes)
         self.assertGreater(len(img_bytes), 0)
 
-    def test_grid_to_image_bytes(self):
+    def test_grid_to_image_bytes(self) -> None:
         grid = np.zeros((10, 10), dtype=np.float32)
         grid[0:5, 0:5] = 50.0
         grid[5:10, 5:10] = 100.0
@@ -147,7 +147,7 @@ class TestRenderer(unittest.TestCase):
         self.assertEqual(img.format, "JPEG")
         self.assertEqual(img.size, (10, 10))
 
-    def test_grid_to_image_bytes_colormap(self):
+    def test_grid_to_image_bytes_colormap(self) -> None:
         grid = np.linspace(1, 10, 100, dtype=np.float32).reshape((10, 10))
 
         bytes_inferno = grid_to_image_bytes(grid, 10, "Inferno", False)
@@ -155,7 +155,7 @@ class TestRenderer(unittest.TestCase):
 
         self.assertNotEqual(bytes_inferno, bytes_viridis)
 
-    def test_grid_to_image_bytes_reverse(self):
+    def test_grid_to_image_bytes_reverse(self) -> None:
         grid = np.linspace(1, 10, 100, dtype=np.float32).reshape((10, 10))
 
         bytes_normal = grid_to_image_bytes(grid, 10, "Inferno", False)
@@ -163,19 +163,19 @@ class TestRenderer(unittest.TestCase):
 
         self.assertNotEqual(bytes_normal, bytes_reversed)
 
-    def test_load_bokeh_palette_existing_256(self):
+    def test_load_bokeh_palette_existing_256(self) -> None:
         palette = load_bokeh_palette("Viridis")
         self.assertEqual(palette.shape, (256, 3))
 
-    def test_load_bokeh_palette_missing(self):
+    def test_load_bokeh_palette_missing(self) -> None:
         with self.assertRaises(KeyError):
             load_bokeh_palette("NonExistentPalette123")
 
-    def test_load_bokeh_palette_interpolate(self):
+    def test_load_bokeh_palette_interpolate(self) -> None:
         palette = load_bokeh_palette("Pastel1")
         self.assertEqual(palette.shape, (256, 3))
 
-    def test_load_bokeh_palette_case_insensitive(self):
+    def test_load_bokeh_palette_case_insensitive(self) -> None:
         palette_lower = load_bokeh_palette("viridis")
         palette_capital = load_bokeh_palette("Viridis")
         np.testing.assert_array_equal(palette_lower, palette_capital)

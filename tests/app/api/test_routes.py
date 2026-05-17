@@ -2,7 +2,8 @@
 import unittest
 import urllib.parse
 from pathlib import Path
-from unittest.mock import patch
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -23,13 +24,14 @@ Y_MAX = 1.5
 @patch.object(Path, "write_bytes")
 @patch("fractal_mcp.app.api.routes.render_fractal")
 class TestExplorerAPI(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
+    client: TestClient
+
+    def setUp(self) -> None:
         app = FastAPI()
         app.include_router(router)
-        cls.client = TestClient(app)
+        self.client = TestClient(app)
 
-    def _get_default_params(self, **kwargs):
+    def _get_default_params(self, **kwargs: Any) -> str:
         defaults = {
             "x_min": X_MIN,
             "x_max": X_MAX,
@@ -44,7 +46,7 @@ class TestExplorerAPI(unittest.TestCase):
 
         return urllib.parse.urlencode(defaults)
 
-    def test_router_render_mandelbrot(self, mock_render, _mock_write):
+    def test_router_render_mandelbrot(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
         mock_render.return_value = b"render_data"
 
         params = self._get_default_params(fractal_type="mandelbrot")
@@ -53,7 +55,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.content, b"render_data")
         mock_render.assert_called_once()
 
-    def test_router_render_julia(self, mock_render, _mock_write):
+    def test_router_render_julia(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
         mock_render.return_value = b"julia_data"
 
         # Must provide julia_c now
@@ -63,7 +65,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.content, b"julia_data")
         mock_render.assert_called_once()
 
-    def test_router_render_exponential(self, mock_render, _mock_write):
+    def test_router_render_exponential(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
         mock_render.return_value = b"expo_data"
 
         params = self._get_default_params(fractal_type="exponential", c="1+0j")
@@ -72,7 +74,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.content, b"expo_data")
         mock_render.assert_called_once()
 
-    def test_router_save_no_ext(self, mock_render, mock_write):
+    def test_router_save_no_ext(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
         mock_render.return_value = b"save_data"
 
         payload = {
@@ -92,7 +94,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.json()["filename"], "test.jpg")
         mock_write.assert_called_once_with(b"save_data")
 
-    def test_router_save_missing_filename(self, _mock_render, _mock_write):
+    def test_router_save_missing_filename(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
         # No filename provided - should return 422 Unprocessable Entity
         payload = {
             "fractal_type": "mandelbrot",
@@ -108,7 +110,7 @@ class TestExplorerAPI(unittest.TestCase):
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 422)
 
-    def test_router_save_julia_with_c(self, mock_render, mock_write):
+    def test_router_save_julia_with_c(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
         mock_render.return_value = b"save_data"
 
         # Julia type WITH julia_c provided
@@ -130,7 +132,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.json()["filename"], "julia_custom.jpg")
         mock_write.assert_called_once_with(b"save_data")
 
-    def test_router_save_complex_string(self, mock_render, mock_write):
+    def test_router_save_complex_string(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
         mock_render.return_value = b"save_data"
 
         # Test parsing complex number from string
@@ -152,7 +154,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.json()["filename"], "julia_test.jpg")
         mock_write.assert_called_once_with(b"save_data")
 
-    def test_router_suggest_filename_endpoint(self, _mock_render, _mock_write):
+    def test_router_suggest_filename_endpoint(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
         params = self._get_default_params(fractal_type="julia", c="-0.123+0.745j", reverse_colormap=False)
         response = self.client.get(f"/suggest-filename?{params}")
         self.assertEqual(response.status_code, 200)
@@ -160,20 +162,20 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertNotIn("reversed", filename)
         self.assertTrue(filename.endswith("turbo.jpg"))
 
-    def test_router_suggest_filename_julia_with_c(self, _mock_render, _mock_write):
+    def test_router_suggest_filename_julia_with_c(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
         params = self._get_default_params(fractal_type="julia", c="-0.7+0.27j")
         response = self.client.get(f"/suggest-filename?{params}")
         self.assertEqual(response.status_code, 200)
         filename = response.json()["filename"]
         self.assertIn("julia_c-0.700_0.270", filename)
 
-    def test_save_invalid_complex(self, _mock_render, _mock_write):
+    def test_save_invalid_complex(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
         # Now returns 422 because we removed the try-except in the validator
         payload = {"fractal_type": "julia", "c": "not-a-number", "resolution": 123}
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 422)
 
-    def test_save_missing_julia_c(self, _mock_render, _mock_write):
+    def test_save_missing_julia_c(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
         # Should return 422 because of Pydantic model_validator
         payload = {
             "fractal_type": "julia",
@@ -190,7 +192,7 @@ class TestExplorerAPI(unittest.TestCase):
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 422)
 
-    def test_save_explicit_none_julia_c(self, _mock_render, _mock_write):
+    def test_save_explicit_none_julia_c(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
         # Should return 422 because of Pydantic model_validator
         payload = {
             "fractal_type": "julia",
@@ -208,7 +210,7 @@ class TestExplorerAPI(unittest.TestCase):
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 422)
 
-    def test_save_complex_object(self, mock_render, _mock_write):
+    def test_save_complex_object(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
         mock_render.return_value = b"data"
         payload = {
             "fractal_type": "julia",
@@ -227,7 +229,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         mock_render.assert_called_once()
 
-    def test_save_mandelbrot(self, mock_render, _mock_write):
+    def test_save_mandelbrot(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
         mock_render.return_value = b"data"
         # Test the branch where fractal_type != JULIA
         payload = {
@@ -246,7 +248,7 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         mock_render.assert_called_once()
 
-    def test_render_cache_hit(self, mock_render, _mock_write):
+    def test_render_cache_hit(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
         mock_render.return_value = b"cached_data"
         params = self._get_default_params(fractal_type="mandelbrot", resolution=100)
         # First render to populate cache
@@ -258,13 +260,13 @@ class TestExplorerAPI(unittest.TestCase):
         # Should only be called ONCE
         mock_render.assert_called_once()
 
-    def test_render_unsupported_fractal(self, _mock_render, _mock_write):
+    def test_render_unsupported_fractal(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
         # Now raises ValueError because Query validation is removed
         params = self._get_default_params(fractal_type="invalid")
         with self.assertRaises(ValueError):
             self.client.get(f"/render?{params}")
 
-    def test_save_cache_hit(self, mock_render, _mock_write):
+    def test_save_cache_hit(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
         mock_render.return_value = b"cached_data"
         # 1. Render once to populate cache
         params = self._get_default_params(fractal_type="mandelbrot", resolution=100)
