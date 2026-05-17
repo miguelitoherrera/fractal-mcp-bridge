@@ -2,13 +2,27 @@
 **An MCP server for scaling fractal computations and rendering images.**
 
 This repository serves as an AI agent backend, connecting the Model Context Protocol (MCP) to a high-performance
-Python library for Mandelbrot and Julia sets.
+Python library for Mandelbrot, Julia, and Exponential sets.
+
+## 🧮 Mathematical Formulas
+
+The computations in this library are based on the following iterative equations in the complex plane:
+
+- **Mandelbrot Set**: $z_{n+1} = z_n^2 + c$
+  - Initial condition: $z_0 = 0$
+  - $c$ is the coordinate in the complex plane being evaluated.
+- **Julia Set**: $z_{n+1} = z_n^2 + c$
+  - Initial condition: $z_0$ is the coordinate in the complex plane being evaluated.
+  - $c$ is a fixed complex constant for the entire set.
+- **Exponential Set**: $z_{n+1} = c \cdot e^{z_n}$
+  - Initial condition: $z_0$ is the coordinate in the complex plane being evaluated.
+  - $c$ is a fixed complex constant.
 
 ## 🏗 Project Architecture
 The repository follows a standard Python "src layout" under a unified `fractal_mcp` package. This maintains clear separation between mathematical logic, image processing, and service orchestration:
 
 - **Math Layer (`src/fractal_mcp/math`)**: 
-  - `mandelbrot.py` & `julia.py`: Pure, Numba-accelerated mathematical functions for calculating fractal escape grids. This layer is strictly computational and has no knowledge of image formats or resolutions.
+  - `mandelbrot.py`, `julia.py`, & `exponents.py`: Pure, Numba-accelerated mathematical functions for calculating fractal escape grids. This layer is strictly computational and has no knowledge of image formats or resolutions.
 - **Orchestration & Imaging Layer (`src/fractal_mcp/renderer.py`)**: 
   - The unified "brain" of the library. It manages coordinate defaults, calculates aspect ratios to prevent image stretching, and converts numerical escape grids into colorful JPEG images using Bokeh colormaps.
 
@@ -17,7 +31,7 @@ The repository follows a standard Python "src layout" under a unified `fractal_m
 - **MCP Bridge (`src/fractal_mcp/bridge`)**: FastMCP server implementation that exposes the library as tools for AI agents.
 
 ## 🌍 Fractal Web Explorer
-If you want to interactively explore the Mandelbrot and Julia sets in more detail, you can spin up the encapsulated
+If you want to interactively explore the Mandelbrot, Julia, and Exponential sets in more detail, you can spin up the encapsulated
 Fractal Web Explorer. From the repository root, run:
 ```bash
 bin/run-fractal-web-explorer
@@ -47,7 +61,7 @@ You can manually verify the bridge and Numba-accelerated logic using the MCP Ins
 ```bash
 npx @modelcontextprotocol/inspector /absolute/path/to/python src/fractal_mcp/bridge/server.py
 ```
-Open the browser link provided by the inspector to test the `generate_mandelbrot` and `generate_julia` tools.
+Open the browser link provided by the inspector to test the `generate_mandelbrot`, `generate_julia`, and `generate_exponential_image` tools.
 
 ### 4. Code Quality & Unit Tests
 To ensure high standards for code style, type safety, and correctness, use the unified check script. This script runs:
