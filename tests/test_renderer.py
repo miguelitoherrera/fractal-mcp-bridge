@@ -21,21 +21,21 @@ Y_MAX = 1.5
 
 class TestRenderer(unittest.TestCase):
     def test_suggest_filename_mandelbrot(self):
-        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", False, None)
+        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", False)
         self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo.jpg")
 
     def test_suggest_filename_julia(self):
-        name = suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", False, complex(-0.7, 0.27))
+        name = suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", False, c=complex(-0.7, 0.27))
         self.assertEqual(name, "julia_c-0.700_0.270_x0.0000_y0.0000_viridis.jpg")
 
     def test_suggest_filename_reversed(self):
-        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", True, None)
+        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", True)
         self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo_reversed.jpg")
 
     def test_suggest_filename_julia_none_c(self):
         # Test that passing None raises ValueError for julia
         with self.assertRaises(ValueError):
-            suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", False, None)
+            suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", False)
 
     def test_render_mandelbrot(self):
         img_bytes = render_fractal(
@@ -48,7 +48,6 @@ class TestRenderer(unittest.TestCase):
             MAX_ITERATIONS,
             DEFAULT_COLORMAP,
             DEFAULT_REVERSE_COLORMAP,
-            None,
         )
         self.assertIsInstance(img_bytes, bytes)
         self.assertGreater(len(img_bytes), 0)
@@ -64,7 +63,7 @@ class TestRenderer(unittest.TestCase):
             MAX_ITERATIONS,
             DEFAULT_COLORMAP,
             DEFAULT_REVERSE_COLORMAP,
-            complex(-0.7, 0.27),
+            c=complex(-0.7, 0.27),
         )
         self.assertIsInstance(img_bytes, bytes)
         self.assertGreater(len(img_bytes), 0)
@@ -82,7 +81,6 @@ class TestRenderer(unittest.TestCase):
                 MAX_ITERATIONS,
                 DEFAULT_COLORMAP,
                 DEFAULT_REVERSE_COLORMAP,
-                None,
             )
 
     def test_render_unsupported(self):
@@ -98,17 +96,44 @@ class TestRenderer(unittest.TestCase):
                 MAX_ITERATIONS,
                 DEFAULT_COLORMAP,
                 DEFAULT_REVERSE_COLORMAP,
-                None,
             )
 
     def test_aspect_ratio_calculation(self):
         img_bytes = render_fractal(
-            "mandelbrot", 0.0, 2.0, 0.0, 1.0, 100, MAX_ITERATIONS, DEFAULT_COLORMAP, DEFAULT_REVERSE_COLORMAP, None
+            "mandelbrot",
+            0.0,
+            2.0,
+            0.0,
+            1.0,
+            100,
+            MAX_ITERATIONS,
+            DEFAULT_COLORMAP,
+            DEFAULT_REVERSE_COLORMAP,
         )
         self.assertIsInstance(img_bytes, bytes)
         self.assertGreater(len(img_bytes), 0)
 
     # Merged tests from test_image.py
+    def test_suggest_filename_exponential(self):
+        name = suggest_filename("exponential", -2.0, 1.0, -1.5, 1.5, "Turbo", False, c=complex(1.0, 0.0))
+        self.assertEqual(name, "exponential_c1.000_0.000_x-0.5000_y0.0000_turbo.jpg")
+
+    def test_render_exponential(self):
+        img_bytes = render_fractal(
+            "exponential",
+            X_MIN,
+            X_MAX,
+            Y_MIN,
+            Y_MAX,
+            100,
+            MAX_ITERATIONS,
+            DEFAULT_COLORMAP,
+            DEFAULT_REVERSE_COLORMAP,
+            c=complex(1.0, 0.0),
+        )
+        self.assertIsInstance(img_bytes, bytes)
+        self.assertGreater(len(img_bytes), 0)
+
     def test_grid_to_image_bytes(self):
         grid = np.zeros((10, 10), dtype=np.float32)
         grid[0:5, 0:5] = 50.0

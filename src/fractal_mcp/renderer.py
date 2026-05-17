@@ -4,6 +4,7 @@ import numpy as np
 from bokeh.palettes import all_palettes
 from PIL import Image
 
+from fractal_mcp.math.exponents import generate_exponential_grid
 from fractal_mcp.math.julia import generate_julia_grid
 from fractal_mcp.math.mandelbrot import generate_mandelbrot_grid
 
@@ -88,11 +89,11 @@ def grid_to_image_bytes(
     return buf.getvalue()
 
 
-def validate_fractal_params(fractal_type: str, julia_c: complex | None) -> None:
+def validate_fractal_params(fractal_type: str, c: complex | None) -> None:
     """Business logic for fractal parameter consistency."""
-    if fractal_type == "julia" and julia_c is None:
-        raise ValueError("julia_c must be provided for Julia fractals")
-    if fractal_type not in ["mandelbrot", "julia"]:
+    if fractal_type in ["julia", "exponential"] and c is None:
+        raise ValueError(f"c must be provided for {fractal_type} fractals")
+    if fractal_type not in ["mandelbrot", "julia", "exponential"]:
         raise ValueError(f"Unsupported fractal type: {fractal_type}")
 
 
@@ -104,10 +105,10 @@ def suggest_filename(
     y_max: float,
     colormap: str,
     reverse_colormap: bool,
-    julia_c: complex | None = None,
+    c: complex | None = None,
 ) -> str:
     """Generate a descriptive filename based on fractal parameters."""
-    validate_fractal_params(fractal_type, julia_c)
+    validate_fractal_params(fractal_type, c)
 
     x_range = x_max - x_min
     x_center = x_min + x_range / 2
@@ -115,9 +116,9 @@ def suggest_filename(
 
     name = f"{fractal_type}_x{x_center:.4f}_y{y_center:.4f}"
 
-    if fractal_type == "julia":
-        assert julia_c is not None
-        name = f"{fractal_type}_c{julia_c.real:.3f}_{julia_c.imag:.3f}_x{x_center:.4f}_y{y_center:.4f}"
+    if fractal_type in ["julia", "exponential"]:
+        assert c is not None
+        name = f"{fractal_type}_c{c.real:.3f}_{c.imag:.3f}_x{x_center:.4f}_y{y_center:.4f}"
 
     reversed_suffix = "_reversed" if reverse_colormap else ""
     return f"{name}_{colormap.lower()}{reversed_suffix}.jpg"
@@ -133,13 +134,13 @@ def render_fractal(
     max_iterations: int,
     colormap: str,
     reverse_colormap: bool,
-    julia_c: complex | None = None,
+    c: complex | None = None,
 ) -> bytes:
     """
     Unified orchestration for rendering fractals.
     Calculates aspect ratio, generates the grid, and converts to image bytes.
     """
-    validate_fractal_params(fractal_type, julia_c)
+    validate_fractal_params(fractal_type, c)
 
     # Calculate height based on aspect ratio to prevent stretching
     width = resolution
@@ -148,6 +149,8 @@ def render_fractal(
     if fractal_type == "mandelbrot":
         grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
     elif fractal_type == "julia":
-        grid = generate_julia_grid(x_min, x_max, y_min, y_max, julia_c, width, height, max_iterations)
+        grid = generate_julia_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
+    elif fractal_type == "exponential":
+        grid = generate_exponential_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
 
     return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)

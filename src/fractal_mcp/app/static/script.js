@@ -16,7 +16,7 @@ let state = {
 
 const fractalImg = document.getElementById('fractalImg');
 const loader = document.getElementById('loader');
-const juliaParams = document.getElementById('julia-params');
+const cParams = document.getElementById('c-params');
 const saveFilenameInput = document.getElementById('saveFilename');
 const saveBtn = document.getElementById('saveBtn');
 const saveStatus = document.getElementById('saveStatus');
@@ -33,7 +33,7 @@ function syncStateFromUI() {
     state.c_real = parseFloat(document.getElementById('c_real').value) || 0;
     state.c_imag = parseFloat(document.getElementById('c_imag').value) || 0;
 
-    juliaParams.style.display = state.fractal_type === 'julia' ? 'flex' : 'none';
+    cParams.style.display = (state.fractal_type === 'julia' || state.fractal_type === 'exponential') ? 'flex' : 'none';
     
     // Update Precision Indicator
     const xRange = state.x_max - state.x_min;
@@ -65,8 +65,8 @@ async function suggestFilename() {
         reverse_colormap: state.reverse_colormap ? 'true' : 'false'
     };
 
-    if (state.fractal_type === 'julia') {
-        paramsObj.julia_c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
+    if (state.fractal_type === 'julia' || state.fractal_type === 'exponential') {
+        paramsObj.c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
     }
 
     const params = new URLSearchParams(paramsObj);
@@ -102,8 +102,8 @@ async function updateUI(renderImage = true) {
             _t: Date.now()
         };
 
-        if (state.fractal_type === 'julia') {
-            paramsObj.julia_c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
+        if (state.fractal_type === 'julia' || state.fractal_type === 'exponential') {
+            paramsObj.c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
         }
 
         const params = new URLSearchParams(paramsObj);
@@ -204,8 +204,8 @@ saveBtn.onclick = async () => {
         filename: saveFilenameInput.value
     };
 
-    if (state.fractal_type === 'julia') {
-        payload.julia_c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
+    if (state.fractal_type === 'julia' || state.fractal_type === 'exponential') {
+        payload.c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
     }
 
     try {
