@@ -83,6 +83,15 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.content, b"sine_data")
         mock_render.assert_called_once()
 
+    def test_router_render_cosine(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        mock_render.return_value = b"cosine_data"
+
+        params = self._get_default_params(fractal_type="cosine", c="1+0j")
+        response = self.client.get(f"/render?{params}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"cosine_data")
+        mock_render.assert_called_once()
+
     def test_router_save_no_ext(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
         mock_render.return_value = b"save_data"
 
