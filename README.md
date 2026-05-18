@@ -17,12 +17,15 @@ The computations in this library are based on the following iterative equations 
 - **Exponential Set**: $z_{n+1} = c \cdot e^{z_n}$
   - Initial condition: $z_0$ is the coordinate in the complex plane being evaluated.
   - $c$ is a fixed complex constant.
+- **Sine Set**: $z_{n+1} = c \cdot \sin(z_n)$
+  - Initial condition: $z_0$ is the coordinate in the complex plane being evaluated.
+  - $c$ is a fixed complex constant.
 
 ## 🏗 Project Architecture
 The repository follows a standard Python "src layout" under a unified `fractal_mcp` package. This maintains clear separation between mathematical logic, image processing, and service orchestration:
 
 - **Math Layer (`src/fractal_mcp/math`)**: 
-  - `mandelbrot.py`, `julia.py`, & `exponents.py`: Pure, Numba-accelerated mathematical functions for calculating fractal escape grids. This layer is strictly computational and has no knowledge of image formats or resolutions.
+  - `mandelbrot.py`, `julia.py`, `exponents.py`, & `sine.py`: Pure, Numba-accelerated mathematical functions for calculating fractal escape grids. This layer is strictly computational and has no knowledge of image formats or resolutions.
 - **Orchestration & Imaging Layer (`src/fractal_mcp/renderer.py`)**: 
   - The unified "brain" of the library. It manages coordinate defaults, calculates aspect ratios to prevent image stretching, and converts numerical escape grids into colorful JPEG images using Bokeh colormaps.
 
@@ -61,7 +64,7 @@ You can manually verify the bridge and Numba-accelerated logic using the MCP Ins
 ```bash
 npx @modelcontextprotocol/inspector /absolute/path/to/python src/fractal_mcp/bridge/server.py
 ```
-Open the browser link provided by the inspector to test the `generate_mandelbrot`, `generate_julia`, and `generate_exponential_image` tools.
+Open the browser link provided by the inspector to test the `generate_mandelbrot_image`, `generate_julia_image`, `generate_exponential_image`, and `generate_sine_image` tools.
 
 ### 4. Code Quality & Unit Tests
 To ensure high standards for code style, type safety, and correctness, use the unified check script. This script runs:
