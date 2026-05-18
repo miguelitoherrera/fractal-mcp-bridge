@@ -134,6 +134,36 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
         mock_render.assert_called_once()
         mock_write.assert_called_once_with(b"fake_image_data")
 
+    async def test_generate_cosine_image(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
+        mock_render.return_value = b"fake_image_data"
+
+        result: Any = await mcp.call_tool(
+            "generate_cosine_image",
+            {
+                "x_min": -2.0,
+                "x_max": 2.0,
+                "y_min": -2.0,
+                "y_max": 2.0,
+                "c": "1+0j",
+                "resolution": 10,
+                "max_iterations": 10,
+                "colormap": "Turbo",
+                "reverse_colormap": False,
+            },
+        )
+
+        res_dict = result
+        if hasattr(result, "content"):
+            content_item = result.content[0]
+            if hasattr(content_item, "text"):
+                res_dict = json.loads(content_item.text)
+
+        self.assertEqual(res_dict["type"], "file")
+        self.assertIn("images/cosine_", res_dict["path"])
+
+        mock_render.assert_called_once()
+        mock_write.assert_called_once_with(b"fake_image_data")
+
 
 if __name__ == "__main__":
     unittest.main()

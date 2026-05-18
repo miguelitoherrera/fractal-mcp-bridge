@@ -18,6 +18,7 @@ The computations in this library are based on the following iterative equations 
   - Initial condition: $z_0$ is the coordinate in the complex plane being evaluated.
   - $c$ is a fixed complex constant.
 - **Sine Set**: $z_{n+1} = c \cdot \sin(z_n)$
+- **Cosine Set**: $z_{n+1} = c \cdot \cos(z_n)$
   - Initial condition: $z_0$ is the coordinate in the complex plane being evaluated.
   - $c$ is a fixed complex constant.
 

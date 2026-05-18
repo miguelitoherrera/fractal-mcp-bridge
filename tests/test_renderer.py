@@ -154,6 +154,26 @@ class TestRenderer(unittest.TestCase):
         self.assertIsInstance(img_bytes, bytes)
         self.assertGreater(len(img_bytes), 0)
 
+    def test_suggest_filename_cosine(self) -> None:
+        name = suggest_filename("cosine", -2.0, 1.0, -1.5, 1.5, "Turbo", False, c=complex(1.0, 0.0))
+        self.assertEqual(name, "cosine_c1.000_0.000_x-0.5000_y0.0000_turbo.jpg")
+
+    def test_render_cosine(self) -> None:
+        img_bytes = render_fractal(
+            "cosine",
+            X_MIN,
+            X_MAX,
+            Y_MIN,
+            Y_MAX,
+            100,
+            MAX_ITERATIONS,
+            DEFAULT_COLORMAP,
+            DEFAULT_REVERSE_COLORMAP,
+            c=complex(1.0, 0.0),
+        )
+        self.assertIsInstance(img_bytes, bytes)
+        self.assertGreater(len(img_bytes), 0)
+
     def test_grid_to_image_bytes(self) -> None:
         grid = np.zeros((10, 10), dtype=np.float32)
         grid[0:5, 0:5] = 50.0
