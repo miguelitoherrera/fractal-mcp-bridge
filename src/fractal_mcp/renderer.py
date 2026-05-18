@@ -7,6 +7,7 @@ from PIL import Image
 from fractal_mcp.math.exponents import generate_exponential_grid
 from fractal_mcp.math.julia import generate_julia_grid
 from fractal_mcp.math.mandelbrot import generate_mandelbrot_grid
+from fractal_mcp.math.sine import generate_sine_grid
 
 
 def load_bokeh_palette(name: str) -> np.ndarray:
@@ -91,9 +92,9 @@ def grid_to_image_bytes(
 
 def validate_fractal_params(fractal_type: str, c: complex | None) -> None:
     """Business logic for fractal parameter consistency."""
-    if fractal_type in ["julia", "exponential"] and c is None:
+    if fractal_type in ["julia", "exponential", "sine"] and c is None:
         raise ValueError(f"c must be provided for {fractal_type} fractals")
-    if fractal_type not in ["mandelbrot", "julia", "exponential"]:
+    if fractal_type not in ["mandelbrot", "julia", "exponential", "sine"]:
         raise ValueError(f"Unsupported fractal type: {fractal_type}")
 
 
@@ -116,7 +117,7 @@ def suggest_filename(
 
     name = f"{fractal_type}_x{x_center:.4f}_y{y_center:.4f}"
 
-    if fractal_type in ["julia", "exponential"]:
+    if fractal_type in ["julia", "exponential", "sine"]:
         assert c is not None
         name = f"{fractal_type}_c{c.real:.3f}_{c.imag:.3f}_x{x_center:.4f}_y{y_center:.4f}"
 
@@ -152,5 +153,7 @@ def render_fractal(
         grid = generate_julia_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
     elif fractal_type == "exponential":
         grid = generate_exponential_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
+    elif fractal_type == "sine":
+        grid = generate_sine_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
 
     return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)

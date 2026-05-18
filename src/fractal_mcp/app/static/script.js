@@ -33,7 +33,7 @@ function syncStateFromUI() {
     state.c_real = parseFloat(document.getElementById('c_real').value) || 0;
     state.c_imag = parseFloat(document.getElementById('c_imag').value) || 0;
 
-    cParams.style.display = (state.fractal_type === 'julia' || state.fractal_type === 'exponential') ? 'flex' : 'none';
+    cParams.style.display = (state.fractal_type === 'julia' || state.fractal_type === 'exponential' || state.fractal_type === 'sine') ? 'flex' : 'none';
     
     // Update Precision Indicator
     const xRange = state.x_max - state.x_min;
@@ -65,7 +65,7 @@ async function suggestFilename() {
         reverse_colormap: state.reverse_colormap ? 'true' : 'false'
     };
 
-    if (state.fractal_type === 'julia' || state.fractal_type === 'exponential') {
+    if (state.fractal_type === 'julia' || state.fractal_type === 'exponential' || state.fractal_type === 'sine') {
         paramsObj.c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
     }
 
@@ -102,7 +102,7 @@ async function updateUI(renderImage = true) {
             _t: Date.now()
         };
 
-        if (state.fractal_type === 'julia' || state.fractal_type === 'exponential') {
+        if (state.fractal_type === 'julia' || state.fractal_type === 'exponential' || state.fractal_type === 'sine') {
             paramsObj.c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
         }
 
@@ -204,7 +204,7 @@ saveBtn.onclick = async () => {
         filename: saveFilenameInput.value
     };
 
-    if (state.fractal_type === 'julia' || state.fractal_type === 'exponential') {
+    if (state.fractal_type === 'julia' || state.fractal_type === 'exponential' || state.fractal_type === 'sine') {
         payload.c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
     }
 
