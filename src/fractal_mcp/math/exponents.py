@@ -14,11 +14,7 @@ def exponential_set(
 
     Calculation Logic:
         1. Iterative Mapping: z_{n+1} = c * exp(z_n) starting with z_0 = z.
-           To optimize, we separate real and imaginary parts:
-           exp(z) = exp(x) * (cos(y) + i*sin(y))
-           c * exp(z) = (c_real + i*c_imag) * exp(x) * (cos(y) + i*sin(y))
-           x_{n+1} = exp(x) * (c_real*cos(y) - c_imag*sin(y))
-           y_{n+1} = exp(x) * (c_real*sin(y) + c_imag*cos(y))
+           exp(x + iy) = exp(x) * (cos(y) + i*sin(y))
         2. Escape Condition: Re(z) > 50.
         3. Smooth Coloring: Adapted for exponential growth.
 
@@ -30,26 +26,19 @@ def exponential_set(
     Returns:
         Smooth iteration count (float) until escape, or max_iterations if bounded.
     """
-    z_real = z.real
-    z_imag = z.imag
-
-    # Bailout based on Real(z) > 50 as per literature/instructions.
-    bailout_real = 50.0
-
+    z_real, z_imag = z.real, z.imag
     for i in range(max_iterations):
-        # Separate real and imaginary calculations for performance
-        exp_x = np.exp(z_real)
-        cos_y = np.cos(z_imag)
-        sin_y = np.sin(z_imag)
+        # Simultaneous assignment maintains mathematical correctness and minimalist style.
+        # Real: exp(x) * (c.real * cos(y) - c.imag * sin(y))
+        # Imag: exp(x) * (c.real * sin(y) + c.imag * cos(y))
+        z_real, z_imag = (
+            np.exp(z_real) * (c.real * np.cos(z_imag) - c.imag * np.sin(z_imag)),
+            np.exp(z_real) * (c.real * np.sin(z_imag) + c.imag * np.cos(z_imag)),
+        )
 
-        # Update coordinates directly (intermediates already captured)
-        z_real = exp_x * (c.real * cos_y - c.imag * sin_y)
-        z_imag = exp_x * (c.real * sin_y + c.imag * cos_y)
-
-        if z_real > bailout_real:
+        if z_real > 50.0:
             # Smooth coloring approximation for exponential maps.
-            # We use the overshoot of the real part beyond the bailout.
-            mu = i + 1 - (z_real - bailout_real) / z_real
+            mu = i + 1 - (z_real - 50.0) / z_real
             return float(mu)
 
     return float(max_iterations)

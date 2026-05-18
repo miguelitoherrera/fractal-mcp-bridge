@@ -74,7 +74,7 @@ def generate_cosine_grid(
 
     for y in numba.prange(height):
         for x in range(width):
-            z_point = complex(x_min + x * x_step, y_min + y * y_step)
-            grid[y, x] = cosine_set(z_point, c, max_iterations)
+            z = complex(x_min + x * x_step, y_min + y * y_step)
+            grid[y, x] = cosine_set(z, c, max_iterations)
 
     return grid
