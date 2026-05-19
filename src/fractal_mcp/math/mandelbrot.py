@@ -80,6 +80,14 @@ def generate_mandelbrot_grid(
 
     Returns:
         2D array of smooth iteration counts (float32).
+
+    Notes:
+        Maps top of image (y=0) to y_max to align math 'up' with screen 'top'.
+
+        Pixel (x, y)      ->  Complex (Re, Im)
+        --------------------------------------
+        (0, 0)            ->  (x_min, y_max)
+        (width, height)   ->  (x_max, y_min)
     """
     x_step = (x_max - x_min) / width
     y_step = (y_max - y_min) / height
@@ -87,7 +95,7 @@ def generate_mandelbrot_grid(
 
     for y in numba.prange(height):
         for x in range(width):
-            c = complex(x_min + x * x_step, y_min + y * y_step)
+            c = complex(x_min + x * x_step, y_max - y * y_step)
             grid[y, x] = mandelbrot(c, max_iterations)
 
     return grid
