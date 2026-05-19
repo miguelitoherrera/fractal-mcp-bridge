@@ -92,6 +92,15 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.content, b"cosine_data")
         mock_render.assert_called_once()
 
+    def test_router_render_newton(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        mock_render.return_value = b"newton_data"
+
+        params = self._get_default_params(fractal_type="newton", power=3.0)
+        response = self.client.get(f"/render?{params}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"newton_data")
+        mock_render.assert_called_once()
+
     def test_router_save_no_ext(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
         mock_render.return_value = b"save_data"
 
@@ -150,6 +159,27 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.json()["filename"], "julia_custom.jpg")
         mock_write.assert_called_once_with(b"save_data")
 
+    def test_router_save_newton(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
+        mock_render.return_value = b"save_data"
+
+        payload = {
+            "fractal_type": "newton",
+            "power": 3.0,
+            "filename": "newton_test",
+            "x_min": X_MIN,
+            "x_max": X_MAX,
+            "y_min": Y_MIN,
+            "y_max": Y_MAX,
+            "max_iterations": 200,
+            "resolution": 1600,
+            "colormap": "Turbo",
+            "reverse_colormap": False,
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["filename"], "newton_test.jpg")
+        mock_write.assert_called_once_with(b"save_data")
+
     def test_router_save_complex_string(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
         mock_render.return_value = b"save_data"
 
@@ -186,6 +216,13 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         filename = response.json()["filename"]
         self.assertIn("julia_c-0.700_0.270", filename)
+
+    def test_router_suggest_filename_newton(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        params = self._get_default_params(fractal_type="newton", power=3.5)
+        response = self.client.get(f"/suggest-filename?{params}")
+        self.assertEqual(response.status_code, 200)
+        filename = response.json()["filename"]
+        self.assertIn("newton_p3.5", filename)
 
     def test_save_invalid_complex(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
         # Now returns 422 because we removed the try-except in the validator
