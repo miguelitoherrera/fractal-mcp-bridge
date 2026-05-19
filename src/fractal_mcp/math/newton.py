@@ -106,6 +106,14 @@ def generate_newton_grid(
 
     Returns:
         A tuple of (roots_grid, iters_grid) as 2D float32 arrays.
+
+    Notes:
+        Maps top of image (y=0) to y_max to align math 'up' with screen 'top'.
+
+        Pixel (x, y)      ->  Complex (Re, Im)
+        --------------------------------------
+        (0, 0)            ->  (x_min, y_max)
+        (width, height)   ->  (x_max, y_min)
     """
     x_step = (x_max - x_min) / width
     y_step = (y_max - y_min) / height
@@ -114,7 +122,7 @@ def generate_newton_grid(
 
     for y in numba.prange(height):
         for x in range(width):
-            z = complex(x_min + x * x_step, y_min + y * y_step)
+            z = complex(x_min + x * x_step, y_max - y * y_step)
             angle, iters = newton_set(z, power, max_iterations)
             roots_grid[y, x] = angle
             iters_grid[y, x] = iters

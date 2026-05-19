@@ -5,7 +5,7 @@ import numpy as np
 
 @numba.njit(fastmath=True)
 def julia(
-    z_initial: complex,
+    z: complex,
     c: complex,
     max_iterations: int,
 ) -> float:
@@ -14,7 +14,7 @@ def julia(
 
     Calculation Logic:
         1. Iterative Mapping: We apply the function z_{n+1} = z_n^2 + c starting
-           with a variable z_initial and a fixed complex constant 'c'.
+           with an initial variable z and a fixed complex constant 'c'.
         2. Escape Time: We iterate until the point escapes the bailout radius
            (|z| > bailout) or we reach max_iterations.
         3. Smooth Coloring (Renormalization): To prevent "staircase" color bands,
@@ -24,33 +24,32 @@ def julia(
            This maps the escape speed to a continuous scale.
 
     Args:
-        z_initial: Starting complex value.
+        z: Starting complex value.
         c: Fixed complex constant.
         max_iterations: Maximum iteration depth.
 
     Returns:
         Smooth iteration count (float) until escape, or max_iterations if bounded.
     """
-    z_real = z_initial.real
-    z_imag = z_initial.imag
-
     # Using a larger bailout radius (2^8 = 256) for smoother coloring
     bailout = 256.0
     bailout_sq = bailout * bailout
 
+    z_real, z_imag = z.real, z.imag
+
     for i in range(max_iterations):
-        # z = z^2 + c
-        z_real_sq = z_real * z_real
-        z_imag_sq = z_imag * z_imag
+        z_real_sq, z_imag_sq = z_real * z_real, z_imag * z_imag
 
         if z_real_sq + z_imag_sq > bailout_sq:
             # Smooth coloring formula: v = i + 1 - log2(log2(|z|))
-            z_abs_sq = z_real_sq + z_imag_sq
-            mu = i + 1 - np.log2(np.log2(z_abs_sq) / 2.0)
+            mu = i + 1 - np.log2(np.log2(z_real_sq + z_imag_sq) / 2.0)
             return float(mu)
 
-        z_imag = 2.0 * z_real * z_imag + c.imag
-        z_real = z_real_sq - z_imag_sq + c.real
+        # z = z^2 + c
+        z_real, z_imag = (
+            z_real_sq - z_imag_sq + c.real,
+            2.0 * z_real * z_imag + c.imag,
+        )
 
     return float(max_iterations)
 
@@ -81,6 +80,14 @@ def generate_julia_grid(
 
     Returns:
         2D array of smooth iteration counts (float32).
+
+    Notes:
+        Maps top of image (y=0) to y_max to align math 'up' with screen 'top'.
+
+        Pixel (x, y)      ->  Complex (Re, Im)
+        --------------------------------------
+        (0, 0)            ->  (x_min, y_max)
+        (width, height)   ->  (x_max, y_min)
     """
     x_step = (x_max - x_min) / width
     y_step = (y_max - y_min) / height
@@ -88,7 +95,7 @@ def generate_julia_grid(
 
     for y in numba.prange(height):
         for x in range(width):
-            z_initial = complex(x_min + x * x_step, y_min + y * y_step)
+            z_initial = complex(x_min + x * x_step, y_max - y * y_step)
             grid[y, x] = julia(z_initial, c, max_iterations)
 
     return grid

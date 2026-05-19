@@ -184,6 +184,36 @@ fractalImg.onload = () => {
     loader.classList.remove('active');
 };
 
+const hoverCoords = document.getElementById('hover-coords');
+const viewer = document.querySelector('.viewer');
+
+viewer.addEventListener('mousemove', (e) => {
+    const imgRect = fractalImg.getBoundingClientRect();
+    
+    if (e.clientX >= imgRect.left && e.clientX <= imgRect.right &&
+        e.clientY >= imgRect.top && e.clientY <= imgRect.bottom) {
+        
+        const px = (e.clientX - imgRect.left) / imgRect.width;
+        const py = (e.clientY - imgRect.top) / imgRect.height;
+
+        const xCoord = state.x_min + px * (state.x_max - state.x_min);
+        const yCoord = state.y_max - py * (state.y_max - state.y_min);
+
+        hoverCoords.textContent = `${xCoord.toFixed(10)}, ${yCoord.toFixed(10)}`;
+        hoverCoords.style.display = 'block';
+        
+        const viewerRect = viewer.getBoundingClientRect();
+        hoverCoords.style.left = `${e.clientX - viewerRect.left}px`;
+        hoverCoords.style.top = `${e.clientY - viewerRect.top}px`;
+    } else {
+        hoverCoords.style.display = 'none';
+    }
+});
+
+viewer.addEventListener('mouseleave', () => {
+    hoverCoords.style.display = 'none';
+});
+
 // Zoom on click
 fractalImg.onclick = (e) => {
     const rect = fractalImg.getBoundingClientRect();
@@ -191,7 +221,7 @@ fractalImg.onclick = (e) => {
     const py = (e.clientY - rect.top) / rect.height;
 
     const clickX = state.x_min + px * (state.x_max - state.x_min);
-    const clickY = state.y_min + py * (state.y_max - state.y_min);
+    const clickY = state.y_max - py * (state.y_max - state.y_min);
 
     const zoom = parseFloat(document.getElementById('zoomFactor').value) || 2;
 
