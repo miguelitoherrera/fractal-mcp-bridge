@@ -5,7 +5,7 @@ import numpy as np
 
 @numba.njit(fastmath=True)
 def julia(
-    z_initial: complex,
+    z: complex,
     c: complex,
     max_iterations: int,
 ) -> float:
@@ -14,7 +14,7 @@ def julia(
 
     Calculation Logic:
         1. Iterative Mapping: We apply the function z_{n+1} = z_n^2 + c starting
-           with a variable z_initial and a fixed complex constant 'c'.
+           with an initial variable z and a fixed complex constant 'c'.
         2. Escape Time: We iterate until the point escapes the bailout radius
            (|z| > bailout) or we reach max_iterations.
         3. Smooth Coloring (Renormalization): To prevent "staircase" color bands,
@@ -24,27 +24,32 @@ def julia(
            This maps the escape speed to a continuous scale.
 
     Args:
-        z_initial: Starting complex value.
+        z: Starting complex value.
         c: Fixed complex constant.
         max_iterations: Maximum iteration depth.
 
     Returns:
         Smooth iteration count (float) until escape, or max_iterations if bounded.
     """
-    z = z_initial
     # Using a larger bailout radius (2^8 = 256) for smoother coloring
     bailout = 256.0
     bailout_sq = bailout * bailout
 
-    for i in range(max_iterations):
-        z_abs_sq = z.real * z.real + z.imag * z.imag
+    z_real, z_imag = z.real, z.imag
 
-        if z_abs_sq > bailout_sq:
+    for i in range(max_iterations):
+        z_real_sq, z_imag_sq = z_real * z_real, z_imag * z_imag
+
+        if z_real_sq + z_imag_sq > bailout_sq:
             # Smooth coloring formula: v = i + 1 - log2(log2(|z|))
-            mu = i + 1 - np.log2(np.log2(z_abs_sq) / 2.0)
+            mu = i + 1 - np.log2(np.log2(z_real_sq + z_imag_sq) / 2.0)
             return float(mu)
 
-        z = z * z + c
+        # z = z^2 + c
+        z_real, z_imag = (
+            z_real_sq - z_imag_sq + c.real,
+            2.0 * z_real * z_imag + c.imag,
+        )
 
     return float(max_iterations)
 
