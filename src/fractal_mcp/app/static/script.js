@@ -11,12 +11,14 @@ let state = {
     reverse_colormap: false,
     c_real: -0.7,
     c_imag: 0.27,
+    power: 3.0,
     resolution: 1600
 };
 
 const fractalImg = document.getElementById('fractalImg');
 const loader = document.getElementById('loader');
 const cParams = document.getElementById('c-params');
+const newtonParams = document.getElementById('newton-params');
 const saveFilenameInput = document.getElementById('saveFilename');
 const saveBtn = document.getElementById('saveBtn');
 const saveStatus = document.getElementById('saveStatus');
@@ -32,8 +34,10 @@ function syncStateFromUI() {
     state.reverse_colormap = document.getElementById('reverse_colormap').checked;
     state.c_real = parseFloat(document.getElementById('c_real').value) || 0;
     state.c_imag = parseFloat(document.getElementById('c_imag').value) || 0;
+    state.power = parseFloat(document.getElementById('power').value) || 3.0;
 
-    cParams.style.display = (state.fractal_type === 'julia' || state.fractal_type === 'exponential' || state.fractal_type === 'sine' || state.fractal_type === 'cosine') ? 'flex' : 'none';
+    cParams.style.display = (['julia', 'exponential', 'sine', 'cosine'].includes(state.fractal_type)) ? 'flex' : 'none';
+    newtonParams.style.display = (state.fractal_type === 'newton') ? 'flex' : 'none';
     
     // Update Precision Indicator
     const xRange = state.x_max - state.x_min;
@@ -65,8 +69,10 @@ async function suggestFilename() {
         reverse_colormap: state.reverse_colormap ? 'true' : 'false'
     };
 
-    if (state.fractal_type === 'julia' || state.fractal_type === 'exponential' || state.fractal_type === 'sine' || state.fractal_type === 'cosine') {
+    if (['julia', 'exponential', 'sine', 'cosine'].includes(state.fractal_type)) {
         paramsObj.c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
+    } else if (state.fractal_type === 'newton') {
+        paramsObj.power = state.power;
     }
 
     const params = new URLSearchParams(paramsObj);
@@ -102,8 +108,10 @@ async function updateUI(renderImage = true) {
             _t: Date.now()
         };
 
-        if (state.fractal_type === 'julia' || state.fractal_type === 'exponential' || state.fractal_type === 'sine' || state.fractal_type === 'cosine') {
+        if (['julia', 'exponential', 'sine', 'cosine'].includes(state.fractal_type)) {
             paramsObj.c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
+        } else if (state.fractal_type === 'newton') {
+            paramsObj.power = state.power;
         }
 
         const params = new URLSearchParams(paramsObj);
@@ -148,6 +156,11 @@ function resetView() {
         state.x_max = 1.0;
         state.y_min = -1.5;
         state.y_max = 1.5;
+    } else if (state.fractal_type === 'newton') {
+        state.x_min = -2.0;
+        state.x_max = 2.0;
+        state.y_min = -2.0;
+        state.y_max = 2.0;
     } else {
         state.x_min = -2.0;
         state.x_max = 2.0;
@@ -204,8 +217,10 @@ saveBtn.onclick = async () => {
         filename: saveFilenameInput.value
     };
 
-    if (state.fractal_type === 'julia' || state.fractal_type === 'exponential' || state.fractal_type === 'sine' || state.fractal_type === 'cosine') {
+    if (['julia', 'exponential', 'sine', 'cosine'].includes(state.fractal_type)) {
         payload.c = `${state.c_real}${state.c_imag >= 0 ? '+' : ''}${state.c_imag}j`;
+    } else if (state.fractal_type === 'newton') {
+        payload.power = state.power;
     }
 
     try {
@@ -247,7 +262,7 @@ document.getElementById('resetBtn').onclick = resetView;
 });
 
 // Keydown listener for numeric inputs (Enter key triggers render)
-['iterations', 'resolution', 'c_real', 'c_imag'].forEach(id => {
+['iterations', 'resolution', 'c_real', 'c_imag', 'power'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             updateUI(true);

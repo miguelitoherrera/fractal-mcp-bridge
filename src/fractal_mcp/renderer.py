@@ -8,6 +8,7 @@ from fractal_mcp.math.cosine import generate_cosine_grid
 from fractal_mcp.math.exponents import generate_exponential_grid
 from fractal_mcp.math.julia import generate_julia_grid
 from fractal_mcp.math.mandelbrot import generate_mandelbrot_grid
+from fractal_mcp.math.newton import generate_newton_grid
 from fractal_mcp.math.sine import generate_sine_grid
 
 
@@ -91,11 +92,59 @@ def grid_to_image_bytes(
     return buf.getvalue()
 
 
-def validate_fractal_params(fractal_type: str, c: complex | None) -> None:
+def newton_to_image_bytes(
+    roots_grid: np.ndarray,
+    iters_grid: np.ndarray,
+    max_iterations: int,
+    colormap: str,
+    reverse_colormap: bool,
+) -> bytes:
+    """
+    Convert Newton fractal root and iteration grids to a shaded JPEG image.
+
+    Args:
+        roots_grid: 2D float32 array of normalized root angles [0.0, 1.0].
+        iters_grid: 2D float32 array of iteration counts.
+        max_iterations: Maximum iteration threshold.
+        colormap: Name of the Bokeh colormap.
+        reverse_colormap: Whether to flip the color scale.
+    """
+    palette = load_bokeh_palette(colormap)
+    if reverse_colormap:
+        palette = palette[::-1]
+
+    # Map normalized root angle to palette index.
+    root_idx = (np.clip(roots_grid, 0.0, 1.0) * 255).astype(np.int32)
+    rgb = palette[root_idx]
+
+    # Apply shading based on iterations (convergence speed).
+    # Shading factor is 1.0 for immediate convergence, decreasing for slow convergence.
+    shading = 1.0 - (iters_grid / max_iterations)
+    shading = np.clip(shading, 0.2, 1.0)  # Maintain minimum visibility
+
+    # Broadcast shading to RGB channels.
+    rgb = (rgb.astype(np.float32) * shading[:, :, np.newaxis]).astype(np.uint8)
+
+    img = Image.fromarray(rgb, mode="RGB")
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=95)
+    return buf.getvalue()
+
+
+def validate_fractal_params(fractal_type: str, c: complex | None, power: float | None = None) -> None:
     """Business logic for fractal parameter consistency."""
     if fractal_type in ["julia", "exponential", "sine", "cosine"] and c is None:
         raise ValueError(f"c must be provided for {fractal_type} fractals")
-    if fractal_type not in ["mandelbrot", "julia", "exponential", "sine", "cosine"]:
+    if fractal_type == "newton" and power is None:
+        raise ValueError("power must be provided for newton fractals")
+    if fractal_type not in [
+        "mandelbrot",
+        "julia",
+        "exponential",
+        "sine",
+        "cosine",
+        "newton",
+    ]:
         raise ValueError(f"Unsupported fractal type: {fractal_type}")
 
 
@@ -108,9 +157,10 @@ def suggest_filename(
     colormap: str,
     reverse_colormap: bool,
     c: complex | None = None,
+    power: float | None = None,
 ) -> str:
     """Generate a descriptive filename based on fractal parameters."""
-    validate_fractal_params(fractal_type, c)
+    validate_fractal_params(fractal_type, c, power)
 
     x_range = x_max - x_min
     x_center = x_min + x_range / 2
@@ -121,6 +171,9 @@ def suggest_filename(
     if fractal_type in ["julia", "exponential", "sine", "cosine"]:
         assert c is not None
         name = f"{fractal_type}_c{c.real:.3f}_{c.imag:.3f}_x{x_center:.4f}_y{y_center:.4f}"
+    elif fractal_type == "newton":
+        assert power is not None
+        name = f"newton_p{power:.1f}_x{x_center:.4f}_y{y_center:.4f}"
 
     reversed_suffix = "_reversed" if reverse_colormap else ""
     return f"{name}_{colormap.lower()}{reversed_suffix}.jpg"
@@ -137,12 +190,13 @@ def render_fractal(
     colormap: str,
     reverse_colormap: bool,
     c: complex | None = None,
+    power: float | None = None,
 ) -> bytes:
     """
     Unified orchestration for rendering fractals.
     Calculates aspect ratio, generates the grid, and converts to image bytes.
     """
-    validate_fractal_params(fractal_type, c)
+    validate_fractal_params(fractal_type, c, power)
 
     # Calculate height based on aspect ratio to prevent stretching
     width = resolution
@@ -150,16 +204,23 @@ def render_fractal(
 
     if fractal_type == "mandelbrot":
         grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
+        return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
     elif fractal_type == "julia":
         grid = generate_julia_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
+        return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
     elif fractal_type == "exponential":
         grid = generate_exponential_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
+        return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
     elif fractal_type == "sine":
         grid = generate_sine_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
+        return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
     elif fractal_type == "cosine":
         grid = generate_cosine_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
+        return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
+    elif fractal_type == "newton":
+        assert power is not None
+        roots, iters = generate_newton_grid(x_min, x_max, y_min, y_max, power, width, height, max_iterations)
+        return newton_to_image_bytes(roots, iters, max_iterations, colormap, reverse_colormap)
     else:
         # Should be caught by validate_fractal_params
         raise ValueError(f"Unsupported fractal type: {fractal_type}")
-
-    return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)

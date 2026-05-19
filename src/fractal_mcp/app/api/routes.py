@@ -34,6 +34,7 @@ class FractalParams(BaseModel):
     colormap: str
     reverse_colormap: bool
     c: complex | None = None
+    power: float | None = None
 
     @field_validator("c", mode="before")
     @classmethod
@@ -42,7 +43,7 @@ class FractalParams(BaseModel):
 
     @model_validator(mode="after")
     def validate_params(self) -> FractalParams:
-        validate_fractal_params(self.fractal_type, self.c)
+        validate_fractal_params(self.fractal_type, self.c, self.power)
         return self
 
 
@@ -90,6 +91,7 @@ async def render(params: FractalParams = Depends()) -> StreamingResponse:
             params.colormap,
             params.reverse_colormap,
             c=params.c,
+            power=params.power,
         )
         _render_cache.update(params, img_bytes)
 
@@ -105,6 +107,7 @@ async def render(params: FractalParams = Depends()) -> StreamingResponse:
         params.colormap,
         params.reverse_colormap,
         c=params.c,
+        power=params.power,
     )
 
     return StreamingResponse(
@@ -125,6 +128,7 @@ async def get_suggested_filename(params: FractalParams = Depends()) -> dict[str,
         params.colormap,
         params.reverse_colormap,
         c=params.c,
+        power=params.power,
     )
     return {"filename": filename}
 
@@ -150,6 +154,7 @@ async def save(req: SaveRequest) -> dict[str, str]:
             req.colormap,
             req.reverse_colormap,
             c=req.c,
+            power=req.power,
         )
         # Update cache with the new render
         _render_cache.update(req, img_bytes)
