@@ -132,6 +132,34 @@ class TestExplorerUI(unittest.TestCase):
         self.assertIn("resetView", js_content)
         self.assertIn("updateUI", js_content)
 
+        # Check default window boundaries for all fractal types
+        # 1. Mandelbrot
+        self.assertIn("state.fractal_type === 'mandelbrot'", js_content)
+        self.assertIn("state.x_min = -2.0;", js_content)
+        self.assertIn("state.x_max = 1.0;", js_content)
+        self.assertIn("state.y_min = -1.5;", js_content)
+        self.assertIn("state.y_max = 1.5;", js_content)
+
+        # 2. Newton
+        self.assertIn("state.fractal_type === 'newton'", js_content)
+        self.assertIn("state.x_min = -2.0;", js_content)
+        self.assertIn("state.x_max = 2.0;", js_content)
+        self.assertIn("state.y_min = -2.0;", js_content)
+        self.assertIn("state.y_max = 2.0;", js_content)
+
+        # 3. Sine, Cosine & Exponential
+        self.assertIn("['sine', 'cosine', 'exponential'].includes(state.fractal_type)", js_content)
+        self.assertIn("state.x_min = -20.0;", js_content)
+        self.assertIn("state.x_max = 20.0;", js_content)
+        self.assertIn("state.y_min = -20.0;", js_content)
+        self.assertIn("state.y_max = 20.0;", js_content)
+
+        # 4. Fallback default coordinates (e.g. Julia)
+        self.assertIn("state.x_min = -2.0;", js_content)
+        self.assertIn("state.x_max = 2.0;", js_content)
+        self.assertIn("state.y_min = -2.0;", js_content)
+        self.assertIn("state.y_max = 2.0;", js_content)
+
     def test_fractal_rendering_endpoints(self) -> None:
         """Verify that every fractal type can be successfully rendered with real calculations."""
         # Define test inputs for all supported fractal types
