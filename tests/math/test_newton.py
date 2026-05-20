@@ -24,6 +24,12 @@ class TestNewton(unittest.TestCase):
         angle, iters = newton_set(complex(0.0, 1.0), 3.0, 2)
         self.assertEqual(iters, 2)
 
+    def test_newton_set_zero_derivative(self) -> None:
+        # If power is 0.0, the derivative is zero, leading to denom == 0.0 and a break
+        angle, iters = newton_set(complex(1.0, 1.0), 0.0, 100)
+        self.assertEqual(angle, 0.0)
+        self.assertEqual(iters, 100)
+
     def test_newton_set_different_power(self) -> None:
         # For f(z) = z^4 - 1, roots are 1, i, -1, -i
         # Root i has angle 0.25 (normalized from pi/2)
