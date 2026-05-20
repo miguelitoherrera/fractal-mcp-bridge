@@ -1,6 +1,7 @@
 # Tests for the fractal rendering engine.
 import io
 import unittest
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 from PIL import Image
@@ -143,6 +144,23 @@ class TestRenderer(unittest.TestCase):
                 DEFAULT_COLORMAP,
                 DEFAULT_REVERSE_COLORMAP,
             )
+
+    @patch("fractal_mcp.renderer.validate_fractal_params")
+    def test_render_unsupported_bypass_validation(self, mock_validate: MagicMock) -> None:
+        # Bypass validation step to cover the unsupported fractal raise block
+        with self.assertRaises(ValueError) as ctx:
+            render_fractal(
+                "invalid_fractal",
+                X_MIN,
+                X_MAX,
+                Y_MIN,
+                Y_MAX,
+                100,
+                MAX_ITERATIONS,
+                DEFAULT_COLORMAP,
+                DEFAULT_REVERSE_COLORMAP,
+            )
+        self.assertIn("Unsupported fractal type", str(ctx.exception))
 
     def test_aspect_ratio_calculation(self) -> None:
         img_bytes = render_fractal(
