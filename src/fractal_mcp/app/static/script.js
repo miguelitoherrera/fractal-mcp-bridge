@@ -161,11 +161,16 @@ function resetView() {
         state.x_max = 2.0;
         state.y_min = -2.0;
         state.y_max = 2.0;
-    } else if (['sine', 'cosine', 'exponential'].includes(state.fractal_type)) {
+    } else if (state.fractal_type === 'exponential') {
         state.x_min = -20.0;
         state.x_max = 20.0;
         state.y_min = -20.0;
         state.y_max = 20.0;
+    } else if (['sine', 'cosine'].includes(state.fractal_type)) {
+        state.x_min = -10.0;
+        state.x_max = 10.0;
+        state.y_min = -10.0;
+        state.y_max = 10.0;
     } else {
         state.x_min = -2.0;
         state.x_max = 2.0;

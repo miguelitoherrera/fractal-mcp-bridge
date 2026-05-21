@@ -147,12 +147,19 @@ class TestExplorerUI(unittest.TestCase):
         self.assertIn("state.y_min = -2.0;", js_content)
         self.assertIn("state.y_max = 2.0;", js_content)
 
-        # 3. Sine, Cosine & Exponential
-        self.assertIn("['sine', 'cosine', 'exponential'].includes(state.fractal_type)", js_content)
+        # 3. Exponential
+        self.assertIn("state.fractal_type === 'exponential'", js_content)
         self.assertIn("state.x_min = -20.0;", js_content)
         self.assertIn("state.x_max = 20.0;", js_content)
         self.assertIn("state.y_min = -20.0;", js_content)
         self.assertIn("state.y_max = 20.0;", js_content)
+
+        # 4. Sine & Cosine
+        self.assertIn("['sine', 'cosine'].includes(state.fractal_type)", js_content)
+        self.assertIn("state.x_min = -10.0;", js_content)
+        self.assertIn("state.x_max = 10.0;", js_content)
+        self.assertIn("state.y_min = -10.0;", js_content)
+        self.assertIn("state.y_max = 10.0;", js_content)
 
         # 4. Fallback default coordinates (e.g. Julia)
         self.assertIn("state.x_min = -2.0;", js_content)
