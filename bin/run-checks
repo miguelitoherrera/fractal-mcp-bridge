@@ -5,18 +5,18 @@ set -e
 cd "$(dirname "$0")/.."
 
 echo "--- 🎨 Checking formatting (Ruff) ---"
-.venv/bin/ruff format --check src tests
+ruff format --check src tests
 
 echo "--- 🔍 Linting (Ruff) ---"
-.venv/bin/ruff check src tests
+ruff check src tests
 
 echo "--- 📝 Type checking (Mypy) ---"
-.venv/bin/mypy src tests
+mypy src tests
 
 echo "--- 🧪 Running tests (Pytest) ---"
 # Run tests with JIT disabled and project package included
 # No PYTHONPATH hack needed once installed, but -m pytest ensures src is in path
-NUMBA_DISABLE_JIT=1 .venv/bin/python -m pytest \
+NUMBA_DISABLE_JIT=1 python -m pytest \
     --cov=fractal_mcp \
     --cov-report=term-missing \
     --cov-report=html \
