@@ -95,8 +95,8 @@ To use this bridge as an AI Agent, update your `claude_desktop_config.json`:
 ```
 Take special care to align the python path with this repo's path.
 
-## ☁️ Gemini CLI Integration
-To use this bridge as an AI Agent, update your `settings.json`:
+## ☁️ Antigravity CLI Integration
+To use this bridge as an AI Agent, update your `mcp_config.json`:
 ```json
 {
   "mcpServers": {
