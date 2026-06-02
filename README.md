@@ -79,27 +79,6 @@ From the repository root, run:
 bin/run-checks
 ```
 
-### 5. 🐛 Bug Hunt
-When asked to **"go on a bug hunt"**, perform an all-encompassing search for bugs within the repository across the following four categories:
-
-1. **Functional Bugs (Most Important):** Look for logic errors, off-by-one errors, null/undefined issues, race conditions, incorrect conditionals, missing edge cases, wrong variable usage, broken control flow, and any code that simply won't work as intended. This is by far the most important category.
-2. **KISS Violations:** Overly complex solutions where simpler ones exist. Unnecessary abstractions, premature generalizations, or convoluted logic.
-3. **DRY Violations:** Duplicated logic that should be extracted. Copy-and-pasted code with minor variations.
-4. **Missing Tests:** New functionality or bug fixes lacking appropriate test coverage.
-
-DO NOT report:
-* Code formatting or style issues (we do this already with ruff)
-* Minor type issues (also linted)
-* Nitpicks that don't affect correctness or maintainability.
-
-For each issue found, report:
-* File and line number
-* Severity: critical/high/medium/low
-* Category: the items 1 thru 4.
-* Description: what the issue is an d why it matters.
-* Suggestion: how to fix it.
-
-Return a structured list grouped by severity (critical first, then high, then medium, then low).
 ## 🤖 Claude Desktop Integration
 To use this bridge as an AI Agent, update your `claude_desktop_config.json`:
 ```json
