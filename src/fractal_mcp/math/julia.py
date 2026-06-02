@@ -41,8 +41,8 @@ def julia(
         z_real_sq, z_imag_sq = z_real * z_real, z_imag * z_imag
 
         if z_real_sq + z_imag_sq > bailout_sq:
-            # Smooth coloring formula: v = i + 1 - log2(log2(|z|))
-            mu = i + 1 - np.log2(np.log2(z_real_sq + z_imag_sq) / 2.0)
+            # Smooth coloring formula: v = i + 2 - log2(log2(|z|^2))
+            mu = i + 2 - np.log2(np.log2(z_real_sq + z_imag_sq))
             return float(mu)
 
         # z = z^2 + c

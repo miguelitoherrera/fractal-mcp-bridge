@@ -43,7 +43,17 @@ class FractalParams(BaseModel):
 
     @model_validator(mode="after")
     def validate_params(self) -> FractalParams:
-        validate_fractal_params(self.fractal_type, self.c, self.power)
+        validate_fractal_params(
+            self.fractal_type,
+            self.c,
+            self.power,
+            self.x_min,
+            self.x_max,
+            self.y_min,
+            self.y_max,
+            self.resolution,
+            self.max_iterations,
+        )
         return self
 
 

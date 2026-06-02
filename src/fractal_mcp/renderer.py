@@ -131,8 +131,26 @@ def newton_to_image_bytes(
     return buf.getvalue()
 
 
-def validate_fractal_params(fractal_type: str, c: complex | None, power: float | None = None) -> None:
+def validate_fractal_params(
+    fractal_type: str,
+    c: complex | None,
+    power: float | None = None,
+    x_min: float | None = None,
+    x_max: float | None = None,
+    y_min: float | None = None,
+    y_max: float | None = None,
+    resolution: int | None = None,
+    max_iterations: int | None = None,
+) -> None:
     """Business logic for fractal parameter consistency."""
+    if x_min is not None and x_max is not None and x_min >= x_max:
+        raise ValueError("x_min must be strictly less than x_max")
+    if y_min is not None and y_max is not None and y_min >= y_max:
+        raise ValueError("y_min must be strictly less than y_max")
+    if resolution is not None and resolution <= 0:
+        raise ValueError("resolution must be strictly positive")
+    if max_iterations is not None and max_iterations <= 0:
+        raise ValueError("max_iterations must be strictly positive")
     if fractal_type in ["julia", "exponential", "sine", "cosine"] and c is None:
         raise ValueError(f"c must be provided for {fractal_type} fractals")
     if fractal_type == "newton" and power is None:
@@ -160,7 +178,7 @@ def suggest_filename(
     power: float | None = None,
 ) -> str:
     """Generate a descriptive filename based on fractal parameters."""
-    validate_fractal_params(fractal_type, c, power)
+    validate_fractal_params(fractal_type, c, power, x_min, x_max, y_min, y_max)
 
     x_range = x_max - x_min
     x_center = x_min + x_range / 2
@@ -196,11 +214,11 @@ def render_fractal(
     Unified orchestration for rendering fractals.
     Calculates aspect ratio, generates the grid, and converts to image bytes.
     """
-    validate_fractal_params(fractal_type, c, power)
+    validate_fractal_params(fractal_type, c, power, x_min, x_max, y_min, y_max, resolution, max_iterations)
 
     # Calculate height based on aspect ratio to prevent stretching
     width = resolution
-    height = round(width * (y_max - y_min) / (x_max - x_min))
+    height = max(1, round(width * (y_max - y_min) / (x_max - x_min)))
 
     if fractal_type == "mandelbrot":
         grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
