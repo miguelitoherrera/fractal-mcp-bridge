@@ -130,6 +130,33 @@ class TestRenderer(unittest.TestCase):
                 DEFAULT_REVERSE_COLORMAP,
             )
 
+    def test_validate_params_invalid_coords(self) -> None:
+        # Test x_min >= x_max
+        with self.assertRaises(ValueError) as ctx:
+            render_fractal("mandelbrot", 1.0, -1.0, -1.0, 1.0, 100, 100, "Turbo", False)
+        self.assertIn("x_min must be strictly less than x_max", str(ctx.exception))
+
+        # Test y_min >= y_max
+        with self.assertRaises(ValueError) as ctx:
+            render_fractal("mandelbrot", -1.0, 1.0, 1.0, -1.0, 100, 100, "Turbo", False)
+        self.assertIn("y_min must be strictly less than y_max", str(ctx.exception))
+
+    def test_validate_params_invalid_dimensions(self) -> None:
+        # Test resolution <= 0
+        with self.assertRaises(ValueError) as ctx:
+            render_fractal("mandelbrot", -1.0, 1.0, -1.0, 1.0, 0, 100, "Turbo", False)
+        self.assertIn("resolution must be strictly positive", str(ctx.exception))
+
+        # Test max_iterations <= 0
+        with self.assertRaises(ValueError) as ctx:
+            render_fractal("mandelbrot", -1.0, 1.0, -1.0, 1.0, 100, 0, "Turbo", False)
+        self.assertIn("max_iterations must be strictly positive", str(ctx.exception))
+
+    def test_height_clamping(self) -> None:
+        # Test that extremely narrow y range results in height of at least 1, not 0
+        img_bytes = render_fractal("mandelbrot", -2.0, 1.0, 0.0, 0.0000001, 100, 100, "Turbo", False)
+        self.assertIsInstance(img_bytes, bytes)
+
     def test_render_unsupported(self) -> None:
         # To test the actual ValueError in render_fractal:
         with self.assertRaises(ValueError):

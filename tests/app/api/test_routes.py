@@ -29,6 +29,9 @@ class TestExplorerAPI(unittest.TestCase):
     def setUp(self) -> None:
         app = FastAPI()
         app.include_router(router)
+        from fractal_mcp.app.main import value_error_handler
+
+        app.add_exception_handler(ValueError, value_error_handler)
         self.client = TestClient(app)
 
     def _get_default_params(self, **kwargs: Any) -> str:
@@ -316,10 +319,10 @@ class TestExplorerAPI(unittest.TestCase):
         mock_render.assert_called_once()
 
     def test_render_unsupported_fractal(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        # Now raises ValueError because Query validation is removed
+        # Now returns 400 because ValueError is handled
         params = self._get_default_params(fractal_type="invalid")
-        with self.assertRaises(ValueError):
-            self.client.get(f"/render?{params}")
+        response = self.client.get(f"/render?{params}")
+        self.assertEqual(response.status_code, 400)
 
     def test_save_cache_hit(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
         mock_render.return_value = b"cached_data"
@@ -344,6 +347,29 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         # Should only be called ONCE (during the initial render)
         mock_render.assert_called_once()
+
+    def test_render_invalid_coords_value_error(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        params = self._get_default_params(fractal_type="mandelbrot", x_min=1.0, x_max=-1.0)
+        response = self.client.get(f"/render?{params}")
+        # ValueError is caught by the exception handler in main.py, returning 400
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("x_min must be strictly less than x_max", response.json()["detail"])
+
+    def test_save_invalid_coords_value_error(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        payload = {
+            "fractal_type": "mandelbrot",
+            "filename": "invalid_coords",
+            "x_min": 1.0,
+            "x_max": -1.0,
+            "y_min": Y_MIN,
+            "y_max": Y_MAX,
+            "max_iterations": 200,
+            "resolution": 1600,
+            "colormap": "Turbo",
+            "reverse_colormap": False,
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 422)
 
 
 if __name__ == "__main__":

@@ -43,11 +43,9 @@ def mandelbrot(
         z_imag_sq = z_imag * z_imag
 
         if z_real_sq + z_imag_sq > bailout_sq:
-            # Smooth coloring formula: v = i + 1 - log2(log2(|z|))
-            # Since we have |z|^2, we use: v = i + 1 - log2(0.5 * log2(|z|^2))
-            # Which simplifies to: v = i + 2 - log2(log2(|z|^2))
+            # Smooth coloring formula: v = i + 2 - log2(log2(|z|^2))
             z_abs_sq = z_real_sq + z_imag_sq
-            mu = i + 1 - np.log2(np.log2(z_abs_sq) / 2.0)
+            mu = i + 2 - np.log2(np.log2(z_abs_sq))
             return float(mu)
 
         z_imag = 2.0 * z_real * z_imag + c.imag
