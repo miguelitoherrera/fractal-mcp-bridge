@@ -17,6 +17,46 @@ mcp = FastMCP("FractalBridge")
 Path("images").mkdir(exist_ok=True)
 
 
+def _generate_and_save_image(
+    fractal_type: str,
+    x_min: float,
+    x_max: float,
+    y_min: float,
+    y_max: float,
+    resolution: int,
+    max_iterations: int,
+    colormap: str,
+    reverse_colormap: bool,
+    c: complex | None = None,
+    power: float | None = None,
+) -> dict[str, Any]:
+    """Helper to render, save a fractal image, and structure the tool response."""
+    img_bytes = render_fractal(
+        fractal_type,
+        x_min,
+        x_max,
+        y_min,
+        y_max,
+        resolution,
+        max_iterations,
+        colormap,
+        reverse_colormap,
+        c=c,
+        power=power,
+    )
+
+    filename = suggest_filename(fractal_type, x_min, x_max, y_min, y_max, colormap, reverse_colormap, c=c, power=power)
+    path = Path("images") / filename
+    path.write_bytes(img_bytes)
+
+    return {
+        "type": "file",
+        "path": str(path),
+        "mime_type": "image/jpeg",
+        "colormap": colormap,
+    }
+
+
 @mcp.tool
 def generate_mandelbrot_image(
     x_min: float,
@@ -41,19 +81,17 @@ def generate_mandelbrot_image(
         colormap: Bokeh colormap name.
         reverse_colormap: If true, reverses the color palette.
     """
-    img_bytes = render_fractal(
-        "mandelbrot", x_min, x_max, y_min, y_max, resolution, max_iterations, colormap, reverse_colormap
+    return _generate_and_save_image(
+        "mandelbrot",
+        x_min,
+        x_max,
+        y_min,
+        y_max,
+        resolution,
+        max_iterations,
+        colormap,
+        reverse_colormap,
     )
-
-    filename = suggest_filename("mandelbrot", x_min, x_max, y_min, y_max, colormap, reverse_colormap)
-    (Path("images") / filename).write_bytes(img_bytes)
-
-    return {
-        "type": "file",
-        "path": str(Path("images") / filename),
-        "mime_type": "image/jpeg",
-        "colormap": colormap,
-    }
 
 
 @mcp.tool
@@ -82,19 +120,18 @@ def generate_julia_image(
         colormap: Bokeh colormap name.
         reverse_colormap: If true, reverses the color palette.
     """
-    img_bytes = render_fractal(
-        "julia", x_min, x_max, y_min, y_max, resolution, max_iterations, colormap, reverse_colormap, c=c
+    return _generate_and_save_image(
+        "julia",
+        x_min,
+        x_max,
+        y_min,
+        y_max,
+        resolution,
+        max_iterations,
+        colormap,
+        reverse_colormap,
+        c=c,
     )
-
-    filename = suggest_filename("julia", x_min, x_max, y_min, y_max, colormap, reverse_colormap, c=c)
-    (Path("images") / filename).write_bytes(img_bytes)
-
-    return {
-        "type": "file",
-        "path": str(Path("images") / filename),
-        "mime_type": "image/jpeg",
-        "colormap": colormap,
-    }
 
 
 @mcp.tool
@@ -123,7 +160,7 @@ def generate_exponential_image(
         colormap: Bokeh colormap name.
         reverse_colormap: If true, reverses the color palette.
     """
-    img_bytes = render_fractal(
+    return _generate_and_save_image(
         "exponential",
         x_min,
         x_max,
@@ -135,16 +172,6 @@ def generate_exponential_image(
         reverse_colormap,
         c=c,
     )
-
-    filename = suggest_filename("exponential", x_min, x_max, y_min, y_max, colormap, reverse_colormap, c=c)
-    (Path("images") / filename).write_bytes(img_bytes)
-
-    return {
-        "type": "file",
-        "path": str(Path("images") / filename),
-        "mime_type": "image/jpeg",
-        "colormap": colormap,
-    }
 
 
 @mcp.tool
@@ -173,7 +200,7 @@ def generate_sine_image(
         colormap: Bokeh colormap name.
         reverse_colormap: If true, reverses the color palette.
     """
-    img_bytes = render_fractal(
+    return _generate_and_save_image(
         "sine",
         x_min,
         x_max,
@@ -185,16 +212,6 @@ def generate_sine_image(
         reverse_colormap,
         c=c,
     )
-
-    filename = suggest_filename("sine", x_min, x_max, y_min, y_max, colormap, reverse_colormap, c=c)
-    (Path("images") / filename).write_bytes(img_bytes)
-
-    return {
-        "type": "file",
-        "path": str(Path("images") / filename),
-        "mime_type": "image/jpeg",
-        "colormap": colormap,
-    }
 
 
 @mcp.tool
@@ -223,7 +240,7 @@ def generate_cosine_image(
         colormap: Bokeh colormap name.
         reverse_colormap: If true, reverses the color palette.
     """
-    img_bytes = render_fractal(
+    return _generate_and_save_image(
         "cosine",
         x_min,
         x_max,
@@ -235,16 +252,6 @@ def generate_cosine_image(
         reverse_colormap,
         c=c,
     )
-
-    filename = suggest_filename("cosine", x_min, x_max, y_min, y_max, colormap, reverse_colormap, c=c)
-    (Path("images") / filename).write_bytes(img_bytes)
-
-    return {
-        "type": "file",
-        "path": str(Path("images") / filename),
-        "mime_type": "image/jpeg",
-        "colormap": colormap,
-    }
 
 
 @mcp.tool
@@ -273,7 +280,7 @@ def generate_newton_image(
         colormap: Bokeh colormap name.
         reverse_colormap: If true, reverses the color palette.
     """
-    img_bytes = render_fractal(
+    return _generate_and_save_image(
         "newton",
         x_min,
         x_max,
@@ -285,16 +292,6 @@ def generate_newton_image(
         reverse_colormap,
         power=power,
     )
-
-    filename = suggest_filename("newton", x_min, x_max, y_min, y_max, colormap, reverse_colormap, power=power)
-    (Path("images") / filename).write_bytes(img_bytes)
-
-    return {
-        "type": "file",
-        "path": str(Path("images") / filename),
-        "mime_type": "image/jpeg",
-        "colormap": colormap,
-    }
 
 
 if __name__ == "__main__":  # pragma: no cover
