@@ -26,20 +26,14 @@ def exponential_set(
     Returns:
         Smooth iteration count (float) until escape, or max_iterations if bounded.
     """
-    z_real, z_imag = z.real, z.imag
     for i in range(max_iterations):
-        # Simultaneous assignment maintains mathematical correctness and minimalist style.
-        # Real: exp(x) * (c.real * cos(y) - c.imag * sin(y))
-        # Imag: exp(x) * (c.real * sin(y) + c.imag * cos(y))
-        z_real, z_imag = (
-            np.exp(z_real) * (c.real * np.cos(z_imag) - c.imag * np.sin(z_imag)),
-            np.exp(z_real) * (c.real * np.sin(z_imag) + c.imag * np.cos(z_imag)),
-        )
+        prev_real = z.real
+        z = c * np.exp(z)
 
-        if z_real > 50.0:
-            # Smooth coloring approximation for exponential maps.
-            mu = i + 1 - (z_real - 50.0) / z_real
-            return float(mu)
+        if z.real > 50.0:
+            denom = z.real - prev_real
+            mu = i + (50.0 - prev_real) / denom if denom > 0.0 else float(i)
+            return max(0.0, float(mu))
 
     return float(max_iterations)
 

@@ -26,17 +26,14 @@ def cosine_set(
     Returns:
         Smooth iteration count (float) until escape, or max_iterations if bounded.
     """
-    z_real, z_imag = z.real, z.imag
     for i in range(max_iterations):
-        z_real, z_imag = (
-            c.real * np.cos(z_real) * np.cosh(z_imag) + c.imag * np.sin(z_real) * np.sinh(z_imag),
-            c.imag * np.cos(z_real) * np.cosh(z_imag) - c.real * np.sin(z_real) * np.sinh(z_imag),
-        )
+        prev_imag = z.imag
+        z = c * np.cos(z)
 
-        if abs(z_imag) > 50.0:
-            # Smooth coloring approximation
-            mu = i + 1 - (abs(z_imag) - 50.0) / abs(z_imag)
-            return float(mu)
+        if abs(z.imag) > 50.0:
+            denom = abs(z.imag) - abs(prev_imag)
+            mu = i + (50.0 - abs(prev_imag)) / denom if denom > 0.0 else float(i)
+            return max(0.0, float(mu))
 
     return float(max_iterations)
 

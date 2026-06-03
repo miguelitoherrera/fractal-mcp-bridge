@@ -1,10 +1,9 @@
 # Integration tests for the FastAPI explorer application.
 import unittest
-from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
-from fractal_mcp.app.main import STATIC_DIR, app
+from fractal_mcp.app.main import app
 
 
 class TestExplorerApp(unittest.TestCase):
@@ -15,12 +14,10 @@ class TestExplorerApp(unittest.TestCase):
 
     def test_app_index_serving(self) -> None:
         """Verify that the app serves the index.html from static/."""
-        with patch("fractal_mcp.app.main.FileResponse") as mock_fr:
-            mock_fr.return_value = MagicMock()
-            response = self.client.get("/")
-            self.assertEqual(response.status_code, 200)
-
-            mock_fr.assert_called_once_with(STATIC_DIR / "index.html")
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("<!DOCTYPE html>", response.text)
+        self.assertIn("Fractal Explorer", response.text)
 
     def test_app_includes_explorer_routes(self) -> None:
         """
