@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from fractal_mcp.app.api.routes import router
+from fractal_mcp.renderer import IMAGES_DIR
 
 # Testing Constants (formerly from renderer.py)
 RESOLUTION = 1600
@@ -122,6 +123,7 @@ class TestExplorerAPI(unittest.TestCase):
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["filename"], "test.jpg")
+        self.assertEqual(response.json()["path"], "images/test.jpg")
         mock_write.assert_called_once_with(b"save_data")
 
     def test_router_save_missing_filename(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
@@ -160,6 +162,7 @@ class TestExplorerAPI(unittest.TestCase):
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["filename"], "julia_custom.jpg")
+        self.assertEqual(response.json()["path"], "images/julia_custom.jpg")
         mock_write.assert_called_once_with(b"save_data")
 
     def test_router_save_newton(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
@@ -181,6 +184,7 @@ class TestExplorerAPI(unittest.TestCase):
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["filename"], "newton_test.jpg")
+        self.assertEqual(response.json()["path"], "images/newton_test.jpg")
         mock_write.assert_called_once_with(b"save_data")
 
     def test_router_save_complex_string(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
@@ -203,6 +207,7 @@ class TestExplorerAPI(unittest.TestCase):
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["filename"], "julia_test.jpg")
+        self.assertEqual(response.json()["path"], "images/julia_test.jpg")
         mock_write.assert_called_once_with(b"save_data")
 
     def test_router_suggest_filename_endpoint(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
@@ -285,6 +290,8 @@ class TestExplorerAPI(unittest.TestCase):
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["filename"], "complex_str.jpg")
+        self.assertEqual(response.json()["path"], "images/complex_str.jpg")
         mock_render.assert_called_once()
 
     def test_save_mandelbrot(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
@@ -304,6 +311,8 @@ class TestExplorerAPI(unittest.TestCase):
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["filename"], "mandelbrot_save.jpg")
+        self.assertEqual(response.json()["path"], "images/mandelbrot_save.jpg")
         mock_render.assert_called_once()
 
     def test_render_cache_hit(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
@@ -345,6 +354,8 @@ class TestExplorerAPI(unittest.TestCase):
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["filename"], "cache_hit_save.jpg")
+        self.assertEqual(response.json()["path"], "images/cache_hit_save.jpg")
         # Should only be called ONCE (during the initial render)
         mock_render.assert_called_once()
 
@@ -370,6 +381,41 @@ class TestExplorerAPI(unittest.TestCase):
         }
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 422)
+
+    def test_router_save_path_traversal(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
+        """Verify that directory traversal filename sequences are safely sanitized before saving."""
+        mock_render.return_value = b"save_data"
+
+        payload = {
+            "fractal_type": "mandelbrot",
+            "filename": "../../../path_traversal_test.jpg",
+            "x_min": X_MIN,
+            "x_max": X_MAX,
+            "y_min": Y_MIN,
+            "y_max": Y_MAX,
+            "max_iterations": 200,
+            "resolution": 1600,
+            "colormap": "Turbo",
+            "reverse_colormap": False,
+        }
+
+        written_paths = []
+
+        def spy_write_bytes(self_path: Path, data: bytes) -> int:
+            written_paths.append(self_path)
+            # Call mock_write to preserve the call stats
+            mock_write(data)
+            return len(data)
+
+        with patch.object(Path, "write_bytes", spy_write_bytes):
+            response = self.client.post("/save", json=payload)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["filename"], "path_traversal_test.jpg")
+
+        # Verify that write_bytes was called on the correct sanitized Path
+        self.assertEqual(len(written_paths), 1)
+        self.assertEqual(written_paths[0], IMAGES_DIR / "path_traversal_test.jpg")
 
 
 if __name__ == "__main__":

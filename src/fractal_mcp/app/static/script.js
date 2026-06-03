@@ -272,7 +272,7 @@ saveBtn.onclick = async () => {
 
         const data = await response.json();
         if (data.status === 'success') {
-            saveStatus.textContent = `Successfully saved: ${data.filename}`;
+            saveStatus.textContent = `Successfully saved: ${data.path}`;
             saveStatus.style.color = "#2ecc71";
         } else {
             saveStatus.textContent = "Error: " + (data.detail || "Failed to save");

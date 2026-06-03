@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from fractal_mcp.app.api.routes import router
+from fractal_mcp.renderer import ensure_images_dir
 
 app = FastAPI(title="Fractal Explorer")
 
@@ -19,7 +20,7 @@ async def value_error_handler(request: Request, exc: Exception) -> JSONResponse:
 STATIC_DIR = Path(__file__).parent / "static"
 
 # Ensure images directory exists in the root
-Path("images").mkdir(exist_ok=True)
+ensure_images_dir()
 
 # Include the explorer API routes
 app.include_router(router)
