@@ -57,7 +57,7 @@ def _generate_and_save_image(
         c=c,
         power=power,
     )
-    path = Path("images") / filename
+    path = IMAGES_DIR / filename
     path.write_bytes(img_bytes)
 
     return {

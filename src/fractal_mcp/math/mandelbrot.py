@@ -45,7 +45,7 @@ def mandelbrot(
             return float(mu)
 
         z_real, z_imag = (
-            z_real_sq - z_imag_sq + c.real,
+            z_real * z_real - z_imag * z_imag + c.real,
             2.0 * z_real * z_imag + c.imag,
         )
 

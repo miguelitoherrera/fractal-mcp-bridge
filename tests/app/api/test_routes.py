@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from fractal_mcp.app.api.routes import clear_render_cache, router
 from fractal_mcp.app.main import value_error_handler
+from fractal_mcp.renderer import IMAGES_DIR
 
 # Testing Constants (formerly from renderer.py)
 RESOLUTION = 1600
