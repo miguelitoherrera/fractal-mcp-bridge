@@ -44,7 +44,6 @@ def mandelbrot(
             mu = i + 2 - np.log2(np.log2(z_abs_sq))
             return float(mu)
 
-        # z = z^2 + c
         z_real, z_imag = (
             z_real * z_real - z_imag * z_imag + c.real,
             2.0 * z_real * z_imag + c.imag,

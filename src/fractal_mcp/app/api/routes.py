@@ -80,6 +80,12 @@ class LastRenderCache:
 _render_cache = LastRenderCache()
 
 
+def clear_render_cache() -> None:
+    """Clear the last rendered image cache (used primarily for test isolation)."""
+    _render_cache.params = None
+    _render_cache.image_bytes = None
+
+
 @router.get("/render")
 async def render(params: FractalParams = Depends()) -> StreamingResponse:
     # Check cache first
@@ -110,6 +116,8 @@ async def render(params: FractalParams = Depends()) -> StreamingResponse:
         params.x_max,
         params.y_min,
         params.y_max,
+        params.resolution,
+        params.max_iterations,
         params.colormap,
         params.reverse_colormap,
         c=params.c,
@@ -131,6 +139,8 @@ async def get_suggested_filename(params: FractalParams = Depends()) -> dict[str,
         params.x_max,
         params.y_min,
         params.y_max,
+        params.resolution,
+        params.max_iterations,
         params.colormap,
         params.reverse_colormap,
         c=params.c,

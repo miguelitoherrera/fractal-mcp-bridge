@@ -8,7 +8,8 @@ from unittest.mock import MagicMock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from fractal_mcp.app.api.routes import router
+from fractal_mcp.app.api.routes import clear_render_cache, router
+from fractal_mcp.app.main import value_error_handler
 from fractal_mcp.renderer import IMAGES_DIR
 
 # Testing Constants (formerly from renderer.py)
@@ -30,7 +31,7 @@ class TestExplorerAPI(unittest.TestCase):
     def setUp(self) -> None:
         app = FastAPI()
         app.include_router(router)
-        from fractal_mcp.app.main import value_error_handler
+        clear_render_cache()
 
         app.add_exception_handler(ValueError, value_error_handler)
         self.client = TestClient(app)
@@ -102,6 +103,26 @@ class TestExplorerAPI(unittest.TestCase):
                 self.assertEqual(response.json()["filename"], case["expected_file"])
                 mock_write.assert_called_once_with(b"save_data")
                 mock_render.assert_called_once()
+
+    def test_router_save_path_traversal_sanitization(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
+        mock_render.return_value = b"save_data"
+        payload = {
+            "fractal_type": "mandelbrot",
+            "x_min": X_MIN,
+            "x_max": X_MAX,
+            "y_min": Y_MIN,
+            "y_max": Y_MAX,
+            "max_iterations": 200,
+            "resolution": 1600,
+            "colormap": "Turbo",
+            "reverse_colormap": False,
+            "filename": "../../../traversal_test.jpg",
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["filename"], "traversal_test.jpg")
+        mock_write.assert_called_once_with(b"save_data")
+        mock_render.assert_called_once()
 
     def test_router_save_invalid_cases(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
         test_cases: list[dict[str, Any]] = [
