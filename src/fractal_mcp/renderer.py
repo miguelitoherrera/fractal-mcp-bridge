@@ -1,4 +1,5 @@
 import io
+from pathlib import Path
 
 import numpy as np
 from bokeh.palettes import all_palettes
@@ -10,6 +11,14 @@ from fractal_mcp.math.julia import generate_julia_grid
 from fractal_mcp.math.mandelbrot import generate_mandelbrot_grid
 from fractal_mcp.math.newton import generate_newton_grid
 from fractal_mcp.math.sine import generate_sine_grid
+
+IMAGES_DIR = Path("images")
+
+
+def ensure_images_dir() -> Path:
+    """Ensure the images directory exists and return the Path object."""
+    IMAGES_DIR.mkdir(exist_ok=True)
+    return IMAGES_DIR
 
 
 def load_bokeh_palette(name: str) -> np.ndarray:
@@ -60,8 +69,8 @@ def grid_to_image_bytes(
         2. Normalization: We map the range [1, max_iterations] to the palette
            range [0, 255].
         3. Background Protection: Points that never escaped (grid >= max_iterations)
-           are usually rendered as the first color in the palette (typically black
-           in our convention).
+           are naturally mapped to the end of the colormap range (index 255),
+           contrasting with the early-escaping background points mapped near index 0.
 
     Args:
         grid: 2D float32 array of smooth iteration counts.
