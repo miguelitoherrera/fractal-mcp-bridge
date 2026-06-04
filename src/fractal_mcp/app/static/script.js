@@ -66,7 +66,9 @@ async function suggestFilename() {
         y_min: state.y_min.toFixed(6),
         y_max: state.y_max.toFixed(6),
         colormap: state.colormap,
-        reverse_colormap: state.reverse_colormap ? 'true' : 'false'
+        reverse_colormap: state.reverse_colormap ? 'true' : 'false',
+        resolution: state.resolution,
+        max_iterations: state.iterations
     };
 
     if (['julia', 'exponential', 'sine', 'cosine'].includes(state.fractal_type)) {

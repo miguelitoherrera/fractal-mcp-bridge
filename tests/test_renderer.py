@@ -28,30 +28,30 @@ Y_MAX = 1.5
 
 class TestRenderer(unittest.TestCase):
     def test_suggest_filename_mandelbrot(self) -> None:
-        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", False)
-        self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo.jpg")
+        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, 1600, 200, "Turbo", False)
+        self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_res1600_iter200_turbo.jpg")
 
     def test_suggest_filename_julia(self) -> None:
-        name = suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", False, c=complex(-0.7, 0.27))
-        self.assertEqual(name, "julia_c-0.700_0.270_x0.0000_y0.0000_viridis.jpg")
+        name = suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, 1600, 200, "Viridis", False, c=complex(-0.7, 0.27))
+        self.assertEqual(name, "julia_c-0.700_0.270_x0.0000_y0.0000_res1600_iter200_viridis.jpg")
 
     def test_suggest_filename_newton(self) -> None:
-        name = suggest_filename("newton", -2.0, 2.0, -2.0, 2.0, "Turbo", False, power=3.0)
-        self.assertEqual(name, "newton_p3.0_x0.0000_y0.0000_turbo.jpg")
+        name = suggest_filename("newton", -2.0, 2.0, -2.0, 2.0, 1600, 200, "Turbo", False, power=3.0)
+        self.assertEqual(name, "newton_p3.0_x0.0000_y0.0000_res1600_iter200_turbo.jpg")
 
     def test_suggest_filename_reversed(self) -> None:
-        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, "Turbo", True)
-        self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_turbo_reversed.jpg")
+        name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, 1600, 200, "Turbo", True)
+        self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_res1600_iter200_turbo_reversed.jpg")
 
     def test_suggest_filename_julia_none_c(self) -> None:
         # Test that passing None raises ValueError for julia
         with self.assertRaises(ValueError):
-            suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, "Viridis", False)
+            suggest_filename("julia", -2.0, 2.0, -2.0, 2.0, 1600, 200, "Viridis", False)
 
     def test_suggest_filename_newton_none_power(self) -> None:
         # Test that passing None raises ValueError for newton
         with self.assertRaises(ValueError):
-            suggest_filename("newton", -2.0, 2.0, -2.0, 2.0, "Turbo", False)
+            suggest_filename("newton", -2.0, 2.0, -2.0, 2.0, 1600, 200, "Turbo", False)
 
     def test_render_mandelbrot(self) -> None:
         img_bytes = render_fractal(
@@ -212,11 +212,13 @@ class TestRenderer(unittest.TestCase):
             1.0,
             -1.5,
             1.5,
+            1600,
+            200,
             "Turbo",
             False,
             c=complex(1.0, 0.0),
         )
-        self.assertEqual(name, "exponential_c1.000_0.000_x-0.5000_y0.0000_turbo.jpg")
+        self.assertEqual(name, "exponential_c1.000_0.000_x-0.5000_y0.0000_res1600_iter200_turbo.jpg")
 
     def test_render_exponential(self) -> None:
         img_bytes = render_fractal(
@@ -235,8 +237,8 @@ class TestRenderer(unittest.TestCase):
         self.assertGreater(len(img_bytes), 0)
 
     def test_suggest_filename_sine(self) -> None:
-        name = suggest_filename("sine", -2.0, 1.0, -1.5, 1.5, "Turbo", False, c=complex(1.0, 0.0))
-        self.assertEqual(name, "sine_c1.000_0.000_x-0.5000_y0.0000_turbo.jpg")
+        name = suggest_filename("sine", -2.0, 1.0, -1.5, 1.5, 1600, 200, "Turbo", False, c=complex(1.0, 0.0))
+        self.assertEqual(name, "sine_c1.000_0.000_x-0.5000_y0.0000_res1600_iter200_turbo.jpg")
 
     def test_render_sine(self) -> None:
         img_bytes = render_fractal(
@@ -255,8 +257,8 @@ class TestRenderer(unittest.TestCase):
         self.assertGreater(len(img_bytes), 0)
 
     def test_suggest_filename_cosine(self) -> None:
-        name = suggest_filename("cosine", -2.0, 1.0, -1.5, 1.5, "Turbo", False, c=complex(1.0, 0.0))
-        self.assertEqual(name, "cosine_c1.000_0.000_x-0.5000_y0.0000_turbo.jpg")
+        name = suggest_filename("cosine", -2.0, 1.0, -1.5, 1.5, 1600, 200, "Turbo", False, c=complex(1.0, 0.0))
+        self.assertEqual(name, "cosine_c1.000_0.000_x-0.5000_y0.0000_res1600_iter200_turbo.jpg")
 
     def test_render_cosine(self) -> None:
         img_bytes = render_fractal(

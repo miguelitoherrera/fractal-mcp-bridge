@@ -172,13 +172,15 @@ def suggest_filename(
     x_max: float,
     y_min: float,
     y_max: float,
+    resolution: int,
+    max_iterations: int,
     colormap: str,
     reverse_colormap: bool,
     c: complex | None = None,
     power: float | None = None,
 ) -> str:
     """Generate a descriptive filename based on fractal parameters."""
-    validate_fractal_params(fractal_type, c, power, x_min, x_max, y_min, y_max)
+    validate_fractal_params(fractal_type, c, power, x_min, x_max, y_min, y_max, resolution, max_iterations)
 
     x_range = x_max - x_min
     x_center = x_min + x_range / 2
@@ -194,7 +196,7 @@ def suggest_filename(
         name = f"newton_p{power:.1f}_x{x_center:.4f}_y{y_center:.4f}"
 
     reversed_suffix = "_reversed" if reverse_colormap else ""
-    return f"{name}_{colormap.lower()}{reversed_suffix}.jpg"
+    return f"{name}_res{resolution}_iter{max_iterations}_{colormap.lower()}{reversed_suffix}.jpg"
 
 
 def render_fractal(

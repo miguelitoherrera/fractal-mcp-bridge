@@ -37,8 +37,8 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(res_dict["type"], "file")
         self.assertEqual(res_dict["colormap"], "Turbo")
 
-        # Expected: images/mandelbrot_x-0.5000_y0.0000_turbo.jpg
-        expected_filename = "mandelbrot_x-0.5000_y0.0000_turbo.jpg"
+        # Expected: images/mandelbrot_x-0.5000_y0.0000_res10_iter10_turbo.jpg
+        expected_filename = "mandelbrot_x-0.5000_y0.0000_res10_iter10_turbo.jpg"
         self.assertEqual(res_dict["path"], f"images/{expected_filename}")
 
         mock_render.assert_called_once()

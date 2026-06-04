@@ -45,7 +45,19 @@ def _generate_and_save_image(
         power=power,
     )
 
-    filename = suggest_filename(fractal_type, x_min, x_max, y_min, y_max, colormap, reverse_colormap, c=c, power=power)
+    filename = suggest_filename(
+        fractal_type,
+        x_min,
+        x_max,
+        y_min,
+        y_max,
+        resolution,
+        max_iterations,
+        colormap,
+        reverse_colormap,
+        c=c,
+        power=power,
+    )
     path = Path("images") / filename
     path.write_bytes(img_bytes)
 

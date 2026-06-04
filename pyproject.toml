@@ -26,8 +26,8 @@ line-length = 120
 target-version = "py314"
 
 [tool.ruff.lint]
-# Error, Pyflakes, Isort, Bugbear, Upgrade
-select = ["E", "F", "I", "B", "UP"]
+# Error, Pyflakes, Isort, Bugbear, Upgrade, Private Access (Self), Import Outside Top Level
+select = ["E", "F", "I", "B", "UP", "SLF", "PLC0415"]
 ignore = ["B008"]
 fixable = ["ALL"]
 
