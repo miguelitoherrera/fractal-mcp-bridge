@@ -49,262 +49,149 @@ class TestExplorerAPI(unittest.TestCase):
 
         return urllib.parse.urlencode(defaults)
 
-    def test_router_render_mandelbrot(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        mock_render.return_value = b"render_data"
+    def test_router_render_cases(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        test_cases: list[dict[str, Any]] = [
+            {"fractal_type": "mandelbrot", "expected": b"render_data"},
+            {"fractal_type": "julia", "c": "-0.7+0.27j", "expected": b"julia_data"},
+            {"fractal_type": "exponential", "c": "1+0j", "expected": b"expo_data"},
+            {"fractal_type": "sine", "c": "1+0j", "expected": b"sine_data"},
+            {"fractal_type": "cosine", "c": "1+0j", "expected": b"cosine_data"},
+            {"fractal_type": "newton", "power": 3.0, "expected": b"newton_data"},
+        ]
+        for case in test_cases:
+            with self.subTest(fractal_type=case["fractal_type"]):
+                mock_render.reset_mock()
+                mock_render.return_value = case["expected"]
 
-        params = self._get_default_params(fractal_type="mandelbrot")
-        response = self.client.get(f"/render?{params}")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, b"render_data")
-        mock_render.assert_called_once()
+                kwargs = {k: v for k, v in case.items() if k != "expected"}
+                params = self._get_default_params(**kwargs)
+                response = self.client.get(f"/render?{params}")
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.content, case["expected"])
+                mock_render.assert_called_once()
 
-    def test_router_render_julia(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        mock_render.return_value = b"julia_data"
-
-        # Must provide julia_c now
-        params = self._get_default_params(fractal_type="julia", c="-0.7+0.27j")
-        response = self.client.get(f"/render?{params}")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, b"julia_data")
-        mock_render.assert_called_once()
-
-    def test_router_render_exponential(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        mock_render.return_value = b"expo_data"
-
-        params = self._get_default_params(fractal_type="exponential", c="1+0j")
-        response = self.client.get(f"/render?{params}")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, b"expo_data")
-        mock_render.assert_called_once()
-
-    def test_router_render_sine(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        mock_render.return_value = b"sine_data"
-
-        params = self._get_default_params(fractal_type="sine", c="1+0j")
-        response = self.client.get(f"/render?{params}")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, b"sine_data")
-        mock_render.assert_called_once()
-
-    def test_router_render_cosine(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        mock_render.return_value = b"cosine_data"
-
-        params = self._get_default_params(fractal_type="cosine", c="1+0j")
-        response = self.client.get(f"/render?{params}")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, b"cosine_data")
-        mock_render.assert_called_once()
-
-    def test_router_render_newton(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        mock_render.return_value = b"newton_data"
-
-        params = self._get_default_params(fractal_type="newton", power=3.0)
-        response = self.client.get(f"/render?{params}")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, b"newton_data")
-        mock_render.assert_called_once()
-
-    def test_router_save_no_ext(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
+    def test_router_save_success_cases(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
         mock_render.return_value = b"save_data"
+        test_cases: list[dict[str, Any]] = [
+            {"fractal_type": "mandelbrot", "filename": "m_save", "expected_file": "m_save.jpg"},
+            {"fractal_type": "julia", "c": "-0.7 + 0.27j", "filename": "j_save", "expected_file": "j_save.jpg"},
+            {"fractal_type": "exponential", "c": "1+0j", "filename": "e_save", "expected_file": "e_save.jpg"},
+            {"fractal_type": "sine", "c": "1+0j", "filename": "s_save", "expected_file": "s_save.jpg"},
+            {"fractal_type": "cosine", "c": "1+0j", "filename": "c_save", "expected_file": "c_save.jpg"},
+            {"fractal_type": "newton", "power": 3.0, "filename": "n_save", "expected_file": "n_save.jpg"},
+        ]
+        for case in test_cases:
+            with self.subTest(case=case):
+                mock_render.reset_mock()
+                mock_write.reset_mock()
 
-        payload = {
-            "fractal_type": "mandelbrot",
-            "filename": "test",
-            "x_min": X_MIN,
-            "x_max": X_MAX,
-            "y_min": Y_MIN,
-            "y_max": Y_MAX,
-            "max_iterations": 200,
-            "resolution": 1600,
-            "colormap": "Turbo",
-            "reverse_colormap": False,
-        }
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["filename"], "test.jpg")
-        mock_write.assert_called_once_with(b"save_data")
+                payload = {
+                    "x_min": X_MIN,
+                    "x_max": X_MAX,
+                    "y_min": Y_MIN,
+                    "y_max": Y_MAX,
+                    "max_iterations": 200,
+                    "resolution": 1600,
+                    "colormap": "Turbo",
+                    "reverse_colormap": False,
+                    **{k: v for k, v in case.items() if k != "expected_file"},
+                }
+                response = self.client.post("/save", json=payload)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json()["filename"], case["expected_file"])
+                mock_write.assert_called_once_with(b"save_data")
+                mock_render.assert_called_once()
 
-    def test_router_save_missing_filename(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        # No filename provided - should return 422 Unprocessable Entity
-        payload = {
-            "fractal_type": "mandelbrot",
-            "x_min": X_MIN,
-            "x_max": X_MAX,
-            "y_min": Y_MIN,
-            "y_max": Y_MAX,
-            "max_iterations": 200,
-            "resolution": 1600,
-            "colormap": "Turbo",
-            "reverse_colormap": False,
-        }
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 422)
+    def test_router_save_invalid_cases(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        test_cases: list[dict[str, Any]] = [
+            # Missing filename
+            {
+                "fractal_type": "mandelbrot",
+                "x_min": X_MIN,
+                "x_max": X_MAX,
+                "y_min": Y_MIN,
+                "y_max": Y_MAX,
+                "max_iterations": 200,
+                "resolution": 1600,
+                "colormap": "Turbo",
+                "reverse_colormap": False,
+            },
+            # Invalid complex number string
+            {"fractal_type": "julia", "c": "not-a-number", "resolution": 123, "filename": "test"},
+            # Missing julia c
+            {
+                "fractal_type": "julia",
+                "filename": "missing_c",
+                "x_min": X_MIN,
+                "x_max": X_MAX,
+                "y_min": Y_MIN,
+                "y_max": Y_MAX,
+                "max_iterations": 200,
+                "resolution": 1600,
+                "colormap": "Turbo",
+                "reverse_colormap": False,
+            },
+            # Explicit None julia c
+            {
+                "fractal_type": "julia",
+                "c": None,
+                "filename": "none_c",
+                "x_min": X_MIN,
+                "x_max": X_MAX,
+                "y_min": Y_MIN,
+                "y_max": Y_MAX,
+                "max_iterations": 200,
+                "resolution": 1600,
+                "colormap": "Turbo",
+                "reverse_colormap": False,
+            },
+            # Invalid coordinates value error
+            {
+                "fractal_type": "mandelbrot",
+                "filename": "invalid_coords",
+                "x_min": 1.0,
+                "x_max": -1.0,
+                "y_min": Y_MIN,
+                "y_max": Y_MAX,
+                "max_iterations": 200,
+                "resolution": 1600,
+                "colormap": "Turbo",
+                "reverse_colormap": False,
+            },
+        ]
+        for case in test_cases:
+            with self.subTest(case=case):
+                response = self.client.post("/save", json=case)
+                self.assertEqual(response.status_code, 422)
 
-    def test_router_save_julia_with_c(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
-        mock_render.return_value = b"save_data"
-
-        # Julia type WITH julia_c provided
-        payload = {
-            "fractal_type": "julia",
-            "c": "-0.7+0.27j",
-            "filename": "julia_custom",
-            "x_min": X_MIN,
-            "x_max": X_MAX,
-            "y_min": Y_MIN,
-            "y_max": Y_MAX,
-            "max_iterations": 200,
-            "resolution": 1600,
-            "colormap": "Turbo",
-            "reverse_colormap": False,
-        }
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["filename"], "julia_custom.jpg")
-        mock_write.assert_called_once_with(b"save_data")
-
-    def test_router_save_newton(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
-        mock_render.return_value = b"save_data"
-
-        payload = {
-            "fractal_type": "newton",
-            "power": 3.0,
-            "filename": "newton_test",
-            "x_min": X_MIN,
-            "x_max": X_MAX,
-            "y_min": Y_MIN,
-            "y_max": Y_MAX,
-            "max_iterations": 200,
-            "resolution": 1600,
-            "colormap": "Turbo",
-            "reverse_colormap": False,
-        }
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["filename"], "newton_test.jpg")
-        mock_write.assert_called_once_with(b"save_data")
-
-    def test_router_save_complex_string(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
-        mock_render.return_value = b"save_data"
-
-        # Test parsing complex number from string
-        payload = {
-            "fractal_type": "julia",
-            "c": "-0.7 + 0.27j",
-            "filename": "julia_test",
-            "x_min": X_MIN,
-            "x_max": X_MAX,
-            "y_min": Y_MIN,
-            "y_max": Y_MAX,
-            "max_iterations": 200,
-            "resolution": 1600,
-            "colormap": "Turbo",
-            "reverse_colormap": False,
-        }
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["filename"], "julia_test.jpg")
-        mock_write.assert_called_once_with(b"save_data")
-
-    def test_router_suggest_filename_endpoint(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        params = self._get_default_params(fractal_type="julia", c="-0.123+0.745j", reverse_colormap=False)
-        response = self.client.get(f"/suggest-filename?{params}")
-        self.assertEqual(response.status_code, 200)
-        filename = response.json()["filename"]
-        self.assertNotIn("reversed", filename)
-        self.assertTrue(filename.endswith("turbo.jpg"))
-
-    def test_router_suggest_filename_julia_with_c(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        params = self._get_default_params(fractal_type="julia", c="-0.7+0.27j")
-        response = self.client.get(f"/suggest-filename?{params}")
-        self.assertEqual(response.status_code, 200)
-        filename = response.json()["filename"]
-        self.assertIn("julia_c-0.700_0.270", filename)
-
-    def test_router_suggest_filename_newton(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        params = self._get_default_params(fractal_type="newton", power=3.5)
-        response = self.client.get(f"/suggest-filename?{params}")
-        self.assertEqual(response.status_code, 200)
-        filename = response.json()["filename"]
-        self.assertIn("newton_p3.5", filename)
-
-    def test_save_invalid_complex(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        # Now returns 422 because we removed the try-except in the validator
-        payload = {"fractal_type": "julia", "c": "not-a-number", "resolution": 123}
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 422)
-
-    def test_save_missing_julia_c(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        # Should return 422 because of Pydantic model_validator
-        payload = {
-            "fractal_type": "julia",
-            "filename": "missing_c",
-            "x_min": X_MIN,
-            "x_max": X_MAX,
-            "y_min": Y_MIN,
-            "y_max": Y_MAX,
-            "max_iterations": 200,
-            "resolution": 1600,
-            "colormap": "Turbo",
-            "reverse_colormap": False,
-        }
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 422)
-
-    def test_save_explicit_none_julia_c(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        # Should return 422 because of Pydantic model_validator
-        payload = {
-            "fractal_type": "julia",
-            "julia_c": None,
-            "filename": "none_c",
-            "x_min": X_MIN,
-            "x_max": X_MAX,
-            "y_min": Y_MIN,
-            "y_max": Y_MAX,
-            "max_iterations": 200,
-            "resolution": 1600,
-            "colormap": "Turbo",
-            "reverse_colormap": False,
-        }
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 422)
-
-    def test_save_complex_object(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        mock_render.return_value = b"data"
-        payload = {
-            "fractal_type": "julia",
-            "c": "-0.123+0.745j",
-            "filename": "complex_str",
-            "x_min": X_MIN,
-            "x_max": X_MAX,
-            "y_min": Y_MIN,
-            "y_max": Y_MAX,
-            "max_iterations": 200,
-            "resolution": 1600,
-            "colormap": "Turbo",
-            "reverse_colormap": False,
-        }
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 200)
-        mock_render.assert_called_once()
-
-    def test_save_mandelbrot(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
-        mock_render.return_value = b"data"
-        # Test the branch where fractal_type != JULIA
-        payload = {
-            "fractal_type": "mandelbrot",
-            "filename": "mandelbrot_save",
-            "x_min": X_MIN,
-            "x_max": X_MAX,
-            "y_min": Y_MIN,
-            "y_max": Y_MAX,
-            "max_iterations": 200,
-            "resolution": 1600,
-            "colormap": "Turbo",
-            "reverse_colormap": False,
-        }
-        response = self.client.post("/save", json=payload)
-        self.assertEqual(response.status_code, 200)
-        mock_render.assert_called_once()
+    def test_router_suggest_filename_cases(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        test_cases: list[dict[str, Any]] = [
+            {
+                "params": {"fractal_type": "julia", "c": "-0.123+0.745j", "reverse_colormap": False},
+                "not_in": "reversed",
+                "ends_with": "turbo.jpg",
+            },
+            {
+                "params": {"fractal_type": "julia", "c": "-0.7+0.27j"},
+                "in": "julia_c-0.700_0.270",
+            },
+            {
+                "params": {"fractal_type": "newton", "power": 3.5},
+                "in": "newton_p3.5",
+            },
+        ]
+        for case in test_cases:
+            with self.subTest(params=case["params"]):
+                params = self._get_default_params(**case["params"])
+                response = self.client.get(f"/suggest-filename?{params}")
+                self.assertEqual(response.status_code, 200)
+                filename = response.json()["filename"]
+                if "not_in" in case:
+                    self.assertNotIn(case["not_in"], filename)
+                if "ends_with" in case:
+                    self.assertTrue(filename.endswith(case["ends_with"]))
+                if "in" in case:
+                    self.assertIn(case["in"], filename)
 
     def test_render_cache_hit(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
         mock_render.return_value = b"cached_data"

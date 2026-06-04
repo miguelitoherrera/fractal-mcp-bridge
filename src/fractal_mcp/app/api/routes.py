@@ -67,17 +67,13 @@ class LastRenderCache:
         self.params: dict[str, Any] | None = None
         self.image_bytes: bytes | None = None
 
-    def _extract_params(self, p: FractalParams) -> dict[str, Any]:
-        """Internal helper to get rendering params from model."""
-        return p.model_dump(exclude={"filename"})
-
     def matches(self, params: FractalParams) -> bool:
         if self.params is None:
             return False
-        return bool(self.params == self._extract_params(params))
+        return bool(self.params == params.model_dump(exclude={"filename"}))
 
     def update(self, params: FractalParams, image_bytes: bytes) -> None:
-        self.params = self._extract_params(params)
+        self.params = params.model_dump(exclude={"filename"})
         self.image_bytes = image_bytes
 
 
