@@ -57,10 +57,13 @@ class TestSine(unittest.TestCase):
 
     def test_sine_set_boundary_escape(self) -> None:
         # Start immediately outside the absolute imaginary boundary of 50.0.
-        # Escape counts are continuous floats due to the smooth coloring formula.
+        # Should escape immediately returning 0.0.
         iters = sine_set(self.z_imag_boundary_escape, self.c_imag_boundary_escape, self.expected_max_iterations)
-        expected_escape_threshold = 2.0
-        self.assertLess(iters, expected_escape_threshold)
+        self.assertEqual(iters, 0.0)
+
+        # Even with c=0, a point starting outside the boundary should escape immediately.
+        iters_c_zero = sine_set(self.z_imag_boundary_escape, complex(0.0, 0.0), self.expected_max_iterations)
+        self.assertEqual(iters_c_zero, 0.0)
 
     def test_generate_sine_grid_inverted(self) -> None:
         # Inverted coordinate boundaries should produce a grid whose shared coordinates

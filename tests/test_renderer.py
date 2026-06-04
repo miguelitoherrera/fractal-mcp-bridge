@@ -43,6 +43,14 @@ class TestRenderer(unittest.TestCase):
         name = suggest_filename("mandelbrot", -2.0, 1.0, -1.5, 1.5, 1600, 200, "Turbo", True)
         self.assertEqual(name, "mandelbrot_x-0.5000_y0.0000_res1600_iter200_turbo_reversed.jpg")
 
+    def test_suggest_filename_deep_zoom(self) -> None:
+        # Deep zoom where x_max - x_min is 1e-8
+        name = suggest_filename(
+            "mandelbrot", -0.74364388, -0.74364387, 0.13182590, 0.13182591, 1600, 200, "Turbo", False
+        )
+        # log10(1e-8) = -8, precision = max(4, 8 + 2) = 10
+        self.assertEqual(name, "mandelbrot_x-0.7436438750_y0.1318259050_res1600_iter200_turbo.jpg")
+
     def test_suggest_filename_julia_none_c(self) -> None:
         # Test that passing None raises ValueError for julia
         with self.assertRaises(ValueError):

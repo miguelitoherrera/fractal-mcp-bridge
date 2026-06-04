@@ -87,6 +87,11 @@ def grid_to_image_bytes(
 
     # We shift by 1.0 to ensure that the very first escape (at n=1)
     # starts near index 0. We clip to handle immediate escapes.
+    # Note: Using max_iterations (instead of max_iterations - 1.0) as the denominator
+    # is an intentional design choice to maintain continuous colormap gradients.
+    # This prevents sharp, disconnected boundaries between late-escaping points and
+    # the convergent interior, allowing seamless blending into the colormap range.
+    # DO NOT change this to (max_iterations - 1.0) or add solid black masking.
     t = np.clip((grid - 1.0) / max_iterations, 0.0, 1.0)
 
     # Map the 0-1 range to palette indices 0-255.
@@ -195,14 +200,17 @@ def suggest_filename(
     x_center = x_min + x_range / 2
     y_center = y_min + (y_max - y_min) / 2
 
-    name = f"{fractal_type}_x{x_center:.4f}_y{y_center:.4f}"
+    # Dynamically scale precision based on the zoom range (minimum 4 decimal places)
+    precision = max(4, -int(np.floor(np.log10(x_range))) + 2)
+
+    name = f"{fractal_type}_x{x_center:.{precision}f}_y{y_center:.{precision}f}"
 
     if fractal_type in ["julia", "exponential", "sine", "cosine"]:
         assert c is not None
-        name = f"{fractal_type}_c{c.real:.3f}_{c.imag:.3f}_x{x_center:.4f}_y{y_center:.4f}"
+        name = f"{fractal_type}_c{c.real:.3f}_{c.imag:.3f}_x{x_center:.{precision}f}_y{y_center:.{precision}f}"
     elif fractal_type == "newton":
         assert power is not None
-        name = f"newton_p{power:.1f}_x{x_center:.4f}_y{y_center:.4f}"
+        name = f"newton_p{power:.1f}_x{x_center:.{precision}f}_y{y_center:.{precision}f}"
 
     reversed_suffix = "_reversed" if reverse_colormap else ""
     return f"{name}_res{resolution}_iter{max_iterations}_{colormap.lower()}{reversed_suffix}.jpg"
