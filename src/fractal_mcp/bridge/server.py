@@ -3,18 +3,17 @@
 This module provides a FastMCP server that exposes fractal generation tools (Mandelbrot and Julia sets) to MCP clients.
 """
 
-from pathlib import Path
 from typing import Any
 
 from fastmcp import FastMCP
 
-from fractal_mcp.renderer import render_fractal, suggest_filename
+from fractal_mcp.renderer import IMAGES_DIR, ensure_images_dir, render_fractal, suggest_filename
 
 # Initialize the MCP server
 mcp = FastMCP("FractalBridge")
 
 # Ensure images directory exists
-Path("images").mkdir(exist_ok=True)
+ensure_images_dir()
 
 
 def _generate_and_save_image(
@@ -46,7 +45,7 @@ def _generate_and_save_image(
     )
 
     filename = suggest_filename(fractal_type, x_min, x_max, y_min, y_max, colormap, reverse_colormap, c=c, power=power)
-    path = Path("images") / filename
+    path = IMAGES_DIR / filename
     path.write_bytes(img_bytes)
 
     return {

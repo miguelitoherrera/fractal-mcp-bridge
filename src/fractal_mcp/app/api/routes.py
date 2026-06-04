@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, field_validator, model_validator
 
-from fractal_mcp.renderer import render_fractal, suggest_filename, validate_fractal_params
+from fractal_mcp.renderer import IMAGES_DIR, render_fractal, suggest_filename, validate_fractal_params
 
 router = APIRouter()
 
@@ -141,7 +141,7 @@ async def get_suggested_filename(params: FractalParams = Depends()) -> dict[str,
 
 @router.post("/save")
 async def save(req: SaveRequest) -> dict[str, str]:
-    filename = req.filename
+    filename = Path(req.filename).name
     if not filename.lower().endswith((".jpg", ".jpeg")):
         filename += ".jpg"
 
@@ -166,5 +166,5 @@ async def save(req: SaveRequest) -> dict[str, str]:
         _render_cache.update(req, img_bytes)
 
     assert img_bytes is not None
-    (Path("images") / filename).write_bytes(img_bytes)
-    return {"status": "success", "filename": filename}
+    (IMAGES_DIR / filename).write_bytes(img_bytes)
+    return {"status": "success", "filename": filename, "path": str(IMAGES_DIR / filename)}

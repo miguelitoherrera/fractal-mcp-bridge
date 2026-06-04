@@ -38,18 +38,17 @@ def mandelbrot(
     bailout_sq = bailout * bailout
 
     for i in range(max_iterations):
-        # z = z^2 + c
-        z_real_sq = z_real * z_real
-        z_imag_sq = z_imag * z_imag
-
-        if z_real_sq + z_imag_sq > bailout_sq:
+        z_abs_sq = z_real * z_real + z_imag * z_imag
+        if z_abs_sq > bailout_sq:
             # Smooth coloring formula: v = i + 2 - log2(log2(|z|^2))
-            z_abs_sq = z_real_sq + z_imag_sq
             mu = i + 2 - np.log2(np.log2(z_abs_sq))
             return float(mu)
 
-        z_imag = 2.0 * z_real * z_imag + c.imag
-        z_real = z_real_sq - z_imag_sq + c.real
+        # z = z^2 + c
+        z_real, z_imag = (
+            z_real * z_real - z_imag * z_imag + c.real,
+            2.0 * z_real * z_imag + c.imag,
+        )
 
     return float(max_iterations)
 

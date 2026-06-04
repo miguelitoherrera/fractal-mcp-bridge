@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 from fractal_mcp.bridge.server import mcp
 
 
-@patch("fractal_mcp.bridge.server.Path.write_bytes")
+@patch("pathlib.Path.write_bytes")
 @patch("fractal_mcp.bridge.server.render_fractal")
 class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
     async def test_generate_mandelbrot_image(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
