@@ -26,6 +26,9 @@ def exponential_set(
     Returns:
         Smooth iteration count (float) until escape, or max_iterations if bounded.
     """
+    if z.real > 50.0:
+        return 0.0
+
     for i in range(max_iterations):
         prev_real = z.real
         z = c * np.exp(z)

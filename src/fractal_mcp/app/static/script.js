@@ -61,10 +61,10 @@ function syncStateFromUI() {
 async function suggestFilename() {
     const paramsObj = {
         fractal_type: state.fractal_type,
-        x_min: state.x_min.toFixed(6),
-        x_max: state.x_max.toFixed(6),
-        y_min: state.y_min.toFixed(6),
-        y_max: state.y_max.toFixed(6),
+        x_min: state.x_min,
+        x_max: state.x_max,
+        y_min: state.y_min,
+        y_max: state.y_max,
         colormap: state.colormap,
         reverse_colormap: state.reverse_colormap ? 'true' : 'false',
         resolution: state.resolution,
@@ -250,6 +250,7 @@ fractalImg.onclick = (e) => {
 
 // Save image handler
 saveBtn.onclick = async () => {
+    syncStateFromUI();
     saveStatus.textContent = "Saving to server...";
     saveStatus.style.color = "#3498db";
 
