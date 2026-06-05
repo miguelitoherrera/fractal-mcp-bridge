@@ -34,7 +34,8 @@ function syncStateFromUI() {
     state.reverse_colormap = document.getElementById('reverse_colormap').checked;
     state.c_real = parseFloat(document.getElementById('c_real').value) || 0;
     state.c_imag = parseFloat(document.getElementById('c_imag').value) || 0;
-    state.power = parseFloat(document.getElementById('power').value) || 3.0;
+    const parsedPower = parseFloat(document.getElementById('power').value);
+    state.power = isNaN(parsedPower) ? 3.0 : parsedPower;
 
     cParams.style.display = (['julia', 'exponential', 'sine', 'cosine'].includes(state.fractal_type)) ? 'flex' : 'none';
     newtonParams.style.display = (state.fractal_type === 'newton') ? 'flex' : 'none';
@@ -183,10 +184,16 @@ function resetView() {
     state.iterations = 200;
     state.resolution = 1600;
     state.reverse_colormap = false;
+    state.c_real = -0.7;
+    state.c_imag = 0.27;
+    state.power = 3.0;
 
     document.getElementById('iterations').value = 200;
     document.getElementById('resolution').value = 1600;
     document.getElementById('reverse_colormap').checked = false;
+    document.getElementById('c_real').value = -0.7;
+    document.getElementById('c_imag').value = 0.27;
+    document.getElementById('power').value = 3.0;
 
     updateUI(true);
 }
@@ -194,6 +201,11 @@ function resetView() {
 // Image load handler
 fractalImg.onload = () => {
     loader.classList.remove('active');
+};
+fractalImg.onerror = () => {
+    loader.classList.remove('active');
+    saveStatus.textContent = "Failed to load the rendered image.";
+    saveStatus.style.color = "#e74c3c";
 };
 
 const hoverCoords = document.getElementById('hover-coords');

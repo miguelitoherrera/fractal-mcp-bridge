@@ -5,6 +5,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from fractal_mcp.bridge.server import mcp
+from fractal_mcp.renderer import IMAGES_DIR
 
 
 @patch("pathlib.Path.write_bytes")
@@ -39,7 +40,7 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
 
         # Expected: images/mandelbrot_x-0.5000_y0.0000_res10_iter10_turbo.jpg
         expected_filename = "mandelbrot_x-0.5000_y0.0000_res10_iter10_turbo.jpg"
-        self.assertEqual(res_dict["path"], f"images/{expected_filename}")
+        self.assertEqual(res_dict["path"], str(IMAGES_DIR / expected_filename))
 
         mock_render.assert_called_once()
         mock_write.assert_called_once_with(b"fake_image_data")

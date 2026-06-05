@@ -7,13 +7,11 @@ from typing import Any
 
 from fastmcp import FastMCP
 
+from fractal_mcp.app.api.routes import parse_complex
 from fractal_mcp.renderer import IMAGES_DIR, ensure_images_dir, render_fractal, suggest_filename
 
 # Initialize the MCP server
 mcp = FastMCP("FractalBridge")
-
-# Ensure images directory exists
-ensure_images_dir()
 
 
 def _generate_and_save_image(
@@ -30,6 +28,7 @@ def _generate_and_save_image(
     power: float | None = None,
 ) -> dict[str, Any]:
     """Helper to render, save a fractal image, and structure the tool response."""
+    ensure_images_dir()
     img_bytes = render_fractal(
         fractal_type,
         x_min,
@@ -74,10 +73,10 @@ def generate_mandelbrot_image(
     x_max: float,
     y_min: float,
     y_max: float,
-    resolution: int,
-    max_iterations: int,
-    colormap: str,
-    reverse_colormap: bool,
+    resolution: int = 1600,
+    max_iterations: int = 200,
+    colormap: str = "Turbo",
+    reverse_colormap: bool = False,
 ) -> dict[str, Any]:
     """
     Render a Mandelbrot set image and save it to a file.
@@ -111,11 +110,11 @@ def generate_julia_image(
     x_max: float,
     y_min: float,
     y_max: float,
-    c: complex,
-    resolution: int,
-    max_iterations: int,
-    colormap: str,
-    reverse_colormap: bool,
+    c: str,
+    resolution: int = 1600,
+    max_iterations: int = 200,
+    colormap: str = "Turbo",
+    reverse_colormap: bool = False,
 ) -> dict[str, Any]:
     """
     Render a Julia set image for a given complex constant c and save it to a file.
@@ -125,7 +124,7 @@ def generate_julia_image(
         x_max: Maximum real value (horizontal axis).
         y_min: Minimum imaginary value (vertical axis).
         y_max: Maximum imaginary value (vertical axis).
-        c: The complex constant 'c' as a complex object.
+        c: The complex constant 'c' as a complex object or string.
         resolution: Pixel width of the image.
         max_iterations: Maximum iterations.
         colormap: Bokeh colormap name.
@@ -141,7 +140,7 @@ def generate_julia_image(
         max_iterations,
         colormap,
         reverse_colormap,
-        c=c,
+        c=parse_complex(c),
     )
 
 
@@ -151,11 +150,11 @@ def generate_exponential_image(
     x_max: float,
     y_min: float,
     y_max: float,
-    c: complex,
-    resolution: int,
-    max_iterations: int,
-    colormap: str,
-    reverse_colormap: bool,
+    c: str,
+    resolution: int = 1600,
+    max_iterations: int = 200,
+    colormap: str = "Turbo",
+    reverse_colormap: bool = False,
 ) -> dict[str, Any]:
     """
     Render an exponential fractal image and save it to a file.
@@ -165,7 +164,7 @@ def generate_exponential_image(
         x_max: Maximum real value (horizontal axis).
         y_min: Minimum imaginary value (vertical axis).
         y_max: Maximum imaginary value (vertical axis).
-        c: The complex constant 'c' as a complex object.
+        c: The complex constant 'c' as a complex object or string.
         resolution: Pixel width of the image.
         max_iterations: Maximum iterations.
         colormap: Bokeh colormap name.
@@ -181,7 +180,7 @@ def generate_exponential_image(
         max_iterations,
         colormap,
         reverse_colormap,
-        c=c,
+        c=parse_complex(c),
     )
 
 
@@ -191,11 +190,11 @@ def generate_sine_image(
     x_max: float,
     y_min: float,
     y_max: float,
-    c: complex,
-    resolution: int,
-    max_iterations: int,
-    colormap: str,
-    reverse_colormap: bool,
+    c: str,
+    resolution: int = 1600,
+    max_iterations: int = 200,
+    colormap: str = "Turbo",
+    reverse_colormap: bool = False,
 ) -> dict[str, Any]:
     """
     Render a sine fractal image and save it to a file.
@@ -205,7 +204,7 @@ def generate_sine_image(
         x_max: Maximum real value (horizontal axis).
         y_min: Minimum imaginary value (vertical axis).
         y_max: Maximum imaginary value (vertical axis).
-        c: The complex constant 'c' as a complex object.
+        c: The complex constant 'c' as a complex object or string.
         resolution: Pixel width of the image.
         max_iterations: Maximum iterations.
         colormap: Bokeh colormap name.
@@ -221,7 +220,7 @@ def generate_sine_image(
         max_iterations,
         colormap,
         reverse_colormap,
-        c=c,
+        c=parse_complex(c),
     )
 
 
@@ -231,11 +230,11 @@ def generate_cosine_image(
     x_max: float,
     y_min: float,
     y_max: float,
-    c: complex,
-    resolution: int,
-    max_iterations: int,
-    colormap: str,
-    reverse_colormap: bool,
+    c: str,
+    resolution: int = 1600,
+    max_iterations: int = 200,
+    colormap: str = "Turbo",
+    reverse_colormap: bool = False,
 ) -> dict[str, Any]:
     """
     Render a cosine fractal image and save it to a file.
@@ -245,7 +244,7 @@ def generate_cosine_image(
         x_max: Maximum real value (horizontal axis).
         y_min: Minimum imaginary value (vertical axis).
         y_max: Maximum imaginary value (vertical axis).
-        c: The complex constant 'c' as a complex object.
+        c: The complex constant 'c' as a complex object or string.
         resolution: Pixel width of the image.
         max_iterations: Maximum iterations.
         colormap: Bokeh colormap name.
@@ -261,7 +260,7 @@ def generate_cosine_image(
         max_iterations,
         colormap,
         reverse_colormap,
-        c=c,
+        c=parse_complex(c),
     )
 
 
@@ -272,10 +271,10 @@ def generate_newton_image(
     y_min: float,
     y_max: float,
     power: float,
-    resolution: int,
-    max_iterations: int,
-    colormap: str,
-    reverse_colormap: bool,
+    resolution: int = 1600,
+    max_iterations: int = 200,
+    colormap: str = "Turbo",
+    reverse_colormap: bool = False,
 ) -> dict[str, Any]:
     """
     Render a Newton's method fractal image and save it to a file.

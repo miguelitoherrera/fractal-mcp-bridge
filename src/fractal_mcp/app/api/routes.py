@@ -66,17 +66,26 @@ class SaveRequest(FractalParams):
 # Simple one-item cache for the last rendered image to avoid redundant calculations
 class LastRenderCache:
     def __init__(self) -> None:
-        self.params: dict[str, Any] | None = None
-        self.image_bytes: bytes | None = None
+        self._cache: tuple[dict[str, Any], bytes] | None = None
 
     def matches(self, params: FractalParams) -> bool:
-        if self.params is None:
+        cache = self._cache
+        if cache is None:
             return False
-        return bool(self.params == params.model_dump(exclude={"filename"}))
+        stored_params, _ = cache
+        return bool(stored_params == params.model_dump(exclude={"filename"}))
+
+    @property
+    def image_bytes(self) -> bytes | None:
+        cache = self._cache
+        return cache[1] if cache is not None else None
 
     def update(self, params: FractalParams, image_bytes: bytes) -> None:
-        self.params = params.model_dump(exclude={"filename"})
-        self.image_bytes = image_bytes
+        self._cache = (params.model_dump(exclude={"filename"}), image_bytes)
+
+    def clear(self) -> None:
+        """Clear the cache."""
+        self._cache = None
 
 
 _render_cache = LastRenderCache()
@@ -84,8 +93,7 @@ _render_cache = LastRenderCache()
 
 def clear_render_cache() -> None:
     """Clear the last rendered image cache (used primarily for test isolation)."""
-    _render_cache.params = None
-    _render_cache.image_bytes = None
+    _render_cache.clear()
 
 
 @router.get("/render")

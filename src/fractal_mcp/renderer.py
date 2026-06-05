@@ -12,7 +12,7 @@ from fractal_mcp.math.mandelbrot import generate_mandelbrot_grid
 from fractal_mcp.math.newton import generate_newton_grid
 from fractal_mcp.math.sine import generate_sine_grid
 
-IMAGES_DIR = Path("images")
+IMAGES_DIR = Path(__file__).resolve().parent.parent.parent / "images"
 
 # Case-insensitive lookup mapping lowercase names to original Bokeh palette family keys
 _COLORMAP_LOOKUP = {k.lower(): k for k in all_palettes.keys()}
@@ -192,7 +192,7 @@ def validate_fractal_params(
         x_range = x_max - x_min
         y_range = y_max - y_min
         # Allow minor floating-point tolerances
-        if not np.isclose(x_range, y_range, rtol=1e-5):
+        if not np.isclose(x_range, y_range, rtol=1e-5, atol=0.0):
             raise ValueError("The coordinate viewport must have a 1-to-1 aspect ratio.")
 
     # Validate colormap name exists in Bokeh palettes case-insensitively
