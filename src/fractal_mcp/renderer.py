@@ -197,8 +197,7 @@ def validate_fractal_params(
 
     # Validate colormap name exists in Bokeh palettes case-insensitively
     if colormap is not None and colormap.lower() not in _COLORMAP_LOOKUP:
-        valid_names = ", ".join(list_colormaps()[:10]) + " ... and more"
-        raise ValueError(f"Unsupported colormap '{colormap}'. Valid options include: {valid_names}")
+        raise ValueError(f"Unsupported colormap '{colormap}'.")
 
 
 def suggest_filename(

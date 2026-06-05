@@ -141,37 +141,103 @@ class TestRenderer(unittest.TestCase):
 
     def test_validate_params_invalid_coords(self) -> None:
         # Test x_min >= x_max
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal("mandelbrot", 1.0, -1.0, -1.0, 1.0, 100, 100, "Turbo", False)
-        self.assertIn("x_min must be strictly less than x_max", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^x_min must be strictly less than x_max$",
+            render_fractal,
+            "mandelbrot",
+            1.0,
+            -1.0,
+            -1.0,
+            1.0,
+            100,
+            100,
+            "Turbo",
+            False,
+        )
 
         # Test y_min >= y_max
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal("mandelbrot", -1.0, 1.0, 1.0, -1.0, 100, 100, "Turbo", False)
-        self.assertIn("y_min must be strictly less than y_max", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^y_min must be strictly less than y_max$",
+            render_fractal,
+            "mandelbrot",
+            -1.0,
+            1.0,
+            1.0,
+            -1.0,
+            100,
+            100,
+            "Turbo",
+            False,
+        )
 
     def test_validate_params_invalid_dimensions(self) -> None:
         # Test resolution <= 0
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal("mandelbrot", -1.0, 1.0, -1.0, 1.0, 0, 100, "Turbo", False)
-        self.assertIn("resolution must be strictly positive", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^resolution must be strictly positive and at most 12800$",
+            render_fractal,
+            "mandelbrot",
+            -1.0,
+            1.0,
+            -1.0,
+            1.0,
+            0,
+            100,
+            "Turbo",
+            False,
+        )
 
         # Test max_iterations <= 0
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal("mandelbrot", -1.0, 1.0, -1.0, 1.0, 100, 0, "Turbo", False)
-        self.assertIn("max_iterations must be strictly positive", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^max_iterations must be strictly positive$",
+            render_fractal,
+            "mandelbrot",
+            -1.0,
+            1.0,
+            -1.0,
+            1.0,
+            100,
+            0,
+            "Turbo",
+            False,
+        )
 
     def test_resolution_limit_validation(self) -> None:
         # Test that resolution > 12800 raises ValueError
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal("mandelbrot", -1.0, 1.0, -1.0, 1.0, 12801, 100, "Turbo", False)
-        self.assertIn("at most 12800", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^resolution must be strictly positive and at most 12800$",
+            render_fractal,
+            "mandelbrot",
+            -1.0,
+            1.0,
+            -1.0,
+            1.0,
+            12801,
+            100,
+            "Turbo",
+            False,
+        )
 
     def test_unsupported_colormap_validation(self) -> None:
         # Test that unsupported colormap raises ValueError
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal("mandelbrot", -1.0, 1.0, -1.0, 1.0, 100, 100, "InvalidColormap", False)
-        self.assertIn("Unsupported colormap", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^Unsupported colormap 'InvalidColormap'\\.$",
+            render_fractal,
+            "mandelbrot",
+            -1.0,
+            1.0,
+            -1.0,
+            1.0,
+            100,
+            100,
+            "InvalidColormap",
+            False,
+        )
 
     def test_suggest_filename_non_finite_range(self) -> None:
         # Test that suggest_filename with non-finite range falls back to precision 4 and doesn't crash
@@ -190,50 +256,53 @@ class TestRenderer(unittest.TestCase):
 
     def test_render_unsupported(self) -> None:
         # To test the actual ValueError in render_fractal:
-        with self.assertRaises(ValueError):
-            render_fractal(
-                "invalid_fractal",
-                X_MIN,
-                X_MAX,
-                Y_MIN,
-                Y_MAX,
-                100,
-                MAX_ITERATIONS,
-                DEFAULT_COLORMAP,
-                DEFAULT_REVERSE_COLORMAP,
-            )
+        self.assertRaises(
+            ValueError,
+            render_fractal,
+            "invalid_fractal",
+            X_MIN,
+            X_MAX,
+            Y_MIN,
+            Y_MAX,
+            100,
+            MAX_ITERATIONS,
+            DEFAULT_COLORMAP,
+            DEFAULT_REVERSE_COLORMAP,
+        )
 
     @patch("fractal_mcp.renderer.validate_fractal_params")
     def test_render_unsupported_bypass_validation(self, mock_validate: MagicMock) -> None:
         # Bypass validation step to cover the unsupported fractal raise block
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal(
-                "invalid_fractal",
-                X_MIN,
-                X_MAX,
-                Y_MIN,
-                Y_MAX,
-                100,
-                MAX_ITERATIONS,
-                DEFAULT_COLORMAP,
-                DEFAULT_REVERSE_COLORMAP,
-            )
-        self.assertIn("Unsupported fractal type", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^Unsupported fractal type: invalid_fractal$",
+            render_fractal,
+            "invalid_fractal",
+            X_MIN,
+            X_MAX,
+            Y_MIN,
+            Y_MAX,
+            100,
+            MAX_ITERATIONS,
+            DEFAULT_COLORMAP,
+            DEFAULT_REVERSE_COLORMAP,
+        )
 
     def test_aspect_ratio_calculation(self) -> None:
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal(
-                "mandelbrot",
-                0.0,
-                2.0,
-                0.0,
-                1.0,
-                100,
-                MAX_ITERATIONS,
-                DEFAULT_COLORMAP,
-                DEFAULT_REVERSE_COLORMAP,
-            )
-        self.assertIn("aspect ratio", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^The coordinate viewport must have a 1-to-1 aspect ratio\\.$",
+            render_fractal,
+            "mandelbrot",
+            0.0,
+            2.0,
+            0.0,
+            1.0,
+            100,
+            MAX_ITERATIONS,
+            DEFAULT_COLORMAP,
+            DEFAULT_REVERSE_COLORMAP,
+        )
 
     # Merged tests from test_image.py
     def test_suggest_filename_exponential(self) -> None:
