@@ -7,15 +7,8 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, field_validator, model_validator
 
-from fractal_mcp.renderer import (
-    IMAGES_DIR,
-    render_fractal,
-    suggest_filename,
-    validate_fractal_params,
-)
-from fractal_mcp.renderer import (
-    list_colormaps as list_renderer_colormaps,
-)
+from fractal_mcp.renderer import IMAGES_DIR, render_fractal, suggest_filename, validate_fractal_params
+from fractal_mcp.renderer import list_colormaps as list_renderer_colormaps
 
 router = APIRouter()
 
