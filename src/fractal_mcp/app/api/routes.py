@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, field_validator, model_validator
 
 from fractal_mcp.renderer import IMAGES_DIR, render_fractal, suggest_filename, validate_fractal_params
+from fractal_mcp.renderer import list_colormaps as list_renderer_colormaps
 
 router = APIRouter()
 
@@ -53,6 +54,7 @@ class FractalParams(BaseModel):
             self.y_max,
             self.resolution,
             self.max_iterations,
+            colormap=self.colormap,
         )
         return self
 
@@ -87,7 +89,7 @@ def clear_render_cache() -> None:
 
 
 @router.get("/render")
-async def render(params: FractalParams = Depends()) -> StreamingResponse:
+def render(params: FractalParams = Depends()) -> StreamingResponse:
     # Check cache first
     if _render_cache.matches(params):
         img_bytes = _render_cache.image_bytes
@@ -149,8 +151,14 @@ async def get_suggested_filename(params: FractalParams = Depends()) -> dict[str,
     return {"filename": filename}
 
 
+@router.get("/colormaps")
+def list_colormaps() -> list[str]:
+    """List all available colormap names."""
+    return list_renderer_colormaps()
+
+
 @router.post("/save")
-async def save(req: SaveRequest) -> dict[str, str]:
+def save(req: SaveRequest) -> dict[str, str]:
     filename = Path(req.filename).name
     if not filename.lower().endswith((".jpg", ".jpeg")):
         filename += ".jpg"

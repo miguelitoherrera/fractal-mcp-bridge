@@ -8,6 +8,7 @@ from PIL import Image
 
 from fractal_mcp.renderer import (
     grid_to_image_bytes,
+    list_colormaps,
     load_bokeh_palette,
     newton_to_image_bytes,
     render_fractal,
@@ -140,65 +141,158 @@ class TestRenderer(unittest.TestCase):
 
     def test_validate_params_invalid_coords(self) -> None:
         # Test x_min >= x_max
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal("mandelbrot", 1.0, -1.0, -1.0, 1.0, 100, 100, "Turbo", False)
-        self.assertIn("x_min must be strictly less than x_max", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^x_min must be strictly less than x_max$",
+            render_fractal,
+            "mandelbrot",
+            1.0,
+            -1.0,
+            -1.0,
+            1.0,
+            100,
+            100,
+            "Turbo",
+            False,
+        )
 
         # Test y_min >= y_max
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal("mandelbrot", -1.0, 1.0, 1.0, -1.0, 100, 100, "Turbo", False)
-        self.assertIn("y_min must be strictly less than y_max", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^y_min must be strictly less than y_max$",
+            render_fractal,
+            "mandelbrot",
+            -1.0,
+            1.0,
+            1.0,
+            -1.0,
+            100,
+            100,
+            "Turbo",
+            False,
+        )
 
     def test_validate_params_invalid_dimensions(self) -> None:
         # Test resolution <= 0
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal("mandelbrot", -1.0, 1.0, -1.0, 1.0, 0, 100, "Turbo", False)
-        self.assertIn("resolution must be strictly positive", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^resolution must be strictly positive and at most 12800$",
+            render_fractal,
+            "mandelbrot",
+            -1.0,
+            1.0,
+            -1.0,
+            1.0,
+            0,
+            100,
+            "Turbo",
+            False,
+        )
 
         # Test max_iterations <= 0
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal("mandelbrot", -1.0, 1.0, -1.0, 1.0, 100, 0, "Turbo", False)
-        self.assertIn("max_iterations must be strictly positive", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^max_iterations must be strictly positive$",
+            render_fractal,
+            "mandelbrot",
+            -1.0,
+            1.0,
+            -1.0,
+            1.0,
+            100,
+            0,
+            "Turbo",
+            False,
+        )
 
-    def test_height_clamping(self) -> None:
-        # Test that extremely narrow y range results in height of at least 1, not 0
-        img_bytes = render_fractal("mandelbrot", -2.0, 1.0, 0.0, 0.0000001, 100, 100, "Turbo", False)
-        self.assertIsInstance(img_bytes, bytes)
+    def test_resolution_limit_validation(self) -> None:
+        # Test that resolution > 12800 raises ValueError
+        self.assertRaisesRegex(
+            ValueError,
+            "^resolution must be strictly positive and at most 12800$",
+            render_fractal,
+            "mandelbrot",
+            -1.0,
+            1.0,
+            -1.0,
+            1.0,
+            12801,
+            100,
+            "Turbo",
+            False,
+        )
+
+    def test_unsupported_colormap_validation(self) -> None:
+        # Test that unsupported colormap raises ValueError
+        self.assertRaisesRegex(
+            ValueError,
+            "^Unsupported colormap 'InvalidColormap'\\.$",
+            render_fractal,
+            "mandelbrot",
+            -1.0,
+            1.0,
+            -1.0,
+            1.0,
+            100,
+            100,
+            "InvalidColormap",
+            False,
+        )
+
+    def test_suggest_filename_non_finite_range(self) -> None:
+        # Test that suggest_filename with non-finite range falls back to precision 4 and doesn't crash
+        name = suggest_filename(
+            "mandelbrot",
+            -1.0,
+            float("inf"),
+            -1.0,
+            float("inf"),
+            100,
+            100,
+            "Turbo",
+            False,
+        )
+        self.assertIn("res100_iter100_turbo.jpg", name)
 
     def test_render_unsupported(self) -> None:
         # To test the actual ValueError in render_fractal:
-        with self.assertRaises(ValueError):
-            render_fractal(
-                "invalid_fractal",
-                X_MIN,
-                X_MAX,
-                Y_MIN,
-                Y_MAX,
-                100,
-                MAX_ITERATIONS,
-                DEFAULT_COLORMAP,
-                DEFAULT_REVERSE_COLORMAP,
-            )
+        self.assertRaises(
+            ValueError,
+            render_fractal,
+            "invalid_fractal",
+            X_MIN,
+            X_MAX,
+            Y_MIN,
+            Y_MAX,
+            100,
+            MAX_ITERATIONS,
+            DEFAULT_COLORMAP,
+            DEFAULT_REVERSE_COLORMAP,
+        )
 
     @patch("fractal_mcp.renderer.validate_fractal_params")
     def test_render_unsupported_bypass_validation(self, mock_validate: MagicMock) -> None:
         # Bypass validation step to cover the unsupported fractal raise block
-        with self.assertRaises(ValueError) as ctx:
-            render_fractal(
-                "invalid_fractal",
-                X_MIN,
-                X_MAX,
-                Y_MIN,
-                Y_MAX,
-                100,
-                MAX_ITERATIONS,
-                DEFAULT_COLORMAP,
-                DEFAULT_REVERSE_COLORMAP,
-            )
-        self.assertIn("Unsupported fractal type", str(ctx.exception))
+        self.assertRaisesRegex(
+            ValueError,
+            "^Unsupported fractal type: invalid_fractal$",
+            render_fractal,
+            "invalid_fractal",
+            X_MIN,
+            X_MAX,
+            Y_MIN,
+            Y_MAX,
+            100,
+            MAX_ITERATIONS,
+            DEFAULT_COLORMAP,
+            DEFAULT_REVERSE_COLORMAP,
+        )
 
     def test_aspect_ratio_calculation(self) -> None:
-        img_bytes = render_fractal(
+        self.assertRaisesRegex(
+            ValueError,
+            "^The coordinate viewport must have a 1-to-1 aspect ratio\\.$",
+            render_fractal,
             "mandelbrot",
             0.0,
             2.0,
@@ -209,8 +303,6 @@ class TestRenderer(unittest.TestCase):
             DEFAULT_COLORMAP,
             DEFAULT_REVERSE_COLORMAP,
         )
-        self.assertIsInstance(img_bytes, bytes)
-        self.assertGreater(len(img_bytes), 0)
 
     # Merged tests from test_image.py
     def test_suggest_filename_exponential(self) -> None:
@@ -351,6 +443,12 @@ class TestRenderer(unittest.TestCase):
         palette_lower = load_bokeh_palette("viridis")
         palette_capital = load_bokeh_palette("Viridis")
         np.testing.assert_array_equal(palette_lower, palette_capital)
+
+    def test_list_colormaps(self) -> None:
+        colormaps = list_colormaps()
+        self.assertIn("Turbo", colormaps)
+        self.assertIn("Viridis", colormaps)
+        self.assertGreater(len(colormaps), 10)
 
 
 if __name__ == "__main__":

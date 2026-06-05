@@ -14,6 +14,14 @@ from fractal_mcp.math.sine import generate_sine_grid
 
 IMAGES_DIR = Path("images")
 
+# Case-insensitive lookup mapping lowercase names to original Bokeh palette family keys
+_COLORMAP_LOOKUP = {k.lower(): k for k in all_palettes.keys()}
+
+
+def list_colormaps() -> list[str]:
+    """Return a sorted list of all available Bokeh palette names in standard casing."""
+    return sorted(all_palettes.keys())
+
 
 def ensure_images_dir() -> Path:
     """Ensure the images directory exists and return the Path object."""
@@ -26,12 +34,11 @@ def load_bokeh_palette(name: str) -> np.ndarray:
     Load a named Bokeh palette and return a standardized (256, 3) uint8 RGB array.
     The lookup is case-insensitive.
     """
-    # Create a case-insensitive mapping of available palettes
-    lowered_palettes = {k.lower(): v for k, v in all_palettes.items()}
-    family = lowered_palettes.get(name.lower())
-
-    if not family:
+    original_key = _COLORMAP_LOOKUP.get(name.lower())
+    if not original_key:
         raise KeyError(f"Palette '{name}' not found in Bokeh palettes.")
+
+    family = all_palettes[original_key]
 
     # Pick the largest available size in the family
     max_size = max(family.keys())
@@ -155,14 +162,15 @@ def validate_fractal_params(
     y_max: float | None = None,
     resolution: int | None = None,
     max_iterations: int | None = None,
+    colormap: str | None = None,
 ) -> None:
     """Business logic for fractal parameter consistency."""
     if x_min is not None and x_max is not None and x_min >= x_max:
         raise ValueError("x_min must be strictly less than x_max")
     if y_min is not None and y_max is not None and y_min >= y_max:
         raise ValueError("y_min must be strictly less than y_max")
-    if resolution is not None and resolution <= 0:
-        raise ValueError("resolution must be strictly positive")
+    if resolution is not None and (resolution <= 0 or resolution > 12800):
+        raise ValueError("resolution must be strictly positive and at most 12800")
     if max_iterations is not None and max_iterations <= 0:
         raise ValueError("max_iterations must be strictly positive")
     if fractal_type in ["julia", "exponential", "sine", "cosine"] and c is None:
@@ -179,6 +187,18 @@ def validate_fractal_params(
     ]:
         raise ValueError(f"Unsupported fractal type: {fractal_type}")
 
+    # Enforce 1-to-1 coordinate aspect ratio
+    if x_min is not None and x_max is not None and y_min is not None and y_max is not None:
+        x_range = x_max - x_min
+        y_range = y_max - y_min
+        # Allow minor floating-point tolerances
+        if not np.isclose(x_range, y_range, rtol=1e-5):
+            raise ValueError("The coordinate viewport must have a 1-to-1 aspect ratio.")
+
+    # Validate colormap name exists in Bokeh palettes case-insensitively
+    if colormap is not None and colormap.lower() not in _COLORMAP_LOOKUP:
+        raise ValueError(f"Unsupported colormap '{colormap}'.")
+
 
 def suggest_filename(
     fractal_type: str,
@@ -194,14 +214,17 @@ def suggest_filename(
     power: float | None = None,
 ) -> str:
     """Generate a descriptive filename based on fractal parameters."""
-    validate_fractal_params(fractal_type, c, power, x_min, x_max, y_min, y_max, resolution, max_iterations)
+    validate_fractal_params(fractal_type, c, power, x_min, x_max, y_min, y_max, resolution, max_iterations, colormap)
 
     x_range = x_max - x_min
     x_center = x_min + x_range / 2
     y_center = y_min + (y_max - y_min) / 2
 
     # Dynamically scale precision based on the zoom range (minimum 4 decimal places)
-    precision = max(4, -int(np.floor(np.log10(x_range))) + 2)
+    if not np.isfinite(x_range) or x_range <= 0:
+        precision = 4
+    else:
+        precision = max(4, -int(np.floor(np.log10(x_range))) + 2)
 
     name = f"{fractal_type}_x{x_center:.{precision}f}_y{y_center:.{precision}f}"
 
@@ -231,13 +254,13 @@ def render_fractal(
 ) -> bytes:
     """
     Unified orchestration for rendering fractals.
-    Calculates aspect ratio, generates the grid, and converts to image bytes.
+    Uses square pixel box format, validates parameters, generates the grid, and converts to image bytes.
     """
-    validate_fractal_params(fractal_type, c, power, x_min, x_max, y_min, y_max, resolution, max_iterations)
+    validate_fractal_params(fractal_type, c, power, x_min, x_max, y_min, y_max, resolution, max_iterations, colormap)
 
-    # Calculate height based on aspect ratio to prevent stretching
+    # Enforce square aspect ratio dimensions (width == height == resolution)
     width = resolution
-    height = max(1, round(width * (y_max - y_min) / (x_max - x_min)))
+    height = resolution
 
     if fractal_type == "mandelbrot":
         grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)

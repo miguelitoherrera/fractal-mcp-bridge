@@ -314,5 +314,29 @@ document.getElementById('resetBtn').onclick = resetView;
 });
 
 // Initial load
-syncStateFromUI();
-updateUI(true);
+async function init() {
+    try {
+        const response = await fetch('/colormaps');
+        if (response.ok) {
+            const colormaps = await response.json();
+            const colormapSelect = document.getElementById('colormap');
+            const currentValue = colormapSelect.value || 'Turbo';
+            colormapSelect.innerHTML = '';
+            colormaps.forEach(cmap => {
+                const opt = document.createElement('option');
+                opt.value = cmap;
+                opt.textContent = cmap;
+                if (cmap === currentValue) {
+                    opt.selected = true;
+                }
+                colormapSelect.appendChild(opt);
+            });
+        }
+    } catch (err) {
+        console.error("Failed to load colormaps:", err);
+    }
+    syncStateFromUI();
+    updateUI(true);
+}
+
+init();

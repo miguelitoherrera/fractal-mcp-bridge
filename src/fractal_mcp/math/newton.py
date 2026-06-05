@@ -17,6 +17,8 @@ def newton_set(
     Calculation Logic:
         1. Iterative Mapping: z_{n+1} = z_n - f(z_n) / f'(z_n).
            For f(z) = z^p - 1, f'(z) = p * z^(p-1).
+           To avoid division-of-infinity (inf/inf -> nan) when z^p overflows, we
+           algebraically rewrite the step as: step = (z - z / z^p) / p.
         2. Convergence: We stop when the absolute step size is below a tolerance (1e-6).
         3. Root Mapping: The final complex phase (angle) of 'z' identifies which root
            it reached.
@@ -38,11 +40,11 @@ def newton_set(
             return 0.0, float(max_iterations)
 
         z_power = z**power
-        denom = power * z_power
-        if denom == 0.0:
+        if z_power == 0.0 or power == 0.0:
             break
 
-        step = (z_power - 1.0) * z / denom
+        # Algebraically rewritten to prevent inf/inf -> nan when z_power overflows
+        step = (z - z / z_power) / power
         z = z - step
 
         if step.real * step.real + step.imag * step.imag < tolerance_sq:
