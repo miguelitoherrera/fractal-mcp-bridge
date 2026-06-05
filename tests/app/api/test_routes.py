@@ -317,6 +317,13 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(len(written_paths), 1)
         self.assertEqual(written_paths[0], IMAGES_DIR / "path_traversal_test.jpg")
 
+    def test_list_colormaps_route(self, *mocks: Any) -> None:
+        response = self.client.get("/colormaps")
+        self.assertEqual(response.status_code, 200)
+        colormaps = response.json()
+        self.assertIn("Turbo", colormaps)
+        self.assertIn("Viridis", colormaps)
+
 
 if __name__ == "__main__":
     unittest.main()
