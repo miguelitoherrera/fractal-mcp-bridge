@@ -7,6 +7,8 @@ import numpy as np
 from PIL import Image
 
 from fractal_mcp.renderer import (
+    IMAGES_DIR,
+    ensure_images_dir,
     grid_to_image_bytes,
     list_colormaps,
     load_bokeh_palette,
@@ -51,6 +53,12 @@ class TestRenderer(unittest.TestCase):
         )
         # log10(1e-8) = -8, precision = max(4, 8 + 2) = 10
         self.assertEqual(name, "mandelbrot_x-0.7436438750_y0.1318259050_res1600_iter200_turbo.jpg")
+
+    def test_ensure_images_dir(self) -> None:
+        with patch("pathlib.Path.mkdir") as mock_mkdir:
+            res = ensure_images_dir()
+            mock_mkdir.assert_called_once_with(exist_ok=True)
+            self.assertEqual(res, IMAGES_DIR)
 
     def test_suggest_filename_julia_none_c(self) -> None:
         # Test that passing None raises ValueError for julia

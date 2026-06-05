@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from fractal_mcp.app.api.routes import clear_render_cache, router
+from fractal_mcp.app.api.routes import clear_render_cache, parse_complex, router
 from fractal_mcp.app.main import value_error_handler
 from fractal_mcp.renderer import IMAGES_DIR
 
@@ -70,6 +70,8 @@ class TestExplorerAPI(unittest.TestCase):
                 response = self.client.get(f"/render?{params}")
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.content, case["expected"])
+                self.assertIn("X-Suggested-Filename", response.headers)
+                self.assertTrue(response.headers["X-Suggested-Filename"].endswith(".jpg"))
                 mock_render.assert_called_once()
 
     def test_router_save_success_cases(self, mock_render: MagicMock, mock_write: MagicMock) -> None:
@@ -255,7 +257,7 @@ class TestExplorerAPI(unittest.TestCase):
         response = self.client.post("/save", json=payload)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["filename"], "cache_hit_save.jpg")
-        self.assertEqual(response.json()["path"], "images/cache_hit_save.jpg")
+        self.assertEqual(response.json()["path"], str(IMAGES_DIR / "cache_hit_save.jpg"))
         # Should only be called ONCE (during the initial render)
         mock_render.assert_called_once()
 
@@ -323,6 +325,14 @@ class TestExplorerAPI(unittest.TestCase):
         colormaps = response.json()
         self.assertIn("Turbo", colormaps)
         self.assertIn("Viridis", colormaps)
+
+    def test_parse_complex_direct(self, *mocks: Any) -> None:
+        self.assertEqual(parse_complex(complex(1, 2)), complex(1, 2))
+        self.assertEqual(parse_complex("-0.7+0.27j"), complex(-0.7, 0.27))
+        self.assertEqual(parse_complex("-0.7 + 0.27j"), complex(-0.7, 0.27))
+        self.assertEqual(parse_complex("  -0.7   +   0.27j  "), complex(-0.7, 0.27))
+        with self.assertRaisesRegex(ValueError, r"complex\(\) arg is a malformed string"):
+            parse_complex("invalid")
 
 
 if __name__ == "__main__":

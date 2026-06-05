@@ -1,3 +1,5 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
@@ -8,7 +10,14 @@ from fastapi.staticfiles import StaticFiles
 from fractal_mcp.app.api.routes import router
 from fractal_mcp.renderer import ensure_images_dir
 
-app = FastAPI(title="Fractal Explorer")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    ensure_images_dir()
+    yield
+
+
+app = FastAPI(title="Fractal Explorer", lifespan=lifespan)
 
 
 @app.exception_handler(ValueError)
@@ -18,9 +27,6 @@ async def value_error_handler(request: Request, exc: Exception) -> JSONResponse:
 
 # Get the path to the static directory within the package
 STATIC_DIR = Path(__file__).parent / "static"
-
-# Ensure images directory exists in the root
-ensure_images_dir()
 
 # Include the explorer API routes
 app.include_router(router)
