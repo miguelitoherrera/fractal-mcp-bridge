@@ -87,6 +87,10 @@ def generate_julia_grid(
         --------------------------------------
         (0, 0)            ->  (x_min, y_max)
         (width, height)   ->  (x_max, y_min)
+
+        Grid loops are duplicated across modules intentionally. Centralizing
+        them would require passing the JIT-compiled element functions, which
+        introduces performance overhead and prevents full Numba optimization.
     """
     x_step = (x_max - x_min) / width
     y_step = (y_max - y_min) / height
