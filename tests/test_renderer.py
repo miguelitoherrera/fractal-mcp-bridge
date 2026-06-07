@@ -15,6 +15,7 @@ from fractal_mcp.renderer import (
     newton_to_image_bytes,
     render_fractal,
     suggest_filename,
+    validate_fractal_params,
 )
 
 # Testing Constants (formerly from renderer.py)
@@ -247,20 +248,87 @@ class TestRenderer(unittest.TestCase):
             False,
         )
 
-    def test_suggest_filename_non_finite_range(self) -> None:
-        # Test that suggest_filename with non-finite range falls back to precision 4 and doesn't crash
+    def test_validate_params_non_finite(self) -> None:
+        # Test that validate_fractal_params raises ValueError on non-finite coordinates
+        with self.assertRaises(ValueError) as ctx:
+            validate_fractal_params(
+                "mandelbrot",
+                None,
+                x_min=-1.0,
+                x_max=float("inf"),
+                y_min=-1.0,
+                y_max=1.0,
+            )
+        self.assertEqual(str(ctx.exception), "Viewport coordinates must be finite numbers")
+
+        # Test non-finite complex c
+        with self.assertRaises(ValueError) as ctx:
+            validate_fractal_params(
+                "julia",
+                complex(float("inf"), 0.0),
+                x_min=-1.0,
+                x_max=1.0,
+                y_min=-1.0,
+                y_max=1.0,
+            )
+        self.assertEqual(str(ctx.exception), "Complex parameter c must be a finite number")
+
+        # Test non-finite power
+        with self.assertRaises(ValueError) as ctx:
+            validate_fractal_params(
+                "newton",
+                None,
+                power=float("nan"),
+                x_min=-1.0,
+                x_max=1.0,
+                y_min=-1.0,
+                y_max=1.0,
+            )
+        self.assertEqual(str(ctx.exception), "power must be a finite number")
+
+        # Test non-finite resolution
+        with self.assertRaises(ValueError) as ctx:
+            validate_fractal_params(
+                "mandelbrot",
+                None,
+                x_min=-1.0,
+                x_max=1.0,
+                y_min=-1.0,
+                y_max=1.0,
+                resolution=float("nan"),  # type: ignore[arg-type]
+            )
+        self.assertEqual(str(ctx.exception), "resolution must be strictly positive and at most 12800")
+
+        # Test non-finite max_iterations
+        with self.assertRaises(ValueError) as ctx:
+            validate_fractal_params(
+                "mandelbrot",
+                None,
+                x_min=-1.0,
+                x_max=1.0,
+                y_min=-1.0,
+                y_max=1.0,
+                max_iterations=float("nan"),  # type: ignore[arg-type]
+            )
+        self.assertEqual(str(ctx.exception), "max_iterations must be strictly positive")
+
+    def test_suggest_filename_extreme_zoom_capped(self) -> None:
+        # Test that suggest_filename under extremely deep zoom caps precision to 20 to prevent long filenames
         name = suggest_filename(
             "mandelbrot",
-            -1.0,
-            float("inf"),
-            -1.0,
-            float("inf"),
+            0.0,
+            1e-25,
+            0.0,
+            1e-25,
             100,
             100,
             "Turbo",
             False,
         )
-        self.assertIn("res100_iter100_turbo.jpg", name)
+        # Check that filename contains coordinates with capped precision (20 decimal places)
+        self.assertIn("_x0.00000000000000000000_y0.00000000000000000000", name)
+        # Entire filename length should be well within normal filesystem limits
+        self.assertLess(len(name), 100)
 
     def test_render_unsupported(self) -> None:
         # To test the actual ValueError in render_fractal:
