@@ -319,6 +319,24 @@ class TestExplorerAPI(unittest.TestCase):
         self.assertEqual(len(written_paths), 1)
         self.assertEqual(written_paths[0], IMAGES_DIR / "path_traversal_test.jpg")
 
+    def test_save_invalid_filename(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        for bad_filename in ("", ".", ".."):
+            payload = {
+                "fractal_type": "mandelbrot",
+                "filename": bad_filename,
+                "x_min": X_MIN,
+                "x_max": X_MAX,
+                "y_min": Y_MIN,
+                "y_max": Y_MAX,
+                "max_iterations": 200,
+                "resolution": 1600,
+                "colormap": "Turbo",
+                "reverse_colormap": False,
+            }
+            response = self.client.post("/save", json=payload)
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("Invalid filename", response.json()["detail"])
+
     def test_list_colormaps_route(self, *mocks: Any) -> None:
         response = self.client.get("/colormaps")
         self.assertEqual(response.status_code, 200)
@@ -329,6 +347,8 @@ class TestExplorerAPI(unittest.TestCase):
     def test_parse_complex_direct(self, *mocks: Any) -> None:
         self.assertEqual(parse_complex(complex(1, 2)), complex(1, 2))
         self.assertEqual(parse_complex("-0.7+0.27j"), complex(-0.7, 0.27))
+        self.assertEqual(parse_complex("-0.7+0.27i"), complex(-0.7, 0.27))
+        self.assertEqual(parse_complex("-0.7+0.27I"), complex(-0.7, 0.27))
         self.assertEqual(parse_complex("-0.7 + 0.27j"), complex(-0.7, 0.27))
         self.assertEqual(parse_complex("  -0.7   +   0.27j  "), complex(-0.7, 0.27))
         with self.assertRaisesRegex(ValueError, r"complex\(\) arg is a malformed string"):

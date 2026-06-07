@@ -20,8 +20,9 @@ def parse_complex(v: str | complex) -> complex:
     """
     if isinstance(v, complex):
         return v
-    # Remove spaces and ensure it can be parsed by complex()
-    return complex(str(v).replace(" ", ""))
+    # Normalize imaginary units by replacing i/I with j/J and removing spaces
+    cleaned = str(v).replace(" ", "").replace("i", "j").replace("I", "j")
+    return complex(cleaned)
 
 
 class FractalParams(BaseModel):
@@ -139,7 +140,7 @@ def render(params: FractalParams = Depends()) -> StreamingResponse:
 
 
 @router.get("/suggest-filename")
-async def get_suggested_filename(params: FractalParams = Depends()) -> dict[str, str]:
+def get_suggested_filename(params: FractalParams = Depends()) -> dict[str, str]:
     filename = suggest_filename(
         params.fractal_type,
         params.x_min,
@@ -165,6 +166,8 @@ def list_colormaps() -> list[str]:
 @router.post("/save")
 def save(req: SaveRequest) -> dict[str, str]:
     filename = Path(req.filename).name
+    if not filename or filename in (".", ".."):
+        raise ValueError("Invalid filename")
     if not filename.lower().endswith((".jpg", ".jpeg")):
         filename += ".jpg"
 

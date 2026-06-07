@@ -40,9 +40,11 @@ def mandelbrot(
     for i in range(max_iterations):
         z_abs_sq = z_real * z_real + z_imag * z_imag
         if z_abs_sq > bailout_sq:
-            # Smooth coloring formula: v = i + 2 - log2(log2(|z|^2))
-            mu = i + 2 - np.log2(np.log2(z_abs_sq))
-            return float(mu)
+            # Smooth coloring formula: v = i + offset - log2(log2(|z|^2))
+            # Using offset 5.0 for bailout=256.0 (derived as 1.0 + log2(log2(B^2)) = 1.0 + log2(16) = 5.0)
+            # This ensures the escape value is strictly positive and matches the grid subtraction in the renderer.
+            mu = i + 5.0 - np.log2(np.log2(z_abs_sq))
+            return max(0.0, float(mu))
 
         z_real, z_imag = (
             z_real * z_real - z_imag * z_imag + c.real,

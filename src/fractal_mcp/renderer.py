@@ -1,3 +1,4 @@
+import functools
 import io
 from pathlib import Path
 
@@ -29,11 +30,9 @@ def ensure_images_dir() -> Path:
     return IMAGES_DIR
 
 
-def load_bokeh_palette(name: str) -> np.ndarray:
-    """
-    Load a named Bokeh palette and return a standardized (256, 3) uint8 RGB array.
-    The lookup is case-insensitive.
-    """
+@functools.lru_cache(maxsize=64)
+def _load_bokeh_palette_cached(name: str) -> np.ndarray:
+    """Private cached helper to load and parse Bokeh palettes."""
     original_key = _COLORMAP_LOOKUP.get(name.lower())
     if not original_key:
         raise KeyError(f"Palette '{name}' not found in Bokeh palettes.")
@@ -58,6 +57,14 @@ def load_bokeh_palette(name: str) -> np.ndarray:
         indices = np.linspace(0, len(arr) - 1, 256)
         arr = np.stack([np.interp(indices, np.arange(len(arr)), arr[:, c]).astype(np.uint8) for c in range(3)], axis=1)
     return arr
+
+
+def load_bokeh_palette(name: str) -> np.ndarray:
+    """
+    Load a named Bokeh palette and return a standardized (256, 3) uint8 RGB array.
+    The lookup is case-insensitive.
+    """
+    return _load_bokeh_palette_cached(name).copy()
 
 
 def grid_to_image_bytes(
@@ -135,7 +142,7 @@ def newton_to_image_bytes(
         palette = palette[::-1]
 
     # Map normalized root angle to palette index.
-    root_idx = (np.clip(roots_grid, 0.0, 1.0) * 255).astype(np.int32)
+    root_idx = np.clip(roots_grid * 256.0, 0.0, 255.0).astype(np.int32)
     rgb = palette[root_idx]
 
     # Apply shading based on iterations (convergence speed).
@@ -143,8 +150,10 @@ def newton_to_image_bytes(
     shading = 1.0 - (iters_grid / max_iterations)
     shading = np.clip(shading, 0.2, 1.0)  # Maintain minimum visibility
 
-    # Broadcast shading to RGB channels.
-    rgb = (rgb.astype(np.float32) * shading[:, :, np.newaxis]).astype(np.uint8)
+    # Broadcast shading to RGB channels (done in-place to optimize memory).
+    rgb_float = rgb.astype(np.float32)
+    rgb_float *= shading[:, :, np.newaxis]
+    rgb = rgb_float.astype(np.uint8)
 
     img = Image.fromarray(rgb, mode="RGB")
     buf = io.BytesIO()
@@ -175,9 +184,16 @@ def validate_fractal_params(
         raise ValueError("Complex parameter c must be a finite number")
     if power is not None and not np.isfinite(power):
         raise ValueError("power must be a finite number")
-    if resolution is not None and (not np.isfinite(resolution) or resolution <= 0 or resolution > 12800):
+    if resolution is not None and (
+        not isinstance(resolution, (int, np.integer))
+        or not np.isfinite(resolution)
+        or resolution <= 0
+        or resolution > 12800
+    ):
         raise ValueError("resolution must be strictly positive and at most 12800")
-    if max_iterations is not None and (not np.isfinite(max_iterations) or max_iterations <= 0):
+    if max_iterations is not None and (
+        not isinstance(max_iterations, (int, np.integer)) or not np.isfinite(max_iterations) or max_iterations <= 0
+    ):
         raise ValueError("max_iterations must be strictly positive")
     if fractal_type in ["julia", "exponential", "sine", "cosine"] and c is None:
         raise ValueError(f"c must be provided for {fractal_type} fractals")
@@ -227,16 +243,18 @@ def suggest_filename(
     y_center = y_min + (y_max - y_min) / 2
 
     # Dynamically scale precision based on the zoom range (minimum 4, maximum 20 decimal places)
-    precision = min(20, max(4, -int(np.floor(np.log10(x_range))) + 2))
-
-    name = f"{fractal_type}_x{x_center:.{precision}f}_y{y_center:.{precision}f}"
+    precision = min(20, max(4, -int(np.floor(np.log10(max(1e-20, x_range)))) + 2))
 
     if fractal_type in ["julia", "exponential", "sine", "cosine"]:
         assert c is not None
-        name = f"{fractal_type}_c{c.real:.3f}_{c.imag:.3f}_x{x_center:.{precision}f}_y{y_center:.{precision}f}"
+        prefix = f"{fractal_type}_c{c.real:.3f}_{c.imag:.3f}"
     elif fractal_type == "newton":
         assert power is not None
-        name = f"newton_p{power:.1f}_x{x_center:.{precision}f}_y{y_center:.{precision}f}"
+        prefix = f"newton_p{power:.1f}"
+    else:
+        prefix = fractal_type
+
+    name = f"{prefix}_x{x_center:.{precision}f}_y{y_center:.{precision}f}"
 
     reversed_suffix = "_reversed" if reverse_colormap else ""
     return f"{name}_res{resolution}_iter{max_iterations}_{colormap.lower()}{reversed_suffix}.jpg"
@@ -267,19 +285,14 @@ def render_fractal(
 
     if fractal_type == "mandelbrot":
         grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
-        return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
     elif fractal_type == "julia":
         grid = generate_julia_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
-        return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
     elif fractal_type == "exponential":
         grid = generate_exponential_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
-        return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
     elif fractal_type == "sine":
         grid = generate_sine_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
-        return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
     elif fractal_type == "cosine":
         grid = generate_cosine_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
-        return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
     elif fractal_type == "newton":
         assert power is not None
         roots, iters = generate_newton_grid(x_min, x_max, y_min, y_max, power, width, height, max_iterations)
@@ -287,3 +300,5 @@ def render_fractal(
     else:
         # Should be caught by validate_fractal_params
         raise ValueError(f"Unsupported fractal type: {fractal_type}")
+
+    return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)

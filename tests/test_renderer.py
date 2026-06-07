@@ -312,6 +312,30 @@ class TestRenderer(unittest.TestCase):
             )
         self.assertEqual(str(ctx.exception), "max_iterations must be strictly positive")
 
+    def test_validate_fractal_params_floats(self) -> None:
+        # Test that float resolution raises ValueError
+        with self.assertRaises(ValueError):
+            validate_fractal_params("mandelbrot", None, resolution=100.5)  # type: ignore[arg-type]
+        # Test that float max_iterations raises ValueError
+        with self.assertRaises(ValueError):
+            validate_fractal_params("mandelbrot", None, max_iterations=10.5)  # type: ignore[arg-type]
+
+    @patch("fractal_mcp.renderer.validate_fractal_params")
+    def test_suggest_filename_zero_range(self, mock_validate: MagicMock) -> None:
+        # Test that a coordinate range of 0 does not raise an OverflowError/log10 warning
+        name = suggest_filename(
+            "mandelbrot",
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            100,
+            100,
+            "Turbo",
+            False,
+        )
+        self.assertIn("_x0.50000000000000000000_y0.50000000000000000000", name)
+
     def test_suggest_filename_extreme_zoom_capped(self) -> None:
         # Test that suggest_filename under extremely deep zoom caps precision to 20 to prevent long filenames
         name = suggest_filename(
