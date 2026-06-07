@@ -59,6 +59,16 @@ class TestNewton(unittest.TestCase):
         self.assertAlmostEqual(angle, expected_root_angle)
         self.assertLess(iters, expected_converged_threshold)
 
+    def test_newton_set_negative_angle(self) -> None:
+        # Starting point in the lower half-plane to converge to a root with negative imaginary part.
+        # For f(z) = z^3 - 1, roots are 1, e^(2pi/3)i, e^(4pi/3)i.
+        # e^(4pi/3) has phase 4pi/3 which is > pi, so math.atan2 returns -2pi/3 (< 0).
+        # Normalization maps it to 4pi/3, which is (4/3 * pi) / (2pi) = 2/3 = 0.6666...
+        z_start = complex(-0.5, -0.8)
+        angle, iters = newton_set(z_start, 3.0, self.expected_max_iterations)
+        self.assertAlmostEqual(angle, 2.0 / 3.0)
+        self.assertLess(iters, 15)
+
     def test_newton_non_finite(self) -> None:
         # Test nan and inf starting coordinates
         for z in (complex(float("nan"), 1.0), complex(1.0, float("inf")), complex(float("-inf"), float("nan"))):

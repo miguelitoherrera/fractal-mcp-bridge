@@ -8,8 +8,7 @@ import os
 from fastmcp import FastMCP
 from fastmcp.utilities.types import Image
 
-from fractal_mcp.app.api.routes import parse_complex
-from fractal_mcp.renderer import IMAGES_DIR, ensure_images_dir, render_fractal, suggest_filename
+from fractal_mcp.renderer import IMAGES_DIR, ensure_images_dir, parse_complex, render_fractal, suggest_filename
 
 # Initialize the MCP server
 mcp = FastMCP("FractalBridge")

@@ -7,22 +7,17 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, field_validator, model_validator
 
-from fractal_mcp.renderer import IMAGES_DIR, render_fractal, suggest_filename, validate_fractal_params
+from fractal_mcp.renderer import (
+    IMAGES_DIR,
+    ensure_images_dir,
+    parse_complex,
+    render_fractal,
+    suggest_filename,
+    validate_fractal_params,
+)
 from fractal_mcp.renderer import list_colormaps as list_renderer_colormaps
 
 router = APIRouter()
-
-
-def parse_complex(v: str | complex) -> complex:
-    """
-    Strictly parse complex numbers from strings or return the complex object.
-    Used for web frontend input which may contain spaces.
-    """
-    if isinstance(v, complex):
-        return v
-    # Normalize imaginary units by replacing i/I with j/J and removing spaces
-    cleaned = str(v).replace(" ", "").replace("i", "j").replace("I", "j")
-    return complex(cleaned)
 
 
 class FractalParams(BaseModel):
@@ -165,7 +160,8 @@ def list_colormaps() -> list[str]:
 
 @router.post("/save")
 def save(req: SaveRequest) -> dict[str, str]:
-    filename = Path(req.filename).name
+    stripped = req.filename.strip()
+    filename = Path(stripped).name
     if not filename or filename in (".", ".."):
         raise ValueError("Invalid filename")
     if not filename.lower().endswith((".jpg", ".jpeg")):
@@ -191,5 +187,6 @@ def save(req: SaveRequest) -> dict[str, str]:
         _render_cache.update(req, img_bytes)
 
     assert img_bytes is not None
+    ensure_images_dir()
     (IMAGES_DIR / filename).write_bytes(img_bytes)
     return {"status": "success", "filename": filename, "path": str(IMAGES_DIR / filename)}

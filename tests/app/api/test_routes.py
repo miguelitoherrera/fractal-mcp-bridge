@@ -8,9 +8,9 @@ from unittest.mock import MagicMock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from fractal_mcp.app.api.routes import clear_render_cache, parse_complex, router
+from fractal_mcp.app.api.routes import clear_render_cache, router
 from fractal_mcp.app.main import value_error_handler
-from fractal_mcp.renderer import IMAGES_DIR
+from fractal_mcp.renderer import IMAGES_DIR, parse_complex
 
 # Testing Constants (formerly from renderer.py)
 RESOLUTION = 1600
@@ -343,6 +343,72 @@ class TestExplorerAPI(unittest.TestCase):
         colormaps = response.json()
         self.assertIn("Turbo", colormaps)
         self.assertIn("Viridis", colormaps)
+
+    def test_save_jpeg_extension(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        mock_render.return_value = b"jpeg_data"
+        payload = {
+            "fractal_type": "mandelbrot",
+            "filename": "test_image.jpeg",
+            "x_min": X_MIN,
+            "x_max": X_MAX,
+            "y_min": Y_MIN,
+            "y_max": Y_MAX,
+            "max_iterations": 200,
+            "resolution": 100,
+            "colormap": DEFAULT_COLORMAP,
+            "reverse_colormap": False,
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["filename"], "test_image.jpeg")
+
+    def test_render_cache_miss_on_different_params(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        mock_render.return_value = b"some_data"
+        params_a = self._get_default_params(fractal_type="mandelbrot", resolution=100)
+        params_b = self._get_default_params(fractal_type="mandelbrot", resolution=200)
+        self.client.get(f"/render?{params_a}")
+        self.client.get(f"/render?{params_b}")
+        self.assertEqual(mock_render.call_count, 2)
+
+    def test_save_populates_render_cache(self, mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        mock_render.return_value = b"cached_data"
+        payload = {
+            "fractal_type": "mandelbrot",
+            "resolution": 100,
+            "filename": "save_populate",
+            "x_min": X_MIN,
+            "x_max": X_MAX,
+            "y_min": Y_MIN,
+            "y_max": Y_MAX,
+            "max_iterations": 200,
+            "colormap": DEFAULT_COLORMAP,
+            "reverse_colormap": False,
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 200)
+
+        params = self._get_default_params(fractal_type="mandelbrot", resolution=100)
+        render_response = self.client.get(f"/render?{params}")
+        self.assertEqual(render_response.status_code, 200)
+        self.assertEqual(render_response.content, b"cached_data")
+        mock_render.assert_called_once()
+
+    def test_save_invalid_filename_whitespace_only(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        payload = {
+            "fractal_type": "mandelbrot",
+            "filename": "   ",
+            "x_min": X_MIN,
+            "x_max": X_MAX,
+            "y_min": Y_MIN,
+            "y_max": Y_MAX,
+            "max_iterations": 200,
+            "resolution": 100,
+            "colormap": DEFAULT_COLORMAP,
+            "reverse_colormap": False,
+        }
+        response = self.client.post("/save", json=payload)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid filename", response.json()["detail"])
 
     def test_parse_complex_direct(self, *mocks: Any) -> None:
         self.assertEqual(parse_complex(complex(1, 2)), complex(1, 2))
