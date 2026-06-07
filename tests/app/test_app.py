@@ -167,6 +167,13 @@ class TestExplorerUI(unittest.TestCase):
         self.assertIn("state.y_min = -2.0;", js_content)
         self.assertIn("state.y_max = 2.0;", js_content)
 
+    def test_explorer_styles_served_correctly(self) -> None:
+        """Verify styles.css is served successfully."""
+        response = self.client.get("/styles.css")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("css", response.headers.get("content-type", ""))
+        self.assertTrue(len(response.text) > 0)
+
     def test_fractal_rendering_endpoints(self) -> None:
         """Verify that every fractal type can be successfully rendered with real calculations."""
         # Define test inputs for all supported fractal types

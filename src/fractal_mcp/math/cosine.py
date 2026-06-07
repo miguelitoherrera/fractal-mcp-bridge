@@ -35,7 +35,7 @@ def cosine_set(
 
         if abs(z.imag) > 50.0:
             denom = abs(z.imag) - abs(prev_imag)
-            mu = i + (50.0 - abs(prev_imag)) / denom if denom > 0.0 else float(i)
+            mu = i + (50.0 - abs(prev_imag)) / denom
             return max(0.0, float(mu))
 
     return float(max_iterations)

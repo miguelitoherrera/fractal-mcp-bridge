@@ -4,6 +4,8 @@ import unittest
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+from fastmcp.exceptions import ToolError
+
 from fractal_mcp.bridge.server import mcp
 
 
@@ -171,6 +173,36 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
 
         mock_render.assert_called_once()
         mock_write.assert_called_once_with(b"fake_image_data")
+
+    async def test_generate_invalid_parameters(self, _mock_render: MagicMock, _mock_write: MagicMock) -> None:
+        # 1. Invalid aspect ratio (not 1-to-1)
+        with self.assertRaisesRegex(ToolError, "The coordinate viewport must have a 1-to-1 aspect ratio."):
+            await mcp.call_tool(
+                "generate_mandelbrot_image",
+                {
+                    "x_min": -2.0,
+                    "x_max": 1.0,
+                    "y_min": -2.0,
+                    "y_max": 2.0,
+                    "resolution": 10,
+                    "max_iterations": 10,
+                },
+            )
+
+        # 2. Invalid complex number string format for Julia set
+        with self.assertRaisesRegex(ToolError, "could not convert string to complex|malformed"):
+            await mcp.call_tool(
+                "generate_julia_image",
+                {
+                    "x_min": -2.0,
+                    "x_max": 2.0,
+                    "y_min": -2.0,
+                    "y_max": 2.0,
+                    "c": "invalid_complex",
+                    "resolution": 10,
+                    "max_iterations": 10,
+                },
+            )
 
 
 if __name__ == "__main__":

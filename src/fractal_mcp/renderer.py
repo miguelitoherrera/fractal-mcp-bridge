@@ -83,8 +83,9 @@ def grid_to_image_bytes(
         2. Normalization: We map the range [1, max_iterations] to the palette
            range [0, 255].
         3. Background Protection: Points that never escaped (grid >= max_iterations)
-           are naturally mapped to the end of the colormap range (index 255),
-           contrasting with the early-escaping background points mapped near index 0.
+           are naturally mapped near the end of the colormap range (e.g. index 253
+           for default iterations) to maintain continuous gradients, contrasting
+           with the early-escaping background points mapped near index 0.
 
     Args:
         grid: 2D float32 array of smooth iteration counts.
@@ -161,6 +162,18 @@ def newton_to_image_bytes(
     return buf.getvalue()
 
 
+def parse_complex(v: str | complex) -> complex:
+    """
+    Strictly parse complex numbers from strings or return the complex object.
+    Used for web frontend input which may contain spaces.
+    """
+    if isinstance(v, complex):
+        return v
+    # Normalize imaginary units by replacing i/I with j/J and removing spaces
+    cleaned = str(v).replace(" ", "").replace("i", "j").replace("I", "j")
+    return complex(cleaned)
+
+
 def validate_fractal_params(
     fractal_type: str,
     c: complex | None,
@@ -185,15 +198,10 @@ def validate_fractal_params(
     if power is not None and not np.isfinite(power):
         raise ValueError("power must be a finite number")
     if resolution is not None and (
-        not isinstance(resolution, (int, np.integer))
-        or not np.isfinite(resolution)
-        or resolution <= 0
-        or resolution > 12800
+        not isinstance(resolution, (int, np.integer)) or resolution <= 0 or resolution > 12800
     ):
         raise ValueError("resolution must be strictly positive and at most 12800")
-    if max_iterations is not None and (
-        not isinstance(max_iterations, (int, np.integer)) or not np.isfinite(max_iterations) or max_iterations <= 0
-    ):
+    if max_iterations is not None and (not isinstance(max_iterations, (int, np.integer)) or max_iterations <= 0):
         raise ValueError("max_iterations must be strictly positive")
     if fractal_type in ["julia", "exponential", "sine", "cosine"] and c is None:
         raise ValueError(f"c must be provided for {fractal_type} fractals")
@@ -213,8 +221,8 @@ def validate_fractal_params(
     if x_min is not None and x_max is not None and y_min is not None and y_max is not None:
         x_range = x_max - x_min
         y_range = y_max - y_min
-        # Allow minor floating-point tolerances
-        if not np.isclose(x_range, y_range, rtol=1e-5, atol=0.0):
+        # Allow minor floating-point tolerances (with absolute tolerance for deep zooms)
+        if not np.isclose(x_range, y_range, rtol=1e-5, atol=1e-16):
             raise ValueError("The coordinate viewport must have a 1-to-1 aspect ratio.")
 
     # Validate colormap name exists in Bokeh palettes case-insensitively

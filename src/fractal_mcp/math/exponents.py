@@ -35,7 +35,7 @@ def exponential_set(
 
         if z.real > 50.0:
             denom = z.real - prev_real
-            mu = i + (50.0 - prev_real) / denom if denom > 0.0 else float(i)
+            mu = i + (50.0 - prev_real) / denom
             return max(0.0, float(mu))
 
     return float(max_iterations)
