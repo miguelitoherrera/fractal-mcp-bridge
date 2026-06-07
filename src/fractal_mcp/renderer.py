@@ -165,13 +165,19 @@ def validate_fractal_params(
     colormap: str | None = None,
 ) -> None:
     """Business logic for fractal parameter consistency."""
+    if any(v is not None and not np.isfinite(v) for v in (x_min, x_max, y_min, y_max)):
+        raise ValueError("Viewport coordinates must be finite numbers")
     if x_min is not None and x_max is not None and x_min >= x_max:
         raise ValueError("x_min must be strictly less than x_max")
     if y_min is not None and y_max is not None and y_min >= y_max:
         raise ValueError("y_min must be strictly less than y_max")
-    if resolution is not None and (resolution <= 0 or resolution > 12800):
+    if c is not None and not np.isfinite(c):
+        raise ValueError("Complex parameter c must be a finite number")
+    if power is not None and not np.isfinite(power):
+        raise ValueError("power must be a finite number")
+    if resolution is not None and (not np.isfinite(resolution) or resolution <= 0 or resolution > 12800):
         raise ValueError("resolution must be strictly positive and at most 12800")
-    if max_iterations is not None and max_iterations <= 0:
+    if max_iterations is not None and (not np.isfinite(max_iterations) or max_iterations <= 0):
         raise ValueError("max_iterations must be strictly positive")
     if fractal_type in ["julia", "exponential", "sine", "cosine"] and c is None:
         raise ValueError(f"c must be provided for {fractal_type} fractals")
@@ -220,11 +226,8 @@ def suggest_filename(
     x_center = x_min + x_range / 2
     y_center = y_min + (y_max - y_min) / 2
 
-    # Dynamically scale precision based on the zoom range (minimum 4 decimal places)
-    if not np.isfinite(x_range) or x_range <= 0:
-        precision = 4
-    else:
-        precision = max(4, -int(np.floor(np.log10(x_range))) + 2)
+    # Dynamically scale precision based on the zoom range (minimum 4, maximum 20 decimal places)
+    precision = min(20, max(4, -int(np.floor(np.log10(x_range))) + 2))
 
     name = f"{fractal_type}_x{x_center:.{precision}f}_y{y_center:.{precision}f}"
 

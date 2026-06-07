@@ -68,17 +68,15 @@ class LastRenderCache:
     def __init__(self) -> None:
         self._cache: tuple[dict[str, Any], bytes] | None = None
 
-    def matches(self, params: FractalParams) -> bool:
+    def get(self, params: FractalParams) -> bytes | None:
+        """Atomic read check. Returns cached bytes if they match params, else None."""
         cache = self._cache
         if cache is None:
-            return False
-        stored_params, _ = cache
-        return bool(stored_params == params.model_dump(exclude={"filename"}))
-
-    @property
-    def image_bytes(self) -> bytes | None:
-        cache = self._cache
-        return cache[1] if cache is not None else None
+            return None
+        stored_params, img_bytes = cache
+        if stored_params == params.model_dump(exclude={"filename"}):
+            return img_bytes
+        return None
 
     def update(self, params: FractalParams, image_bytes: bytes) -> None:
         self._cache = (params.model_dump(exclude={"filename"}), image_bytes)
@@ -99,9 +97,8 @@ def clear_render_cache() -> None:
 @router.get("/render")
 def render(params: FractalParams = Depends()) -> StreamingResponse:
     # Check cache first
-    if _render_cache.matches(params):
-        img_bytes = _render_cache.image_bytes
-    else:
+    img_bytes = _render_cache.get(params)
+    if img_bytes is None:
         img_bytes = render_fractal(
             params.fractal_type,
             params.x_min,
@@ -172,9 +169,8 @@ def save(req: SaveRequest) -> dict[str, str]:
         filename += ".jpg"
 
     # Sanity check: Can we use the cached image?
-    if _render_cache.matches(req):
-        img_bytes = _render_cache.image_bytes
-    else:
+    img_bytes = _render_cache.get(req)
+    if img_bytes is None:
         img_bytes = render_fractal(
             req.fractal_type,
             req.x_min,

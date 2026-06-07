@@ -3,9 +3,10 @@
 This module provides a FastMCP server that exposes fractal generation tools (Mandelbrot and Julia sets) to MCP clients.
 """
 
-from typing import Any
+import os
 
 from fastmcp import FastMCP
+from fastmcp.utilities.types import Image
 
 from fractal_mcp.app.api.routes import parse_complex
 from fractal_mcp.renderer import IMAGES_DIR, ensure_images_dir, render_fractal, suggest_filename
@@ -26,7 +27,7 @@ def _generate_and_save_image(
     reverse_colormap: bool,
     c: complex | None = None,
     power: float | None = None,
-) -> dict[str, Any]:
+) -> Image:
     """Helper to render, save a fractal image, and structure the tool response."""
     ensure_images_dir()
     img_bytes = render_fractal(
@@ -59,12 +60,7 @@ def _generate_and_save_image(
     path = IMAGES_DIR / filename
     path.write_bytes(img_bytes)
 
-    return {
-        "type": "file",
-        "path": str(path),
-        "mime_type": "image/jpeg",
-        "colormap": colormap,
-    }
+    return Image(data=img_bytes, format="jpeg")
 
 
 @mcp.tool
@@ -77,7 +73,7 @@ def generate_mandelbrot_image(
     max_iterations: int = 200,
     colormap: str = "Turbo",
     reverse_colormap: bool = False,
-) -> dict[str, Any]:
+) -> Image:
     """
     Render a Mandelbrot set image and save it to a file.
 
@@ -115,7 +111,7 @@ def generate_julia_image(
     max_iterations: int = 200,
     colormap: str = "Turbo",
     reverse_colormap: bool = False,
-) -> dict[str, Any]:
+) -> Image:
     """
     Render a Julia set image for a given complex constant c and save it to a file.
 
@@ -155,7 +151,7 @@ def generate_exponential_image(
     max_iterations: int = 200,
     colormap: str = "Turbo",
     reverse_colormap: bool = False,
-) -> dict[str, Any]:
+) -> Image:
     """
     Render an exponential fractal image and save it to a file.
 
@@ -195,7 +191,7 @@ def generate_sine_image(
     max_iterations: int = 200,
     colormap: str = "Turbo",
     reverse_colormap: bool = False,
-) -> dict[str, Any]:
+) -> Image:
     """
     Render a sine fractal image and save it to a file.
 
@@ -235,7 +231,7 @@ def generate_cosine_image(
     max_iterations: int = 200,
     colormap: str = "Turbo",
     reverse_colormap: bool = False,
-) -> dict[str, Any]:
+) -> Image:
     """
     Render a cosine fractal image and save it to a file.
 
@@ -275,7 +271,7 @@ def generate_newton_image(
     max_iterations: int = 200,
     colormap: str = "Turbo",
     reverse_colormap: bool = False,
-) -> dict[str, Any]:
+) -> Image:
     """
     Render a Newton's method fractal image and save it to a file.
 
@@ -305,4 +301,8 @@ def generate_newton_image(
 
 
 if __name__ == "__main__":  # pragma: no cover
-    mcp.run()
+    port_env = os.environ.get("PORT")
+    if port_env:
+        mcp.run(transport="sse", host="0.0.0.0", port=int(port_env))
+    else:
+        mcp.run()

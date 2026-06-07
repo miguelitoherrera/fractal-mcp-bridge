@@ -1,11 +1,10 @@
 # Tests for the FastMCP bridge server and tools.
-import json
+import base64
 import unittest
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 from fractal_mcp.bridge.server import mcp
-from fractal_mcp.renderer import IMAGES_DIR
 
 
 @patch("pathlib.Path.write_bytes")
@@ -29,18 +28,11 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
             },
         )
 
-        res_dict = result
-        if hasattr(result, "content"):
-            content_item = result.content[0]
-            if hasattr(content_item, "text"):
-                res_dict = json.loads(content_item.text)
-
-        self.assertEqual(res_dict["type"], "file")
-        self.assertEqual(res_dict["colormap"], "Turbo")
-
-        # Expected: images/mandelbrot_x-0.5000_y0.0000_res10_iter10_turbo.jpg
-        expected_filename = "mandelbrot_x-0.5000_y0.0000_res10_iter10_turbo.jpg"
-        self.assertEqual(res_dict["path"], str(IMAGES_DIR / expected_filename))
+        self.assertEqual(len(result.content), 1)
+        content_item = result.content[0]
+        self.assertEqual(content_item.type, "image")
+        self.assertEqual(content_item.mimeType, "image/jpeg")
+        self.assertEqual(base64.b64decode(content_item.data), b"fake_image_data")
 
         mock_render.assert_called_once()
         mock_write.assert_called_once_with(b"fake_image_data")
@@ -63,14 +55,11 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
             },
         )
 
-        res_dict = result
-        if hasattr(result, "content"):
-            content_item = result.content[0]
-            if hasattr(content_item, "text"):
-                res_dict = json.loads(content_item.text)
-
-        self.assertEqual(res_dict["type"], "file")
-        self.assertIn("images/julia_", res_dict["path"])
+        self.assertEqual(len(result.content), 1)
+        content_item = result.content[0]
+        self.assertEqual(content_item.type, "image")
+        self.assertEqual(content_item.mimeType, "image/jpeg")
+        self.assertEqual(base64.b64decode(content_item.data), b"fake_image_data")
 
         mock_render.assert_called_once()
         mock_write.assert_called_once_with(b"fake_image_data")
@@ -93,14 +82,11 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
             },
         )
 
-        res_dict = result
-        if hasattr(result, "content"):
-            content_item = result.content[0]
-            if hasattr(content_item, "text"):
-                res_dict = json.loads(content_item.text)
-
-        self.assertEqual(res_dict["type"], "file")
-        self.assertIn("images/exponential_", res_dict["path"])
+        self.assertEqual(len(result.content), 1)
+        content_item = result.content[0]
+        self.assertEqual(content_item.type, "image")
+        self.assertEqual(content_item.mimeType, "image/jpeg")
+        self.assertEqual(base64.b64decode(content_item.data), b"fake_image_data")
 
         mock_render.assert_called_once()
         mock_write.assert_called_once_with(b"fake_image_data")
@@ -123,14 +109,11 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
             },
         )
 
-        res_dict = result
-        if hasattr(result, "content"):
-            content_item = result.content[0]
-            if hasattr(content_item, "text"):
-                res_dict = json.loads(content_item.text)
-
-        self.assertEqual(res_dict["type"], "file")
-        self.assertIn("images/sine_", res_dict["path"])
+        self.assertEqual(len(result.content), 1)
+        content_item = result.content[0]
+        self.assertEqual(content_item.type, "image")
+        self.assertEqual(content_item.mimeType, "image/jpeg")
+        self.assertEqual(base64.b64decode(content_item.data), b"fake_image_data")
 
         mock_render.assert_called_once()
         mock_write.assert_called_once_with(b"fake_image_data")
@@ -153,14 +136,11 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
             },
         )
 
-        res_dict = result
-        if hasattr(result, "content"):
-            content_item = result.content[0]
-            if hasattr(content_item, "text"):
-                res_dict = json.loads(content_item.text)
-
-        self.assertEqual(res_dict["type"], "file")
-        self.assertIn("images/cosine_", res_dict["path"])
+        self.assertEqual(len(result.content), 1)
+        content_item = result.content[0]
+        self.assertEqual(content_item.type, "image")
+        self.assertEqual(content_item.mimeType, "image/jpeg")
+        self.assertEqual(base64.b64decode(content_item.data), b"fake_image_data")
 
         mock_render.assert_called_once()
         mock_write.assert_called_once_with(b"fake_image_data")
@@ -183,14 +163,11 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
             },
         )
 
-        res_dict = result
-        if hasattr(result, "content"):
-            content_item = result.content[0]
-            if hasattr(content_item, "text"):
-                res_dict = json.loads(content_item.text)
-
-        self.assertEqual(res_dict["type"], "file")
-        self.assertIn("images/newton_", res_dict["path"])
+        self.assertEqual(len(result.content), 1)
+        content_item = result.content[0]
+        self.assertEqual(content_item.type, "image")
+        self.assertEqual(content_item.mimeType, "image/jpeg")
+        self.assertEqual(base64.b64decode(content_item.data), b"fake_image_data")
 
         mock_render.assert_called_once()
         mock_write.assert_called_once_with(b"fake_image_data")
