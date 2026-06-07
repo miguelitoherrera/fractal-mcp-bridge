@@ -59,6 +59,13 @@ class TestNewton(unittest.TestCase):
         self.assertAlmostEqual(angle, expected_root_angle)
         self.assertLess(iters, expected_converged_threshold)
 
+    def test_newton_non_finite(self) -> None:
+        # Test nan and inf starting coordinates
+        for z in (complex(float("nan"), 1.0), complex(1.0, float("inf")), complex(float("-inf"), float("nan"))):
+            angle, iters = newton_set(z, 3.0, self.expected_max_iterations)
+            self.assertEqual(angle, 0.0)
+            self.assertEqual(iters, float(self.expected_max_iterations))
+
     def test_generate_newton_grid(self) -> None:
         width, height = 10, 10
         roots, iters = generate_newton_grid(

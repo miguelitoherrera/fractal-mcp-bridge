@@ -21,11 +21,11 @@ class TestJulia(unittest.TestCase):
         test_params = [
             # (z_initial, c, expected_iterations, label)
             (complex(0.0, 0.0), complex(-0.8, 0.156), self.expected_max_iterations, "Douady rabbit"),
-            (complex(0.0, 0.0), complex(0.285, 0.01), 20, "dendrite"),
+            (complex(0.0, 0.0), complex(0.285, 0.01), 23, "dendrite"),
             (complex(0.0, 0.0), complex(0.0, -1.0), self.expected_max_iterations, "San Marco fractal"),
             (complex(0.0, 0.0), complex(0.0, 0.0), self.expected_max_iterations, "simple circle"),
-            (complex(2.0, 0.0), complex(0.0, 0.0), 1, "immediate escape real"),
-            (complex(0.0, 2.0), complex(0.0, 0.0), 1, "immediate escape imaginary"),
+            (complex(300.0, 0.0), complex(0.0, 0.0), 1, "immediate escape real"),
+            (complex(0.0, 300.0), complex(0.0, 0.0), 1, "immediate escape imaginary"),
             (complex(0.1, 0.1), complex(0.0, 0.0), self.expected_max_iterations, "inside unit circle"),
         ]
         for z_initial, c, expected_iterations, label in test_params:

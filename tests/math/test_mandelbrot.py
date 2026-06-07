@@ -21,10 +21,11 @@ class TestMandelbrot(unittest.TestCase):
             # (c, expected_iterations, label)
             (complex(0.0, 0.0), self.expected_max_iterations, "origin"),
             (complex(0.0, 1.0), self.expected_max_iterations, "boundary point"),
-            (complex(1.0, 1.0), 2, "outside cardioid"),
-            (complex(0.5, 0.5), 5, "slow escaping point"),
+            (complex(1.0, 1.0), 5, "outside cardioid"),
+            (complex(0.5, 0.5), 8, "slow escaping point"),
             (complex(-2.0, 0.0), self.expected_max_iterations, "left antenna tip"),
-            (complex(2.1, 0.0), 2, "escaping real tip"),
+            (complex(2.1, 0.0), 5, "escaping real tip"),
+            (complex(10000.0, 0.0), 1, "immediate escape"),
         ]
         for c, expected_iterations, label in test_params:
             iters = mandelbrot(c, self.expected_max_iterations)

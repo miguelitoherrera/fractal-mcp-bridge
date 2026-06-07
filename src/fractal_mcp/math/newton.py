@@ -36,6 +36,9 @@ def newton_set(
     tolerance_sq = 1e-12
 
     for i in range(max_iterations):
+        if not (math.isfinite(z.real) and math.isfinite(z.imag)):
+            return 0.0, float(max_iterations)
+
         if abs(z) == 0.0:
             return 0.0, float(max_iterations)
 
