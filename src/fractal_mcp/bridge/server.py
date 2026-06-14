@@ -8,7 +8,13 @@ import os
 from fastmcp import FastMCP
 from fastmcp.utilities.types import Image
 
-from fractal_mcp.renderer import IMAGES_DIR, ensure_images_dir, parse_complex, render_fractal, suggest_filename
+from fractal_mcp.renderer import (
+    IMAGES_DIR,
+    ensure_images_dir,
+    parse_complex,
+    render_fractal,
+    suggest_filename,
+)
 
 # Initialize the MCP server
 mcp = FastMCP("FractalBridge")
@@ -297,6 +303,16 @@ def generate_newton_image(
         reverse_colormap,
         power=power,
     )
+
+
+@mcp.tool
+def list_colormaps() -> list[str]:
+    """
+    List all available colormap (palette) names supported by the fractal renderer.
+    """
+    from fractal_mcp.renderer import list_colormaps  # noqa: PLC0415
+
+    return list_colormaps()
 
 
 def main() -> None:
