@@ -204,6 +204,22 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
                 },
             )
 
+    @patch("fractal_mcp.renderer.list_colormaps")
+    async def test_list_colormaps(
+        self,
+        mock_list_colormaps: MagicMock,
+        _mock_render: MagicMock,
+        _mock_write: MagicMock,
+    ) -> None:
+        mock_list_colormaps.return_value = ["MockPalette1", "MockPalette2"]
+        result: Any = await mcp.call_tool("list_colormaps", {})
+        self.assertEqual(len(result.content), 1)
+        content_item = result.content[0]
+        self.assertEqual(content_item.type, "text")
+        self.assertIn("MockPalette1", content_item.text)
+        self.assertIn("MockPalette2", content_item.text)
+        mock_list_colormaps.assert_called_once()
+
     @patch("fractal_mcp.bridge.server.mcp.run")
     @patch.dict("os.environ", {}, clear=True)
     def test_main_default(self, mock_run: MagicMock, mock_render: MagicMock, mock_write: MagicMock) -> None:
