@@ -299,9 +299,13 @@ def generate_newton_image(
     )
 
 
-if __name__ == "__main__":  # pragma: no cover
+def main() -> None:
     port_env = os.environ.get("PORT")
     if port_env:
         mcp.run(transport="sse", host="0.0.0.0", port=int(port_env))
     else:
         mcp.run()
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

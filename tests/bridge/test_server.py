@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from fastmcp.exceptions import ToolError
 
-from fractal_mcp.bridge.server import mcp
+from fractal_mcp.bridge.server import main, mcp
 
 
 @patch("pathlib.Path.write_bytes")
@@ -203,6 +203,18 @@ class TestBridgeServer(unittest.IsolatedAsyncioTestCase):
                     "max_iterations": 10,
                 },
             )
+
+    @patch("fractal_mcp.bridge.server.mcp.run")
+    @patch.dict("os.environ", {}, clear=True)
+    def test_main_default(self, mock_run: MagicMock, mock_render: MagicMock, mock_write: MagicMock) -> None:
+        main()
+        mock_run.assert_called_once_with()
+
+    @patch("fractal_mcp.bridge.server.mcp.run")
+    @patch.dict("os.environ", {"PORT": "8080"})
+    def test_main_sse(self, mock_run: MagicMock, mock_render: MagicMock, mock_write: MagicMock) -> None:
+        main()
+        mock_run.assert_called_once_with(transport="sse", host="0.0.0.0", port=8080)
 
 
 if __name__ == "__main__":
