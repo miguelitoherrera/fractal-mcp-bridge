@@ -24,6 +24,9 @@ where = ["src"]
 [tool.setuptools.package-data]
 "fractal_mcp.app" = ["static/*"]
 
+[project.scripts]
+fractal-mcp = "fractal_mcp.bridge.server:main"
+
 [tool.ruff]
 line-length = 120
 target-version = "py314"
