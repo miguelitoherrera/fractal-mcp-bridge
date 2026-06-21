@@ -85,15 +85,13 @@ To use this bridge as an AI Agent, update your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "fractal-bridge": {
-      "command": "/absolute/path/to/python",
-      "args": [
-        "/absolute/path/to/fractal-mcp-bridge/src/fractal_mcp/bridge/server.py"
-      ]
+      "command": "fractal-mcp"
     }
   }
 }
 ```
-Take special care to align the python path with this repo's path.
+> [!NOTE]
+> If Claude Desktop cannot locate the command (common on macOS GUI apps that do not inherit shell `$PATH`), replace `"fractal-mcp"` with the absolute path to the executable (which can be resolved by running `which fractal-mcp` in your terminal).
 
 ## ☁️ Antigravity CLI Integration
 To use this bridge as an AI Agent, update your `mcp_config.json`:
@@ -101,11 +99,12 @@ To use this bridge as an AI Agent, update your `mcp_config.json`:
 {
   "mcpServers": {
     "fractal-bridge": {
-      "command": "/absolute/path/to/python",
-      "args": [
-        "/absolute/path/to/fractal-mcp-bridge/src/fractal_mcp/bridge/server.py"
-      ]
+      "command": "fractal-mcp"
     }
   }
 }
 ```
+> [!NOTE]
+> If the Antigravity CLI cannot locate the command, replace `"fractal-mcp"` with the absolute path to the executable (which can be resolved by running `which fractal-mcp` in your terminal).
+
+
