@@ -52,6 +52,8 @@ bin/run-fractal-web-explorer
 ```
 Open the browser link provided in the terminal (defaults to `http://localhost:8001`).
 
+![Fractal Web Explorer UI](images/screenshot-web-explorer.png)
+
 ---
 
 ## 🚀 Local Setup & Development
