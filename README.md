@@ -25,62 +25,85 @@ The computations in this library are based on the following iterative equations 
 ## 🏗 Project Architecture
 The repository follows a standard Python "src layout" under a unified `fractal_mcp` package. This maintains clear separation between mathematical logic, image processing, and service orchestration:
 
-- **Math Layer (`src/fractal_mcp/math`)**: 
-  - `mandelbrot.py`, `julia.py`, `exponents.py`, & `sine.py`: Pure, Numba-accelerated mathematical functions for calculating fractal escape grids. This layer is strictly computational and has no knowledge of image formats or resolutions.
-- **Orchestration & Imaging Layer (`src/fractal_mcp/renderer.py`)**: 
-  - The unified "brain" of the library. It manages coordinate defaults, calculates aspect ratios to prevent image stretching, and converts numerical escape grids into colorful JPEG images using Bokeh colormaps.
-
-### Service Layer
-- **Fractal Explorer App (`src/fractal_mcp/app`)**: An encapsulated web application. Includes the FastAPI orchestrator (`main.py`), the API routing endpoints (`api/`), and the web assets (`static/`).
-- **MCP Bridge (`src/fractal_mcp/bridge`)**: FastMCP server implementation that exposes the library as tools for AI agents.
+### 📂 Directory & File Structure
+```
+fractal-mcp-bridge/
+├── bin/                       # Executable utility and environment script runners
+├── images/                    # Saved output renders and sample fractal images
+├── src/
+│   └── fractal_mcp/
+│       ├── app/               # Interactive Fractal Web Explorer app
+│       │   ├── api/           # Endpoint routes for fractal computations
+│       │   └── static/        # UI frontend (HTML, CSS, JS assets)
+│       ├── bridge/            # FastMCP server exposing tools for agents
+│       ├── math/              # Numba-accelerated computational math layers
+│       └── renderer.py        # Main rendering engine and color palette coordinator
+├── tests/                     # Test suites validating mathematical and service layers
+├── pyproject.toml             # Project metadata, script entrypoints, and dependency profiles
+└── README.md                  # Core documentation and integration guides
+```
 
 ## 🌍 Fractal Web Explorer
-If you want to interactively explore the Mandelbrot, Julia, and Exponential sets in more detail, you can spin up the encapsulated
-Fractal Web Explorer. From the repository root, run:
+If you want to interactively explore the Mandelbrot, Julia, and Exponential sets in more detail, you can spin up the encapsulated Fractal Web Explorer.
+
+From the repository root, run:
 ```bash
 bin/run-fractal-web-explorer
 ```
-Open the browser link provided in the terminal.
+Open the browser link provided in the terminal (defaults to `http://localhost:8001`).
+
+---
 
 ## 🚀 Local Setup & Development
-To ensure the environment correctly resolves the internal package mappings, you must perform an editable installation.
+To ensure the environment correctly resolves the internal package mappings, you must perform an editable installation using `pyproject.toml`.
 
 ### 1. Prerequisites
 - **Python 3.14.1**
 - **Node.js / npx** (required for the MCP Inspector)
 
 ### 2. Installation
-From the repository root, run:
-```bash
-pip install -r requirements.txt
-```
-
-From the repository root, run the following command, which uses the `pyproject.toml` to map the internal modules to your Python environment.
+From the repository root, run the following command to map the internal modules to your Python environment and install the core dependencies:
 ```bash
 pip install -e .
+```
+
+If you plan to run unit tests, linting, or type checking, install the development dependencies as well:
+```bash
+pip install -e ".[dev]"
 ```
 
 ### 3. Smoke Testing
 You can manually verify the bridge and Numba-accelerated logic using the MCP Inspector:
 ```bash
-npx @modelcontextprotocol/inspector /absolute/path/to/python src/fractal_mcp/bridge/server.py
+npx @modelcontextprotocol/inspector fractal-mcp
 ```
-Open the browser link provided by the inspector to test the `generate_mandelbrot_image`, `generate_julia_image`, `generate_exponential_image`, and `generate_sine_image` tools.
+Open the browser link provided by the inspector to test the tools.
 
 ### 4. Code Quality & Unit Tests
-To ensure high standards for code style, type safety, and correctness, use the unified check script. This script runs:
-1.  **Ruff Format**: Ensures consistent code styling.
-2.  **Ruff Lint**: Catches common errors and smells.
-3.  **Mypy**: Validates static types across the codebase.
-4.  **Pytest**: Executes unit tests with coverage reporting.
-
-From the repository root, run:
+To ensure high standards for code style, type safety, and correctness, run the unified validation check script from the repository root:
 ```bash
 bin/run-checks
 ```
 
-## 🤖 Claude Desktop Integration
-To use this bridge as an AI Agent, update your `claude_desktop_config.json`:
+The script runs the following checks in order:
+1. **🎨 Formatting Check (`ruff format`)**: Verifies that all code in `src/` and `tests/` adheres to the project's formatting guidelines.
+2. **🔍 Linting (`ruff check`)**: Analyzes code quality and catches common style bugs, unused imports, or code smells.
+3. **📝 Static Type Analysis (`mypy`)**: Validates static type annotations across `src/` and `tests/`.
+4. **🧪 Unit Testing (`pytest` + `pytest-cov`)**: Runs the entire test suite with code coverage analysis:
+   * **Numba JIT Disabled**: Executes tests with the environment variable `NUMBA_DISABLE_JIT=1`. Disabling the Just-In-Time compiler ensures fast startup during tests and guarantees that `pytest-cov` can collect accurate, line-by-line coverage metrics.
+   * **Coverage Reporting**: Generates a terminal summary pointing out any uncovered lines (`--cov-report=term-missing`) and compiles an interactive HTML report to `htmlcov/index.html`.
+   * **Pass-Through Arguments**: Supports passing flags directly to pytest (e.g., `bin/run-checks -k test_mandelbrot` or `bin/run-checks -v`).
+
+---
+
+## 🛠️ MCP Bridge Integration & Usage
+
+The `fractal-mcp` server exposes high-performance fractal computation and rendering tools to AI agents using the Model Context Protocol (MCP).
+
+### 1. Client Configurations
+
+#### 🤖 Claude Desktop Integration
+To use this bridge in Claude Desktop, add the server in your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
@@ -93,8 +116,8 @@ To use this bridge as an AI Agent, update your `claude_desktop_config.json`:
 > [!NOTE]
 > If Claude Desktop cannot locate the command (common on macOS GUI apps that do not inherit shell `$PATH`), replace `"fractal-mcp"` with the absolute path to the executable (which can be resolved by running `which fractal-mcp` in your terminal).
 
-## ☁️ Antigravity CLI Integration
-To use this bridge as an AI Agent, update your `mcp_config.json`:
+#### ☁️ Antigravity CLI Integration
+To register the server in the Antigravity CLI, update your `mcp_config.json`:
 ```json
 {
   "mcpServers": {
@@ -106,5 +129,140 @@ To use this bridge as an AI Agent, update your `mcp_config.json`:
 ```
 > [!NOTE]
 > If the Antigravity CLI cannot locate the command, replace `"fractal-mcp"` with the absolute path to the executable (which can be resolved by running `which fractal-mcp` in your terminal).
+
+### 2. Execution Modes
+
+* **stdio Transport Mode (Default)**: Ideal for standard MCP client integrations.
+  ```bash
+  fractal-mcp
+  ```
+* **SSE (Server-Sent Events) Transport Mode**: Launch the server in SSE mode by specifying a `PORT` environment variable:
+  ```bash
+  PORT=8000 fractal-mcp
+  ```
+
+### 3. Input Constraints & Rules
+
+To avoid validation errors (`ValueError` / `ToolError`), observe the following rules when invoking the tools:
+* **Aspect Ratio**: The viewport coordinates must have a **1-to-1 aspect ratio** to prevent image distortion (i.e., `x_max - x_min` must equal `y_max - y_min`).
+* **Complex Constant (`c`)**: Pass complex parameters (for Julia, Exponential, Sine, Cosine sets) as a string. Both `i` and `j` are accepted, and spaces are handled automatically (e.g., `"-0.7+0.27015j"`, `"0.285 + 0.01i"`).
+* **Resolution**: Must be a positive integer no greater than `12800`.
+* **Colormaps**: Must be a valid [Bokeh palette name](https://docs.bokeh.org/en/latest/docs/reference/palettes.html) (case-insensitive). Examples: `"Turbo"`, `"Viridis"`, `"Plasma"`, `"Inferno"`, `"Magma"`, `"Cividis"`, `"Blues"`.
+
+---
+
+## 💻 Sample Commands & Tool Invocation
+
+You can test tools directly from the terminal using the `fastmcp call` utility. This launches the server, runs the specified tool, saves the resulting image to the local `images/` directory, and prints the image metadata to `stdout`.
+
+### 1. List Available Colormaps
+
+**Agent Prompt:**
+> "Show me the list of available colormaps" or "What colormaps are supported by the fractal renderer?"
+
+*Alternatively, you can test this tool directly from your terminal using `fastmcp call`:*
+```bash
+fastmcp call \
+  --command "fractal-mcp" \
+  --target list_colormaps
+```
+
+### 2. Generate a Mandelbrot Fractal
+**Agent Prompt:**
+> "Generate a Mandelbrot fractal using the Turbo reversed colormap and a max iteration of 800."
+
+*Alternatively, via terminal command:*
+```bash
+fastmcp call \
+  --command "fractal-mcp" \
+  --target generate_mandelbrot_image \
+  --input-json '{"x_min": -2.0, "x_max": 1.0, "y_min": -1.5, "y_max": 1.5, "resolution": 1600, "colormap": "Turbo", "reverse_colormap": true, "max_iterations": 800}'
+```
+
+### 3. Generate a Julia Fractal (Douady's Rabbit)
+**Agent Prompt:**
+> "Generate Douady's Rabbit using the Turbo colormap and a max iteration of 800."
+
+*Alternatively, via terminal command:*
+```bash
+fastmcp call \
+  --command "fractal-mcp" \
+  --target generate_julia_image \
+  --input-json '{"x_min": -2.0, "x_max": 2.0, "y_min": -2.0, "y_max": 2.0, "c": "-0.123+0.745j", "resolution": 1600, "colormap": "Turbo", "max_iterations": 800}'
+```
+
+### 4. Generate an Exponential Fractal
+**Agent Prompt:**
+> "Render an exponential fractal with constant c = 1.0+0.0j, bounds from -20.0 to 20.0, resolution 1600, using the Blues reversed colormap."
+
+*Alternatively, via terminal command:*
+```bash
+fastmcp call \
+  --command "fractal-mcp" \
+  --target generate_exponential_image \
+  --input-json '{"x_min": -20.0, "x_max": 20.0, "y_min": -20.0, "y_max": 20.0, "c": "1.0+0.0j", "resolution": 1600, "colormap": "Blues", "reverse_colormap": true}'
+```
+
+### 5. Generate a Sine Fractal
+**Agent Prompt:**
+> "Render a sine fractal with constant c = 1.0+0.0j, bounds from -10.0 to 10.0, and resolution 1600."
+
+*Alternatively, via terminal command:*
+```bash
+fastmcp call \
+  --command "fractal-mcp" \
+  --target generate_sine_image \
+  --input-json '{"x_min": -10.0, "x_max": 10.0, "y_min": -10.0, "y_max": 10.0, "c": "1.0+0.0j", "resolution": 1600}'
+```
+
+### 6. Generate a Cosine Fractal
+**Agent Prompt:**
+> "Render a cosine fractal with constant c = 1.0+0.0j, bounds from -10.0 to 10.0, and resolution 1600."
+
+*Alternatively, via terminal command:*
+```bash
+fastmcp call \
+  --command "fractal-mcp" \
+  --target generate_cosine_image \
+  --input-json '{"x_min": -10.0, "x_max": 10.0, "y_min": -10.0, "y_max": 10.0, "c": "1.0+0.0j", "resolution": 1600}'
+```
+
+### 7. Generate a Newton's Method Fractal
+**Agent Prompt:**
+> "Render a Newton's method fractal with power 3.0, bounds from -2.0 to 2.0, and resolution 1600."
+
+*Alternatively, via terminal command:*
+```bash
+fastmcp call \
+  --command "fractal-mcp" \
+  --target generate_newton_image \
+  --input-json '{"x_min": -2.0, "x_max": 2.0, "y_min": -2.0, "y_max": 2.0, "power": 3.0, "resolution": 1600}'
+```
+
+---
+
+## 🎨 Rendering Gallery
+
+Below are sample renders generated by the library's high-performance mathematical engine:
+
+### 1. Mandelbrot Set (colormap: `Greys` reversed)
+![Mandelbrot Set Sample](images/mandelbrot_x-0.5000_y0.0000_greys_reversed.jpg)
+
+### 2. Julia Set - Douady's Rabbit (c = -0.123 + 0.745i, colormap: `YlGnBu`)
+![Julia Set Sample](images/julia_c-0.123_0.745_x0.0000_y0.0000_res12800_iter500_ylgnbu.jpg)
+
+### 3. Exponential Set (c = -2.550 + 1.450i, colormap: `Blues` reversed)
+![Exponential Set Sample](images/exponential_c-2.550_1.450_x-1.0833_y19.0883_blues_reversed.jpg)
+
+### 4. Sine Set (c = -1.000 + 0.190i, colormap: `Blues`)
+![Sine Set Sample](images/sine_c-1.000_0.190_x0.0000_y-0.0078_blues.jpg)
+
+### 5. Cosine Set (c = -1.000 + 0.809i, colormap: `Magma`)
+![Cosine Set Sample](images/cosine_c-1.000_0.809_x0.0000_y-0.0411_magma.jpg)
+
+### 6. Newton's Method Set (power: p = 5.0, colormap: `Greys` reversed)
+![Newton's Method Set Sample](images/newton_p5.0_x0.0000_y0.0000_res12800_iter200_greys_reversed.jpg)
+
+
 
 
