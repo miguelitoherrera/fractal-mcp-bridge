@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "fractal-bridge": {
+      "command": "fractal-mcp"
+    }
+  }
+}
