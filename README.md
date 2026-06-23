@@ -28,6 +28,10 @@ The repository follows a standard Python "src layout" under a unified `fractal_m
 ### 📂 Directory & File Structure
 ```
 fractal-mcp-bridge/
+├── .agents/                   # Workspace-scoped AI agent customizations and configurations
+│   ├── skills/                # Specialized agent instruction packages and tools
+│   ├── AGENTS.md              # Project-specific guidelines, formatting rules, and constraints
+│   └── mcp_config.json        # Auto-registration config for MCP servers
 ├── bin/                       # Executable utility and environment script runners
 ├── images/                    # Saved output renders and sample fractal images
 ├── src/
@@ -118,19 +122,11 @@ To use this bridge in Claude Desktop, add the server in your `claude_desktop_con
 > [!NOTE]
 > If Claude Desktop cannot locate the command (common on macOS GUI apps that do not inherit shell `$PATH`), replace `"fractal-mcp"` with the absolute path to the executable (which can be resolved by running `which fractal-mcp` in your terminal).
 
-#### ☁️ Antigravity CLI Integration
-To register the server in the Antigravity CLI, update your `mcp_config.json`:
-```json
-{
-  "mcpServers": {
-    "fractal-bridge": {
-      "command": "fractal-mcp"
-    }
-  }
-}
-```
-> [!NOTE]
-> If the Antigravity CLI cannot locate the command, replace `"fractal-mcp"` with the absolute path to the executable (which can be resolved by running `which fractal-mcp` in your terminal).
+#### ☁️ Antigravity Integration
+This workspace is optimized for AI agents using **Antigravity**. It includes a dedicated [.agents/](.agents) directory containing:
+- **[.agents/mcp_config.json](.agents/mcp_config.json)**: Local MCP configuration that automatically discovers and registers the `fractal-bridge` server and its tools in the Antigravity CLI or IDE.
+- **[.agents/AGENTS.md](.agents/AGENTS.md)**: Workspace-scoped development guidelines, style preferences, and verification requirements.
+- **`skills/`**: Specialized workspace skills (API guidelines, testing protocols, etc.) loaded automatically by agent workflows.
 
 ### 2. Execution Modes
 
