@@ -2,6 +2,8 @@
 import numba
 import numpy as np
 
+from fractal_mcp.math.grid import make_grid_generator
+
 
 @numba.njit(fastmath=True)
 def mandelbrot(
@@ -54,7 +56,9 @@ def mandelbrot(
     return float(max_iterations)
 
 
-@numba.njit(parallel=True, fastmath=True)
+_generate_mandelbrot_grid = make_grid_generator(mandelbrot)
+
+
 def generate_mandelbrot_grid(
     x_min: float,
     x_max: float,
@@ -86,18 +90,5 @@ def generate_mandelbrot_grid(
         --------------------------------------
         (0, 0)            ->  (x_min, y_max)
         (width, height)   ->  (x_max, y_min)
-
-        Grid loops are duplicated across modules intentionally. Centralizing
-        them would require passing the JIT-compiled element functions, which
-        introduces performance overhead and prevents full Numba optimization.
     """
-    x_step = (x_max - x_min) / width
-    y_step = (y_max - y_min) / height
-    grid = np.empty((height, width), dtype=np.float32)
-
-    for y in numba.prange(height):
-        for x in range(width):
-            c = complex(x_min + x * x_step, y_max - y * y_step)
-            grid[y, x] = mandelbrot(c, max_iterations)
-
-    return grid
+    return _generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
