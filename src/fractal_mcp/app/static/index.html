@@ -19,6 +19,9 @@
 
     <div class="container">
         <div class="controls">
+            <div class="row" style="font-size: 0.8rem; color: #94a3b8; margin-bottom: -5px; line-height: 1.4;">
+                <span>💡 Press <strong>Enter</strong> inside any numeric input to render changes.</span>
+            </div>
             <div class="row">
                 <div class="control-group">
                     <label>Fractal Type</label>
@@ -63,8 +66,13 @@
                 </div>
 
                 <div class="control-group">
-                    <label>Zoom Factor</label>
-                    <input type="number" id="zoomFactor" value="10" step="0.5" min="1.1" style="width: 80px;">
+                    <label>Zoom Factor: <span id="zoomVal" style="color: #3498db; font-weight: bold; text-transform: lowercase;">10.0x (zoom in)</span></label>
+                    <input type="range" id="zoomFactor" min="0.1" max="20.0" step="0.1" value="10.0" style="margin-top: 4px; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b; margin-top: 2px; padding: 0 2px; font-weight: 500;">
+                        <span>0.1x (Out)</span>
+                        <span>10.0x</span>
+                        <span>20.0x (In)</span>
+                    </div>
                 </div>
             </div>
 

@@ -22,6 +22,19 @@ const newtonParams = document.getElementById('newton-params');
 const saveFilenameInput = document.getElementById('saveFilename');
 const saveBtn = document.getElementById('saveBtn');
 const saveStatus = document.getElementById('saveStatus');
+const zoomFactorInput = document.getElementById('zoomFactor');
+const zoomValLabel = document.getElementById('zoomVal');
+
+function updateZoomLabel(value) {
+    const val = parseFloat(value);
+    if (val < 1.0) {
+        zoomValLabel.textContent = `${val.toFixed(1)}x (zoom out)`;
+    } else if (val === 1.0) {
+        zoomValLabel.textContent = `1.0x (no zoom)`;
+    } else {
+        zoomValLabel.textContent = `${val.toFixed(1)}x (zoom in)`;
+    }
+}
 
 /**
  * Sync the internal 'state' object with values from the UI.
@@ -204,6 +217,8 @@ function resetView() {
     document.getElementById('c_real').value = -0.7;
     document.getElementById('c_imag').value = 0.27;
     document.getElementById('power').value = 3.0;
+    zoomFactorInput.value = 10.0;
+    updateZoomLabel(10.0);
 
     updateUI(true);
 }
@@ -333,6 +348,10 @@ document.getElementById('resetBtn').onclick = resetView;
             updateUI(true);
         }
     });
+});
+
+zoomFactorInput.addEventListener('input', (e) => {
+    updateZoomLabel(e.target.value);
 });
 
 // Initial load
