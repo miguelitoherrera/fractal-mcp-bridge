@@ -297,12 +297,16 @@ def render_fractal(
     if fractal_type == "mandelbrot":
         grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
     elif fractal_type == "julia":
+        assert c is not None
         grid = generate_julia_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
     elif fractal_type == "exponential":
+        assert c is not None
         grid = generate_exponential_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
     elif fractal_type == "sine":
+        assert c is not None
         grid = generate_sine_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
     elif fractal_type == "cosine":
+        assert c is not None
         grid = generate_cosine_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
     elif fractal_type == "newton":
         assert power is not None
