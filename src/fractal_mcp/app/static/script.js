@@ -95,6 +95,7 @@ async function suggestFilename() {
  */
 async function updateUI(renderImage = true) {
     syncStateFromUI();
+    saveStatus.textContent = "";
 
     if (renderImage) {
         loader.classList.add('active');
@@ -122,7 +123,16 @@ async function updateUI(renderImage = true) {
 
         try {
             const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) {
+                let errMsg = `HTTP error! status: ${response.status}`;
+                try {
+                    const errData = await response.json();
+                    if (errData && errData.detail) {
+                        errMsg = errData.detail;
+                    }
+                } catch (_) {}
+                throw new Error(errMsg);
+            }
 
             // Extract filename from header (primary sync)
             const suggestedFilename = response.headers.get("X-Suggested-Filename") || response.headers.get("x-suggested-filename");
@@ -140,14 +150,14 @@ async function updateUI(renderImage = true) {
         } catch (err) {
             console.error("Render failed:", err);
             loader.classList.remove('active');
+            saveStatus.textContent = "Render failed: " + err.message;
+            saveStatus.style.color = "#e74c3c";
             // If render fails, try to at least get a filename suggestion
             await suggestFilename();
         }
     } else {
         await suggestFilename();
     }
-
-    saveStatus.textContent = "";
 }
 
 /**

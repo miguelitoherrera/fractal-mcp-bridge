@@ -205,8 +205,11 @@ def validate_fractal_params(
         raise ValueError("max_iterations must be strictly positive")
     if fractal_type in ["julia", "exponential", "sine", "cosine"] and c is None:
         raise ValueError(f"c must be provided for {fractal_type} fractals")
-    if fractal_type == "newton" and power is None:
-        raise ValueError("power must be provided for newton fractals")
+    if fractal_type == "newton":
+        if power is None:
+            raise ValueError("power must be provided for newton fractals")
+        if power == 0.0:
+            raise ValueError("Newton fractal power must not be zero")
     if fractal_type not in [
         "mandelbrot",
         "julia",

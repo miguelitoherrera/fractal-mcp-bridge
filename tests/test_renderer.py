@@ -71,6 +71,11 @@ class TestRenderer(unittest.TestCase):
         with self.assertRaises(ValueError):
             suggest_filename("newton", -2.0, 2.0, -2.0, 2.0, 1600, 200, "Turbo", False)
 
+    def test_suggest_filename_newton_zero_power(self) -> None:
+        # Test that passing power=0.0 raises ValueError for newton
+        with self.assertRaisesRegex(ValueError, "Newton fractal power must not be zero"):
+            suggest_filename("newton", -2.0, 2.0, -2.0, 2.0, 1600, 200, "Turbo", False, power=0.0)
+
     def test_render_mandelbrot(self) -> None:
         img_bytes = render_fractal(
             "mandelbrot",
