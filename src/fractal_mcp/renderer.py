@@ -1,5 +1,6 @@
 import functools
 import io
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -271,6 +272,9 @@ def suggest_filename(
     return f"{name}_res{resolution}_iter{max_iterations}_{colormap.lower()}{reversed_suffix}.jpg"
 
 
+_render_lock = threading.Lock()
+
+
 def render_fractal(
     fractal_type: str,
     x_min: float,
@@ -294,26 +298,27 @@ def render_fractal(
     width = resolution
     height = resolution
 
-    if fractal_type == "mandelbrot":
-        grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
-    elif fractal_type == "julia":
-        assert c is not None
-        grid = generate_julia_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
-    elif fractal_type == "exponential":
-        assert c is not None
-        grid = generate_exponential_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
-    elif fractal_type == "sine":
-        assert c is not None
-        grid = generate_sine_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
-    elif fractal_type == "cosine":
-        assert c is not None
-        grid = generate_cosine_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
-    elif fractal_type == "newton":
-        assert power is not None
-        roots, iters = generate_newton_grid(x_min, x_max, y_min, y_max, power, width, height, max_iterations)
-        return newton_to_image_bytes(roots, iters, max_iterations, colormap, reverse_colormap)
-    else:
-        # Should be caught by validate_fractal_params
-        raise ValueError(f"Unsupported fractal type: {fractal_type}")
+    with _render_lock:
+        if fractal_type == "mandelbrot":
+            grid = generate_mandelbrot_grid(x_min, x_max, y_min, y_max, width, height, max_iterations)
+        elif fractal_type == "julia":
+            assert c is not None
+            grid = generate_julia_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
+        elif fractal_type == "exponential":
+            assert c is not None
+            grid = generate_exponential_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
+        elif fractal_type == "sine":
+            assert c is not None
+            grid = generate_sine_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
+        elif fractal_type == "cosine":
+            assert c is not None
+            grid = generate_cosine_grid(x_min, x_max, y_min, y_max, c, width, height, max_iterations)
+        elif fractal_type == "newton":
+            assert power is not None
+            roots, iters = generate_newton_grid(x_min, x_max, y_min, y_max, power, width, height, max_iterations)
+            return newton_to_image_bytes(roots, iters, max_iterations, colormap, reverse_colormap)
+        else:
+            # Should be caught by validate_fractal_params
+            raise ValueError(f"Unsupported fractal type: {fractal_type}")
 
-    return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
+        return grid_to_image_bytes(grid, max_iterations, colormap, reverse_colormap)
