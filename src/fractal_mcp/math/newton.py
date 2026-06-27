@@ -54,7 +54,10 @@ def newton_set(
             angle = math.atan2(z.imag, z.real)
             if angle < 0:
                 angle += 2.0 * math.pi
-            return angle / (2.0 * math.pi), float(i)
+            norm_angle = angle / (2.0 * math.pi)
+            if norm_angle >= 0.999:
+                norm_angle = 0.0
+            return norm_angle, float(i)
 
     return 0.0, float(max_iterations)
 

@@ -33,12 +33,7 @@ def ensure_images_dir() -> Path:
 
 @functools.lru_cache(maxsize=64)
 def _load_bokeh_palette_cached(name: str) -> np.ndarray:
-    """Private cached helper to load and parse Bokeh palettes."""
-    original_key = _COLORMAP_LOOKUP.get(name.lower())
-    if not original_key:
-        raise KeyError(f"Palette '{name}' not found in Bokeh palettes.")
-
-    family = all_palettes[original_key]
+    family = all_palettes[name]
 
     # Pick the largest available size in the family
     max_size = max(family.keys())
@@ -65,7 +60,10 @@ def load_bokeh_palette(name: str) -> np.ndarray:
     Load a named Bokeh palette and return a standardized (256, 3) uint8 RGB array.
     The lookup is case-insensitive.
     """
-    return _load_bokeh_palette_cached(name).copy()
+    original_key = _COLORMAP_LOOKUP.get(name.lower())
+    if not original_key:
+        raise KeyError(f"Palette '{name}' not found in Bokeh palettes.")
+    return _load_bokeh_palette_cached(original_key).copy()
 
 
 def grid_to_image_bytes(
