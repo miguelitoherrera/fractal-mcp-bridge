@@ -102,6 +102,65 @@ The script runs the following checks in order:
 
 ---
 
+## 🐳 Running with Docker
+
+This repository includes a [Dockerfile](file:///Users/mike.herrera/workspace/fractal-mcp-bridge/Dockerfile) and [.dockerignore](file:///Users/mike.herrera/workspace/fractal-mcp-bridge/.dockerignore) to run both the web explorer and the MCP bridge server in an isolated container.
+
+### 1. Build the Docker Image
+To build the image, run the following command from the repository root. This will install all dependencies (including development ones) and run the test suite (`bin/run-checks`) as part of the build step:
+
+```bash
+docker build -t fractal-mcp-bridge .
+```
+
+### 2. Run the Web Explorer
+To run the interactive Fractal Web Explorer inside the container, expose port `8001`:
+
+```bash
+docker run -it --rm -p 8001:8001 fractal-mcp-bridge
+```
+Then open `http://localhost:8001` in your browser.
+
+### 3. Run the MCP Bridge Server
+When running the MCP server inside Docker, you must mount the local `images/` directory to `/app/images` inside the container so generated images are persisted to the host.
+
+#### stdio Mode (Standard Client Integration)
+To use the Docker image as an MCP stdio server in client configurations (like Claude Desktop or Cursor), specify `docker` as the command and override the entrypoint to the bridge server:
+
+```json
+{
+  "mcpServers": {
+    "fractal-bridge-docker": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "/absolute/path/to/fractal-mcp-bridge/images:/app/images",
+        "fractal-mcp-bridge",
+        "python",
+        "src/fractal_mcp/bridge/server.py"
+      ]
+    }
+  }
+}
+```
+
+#### SSE Mode (Server-Sent Events)
+To run the MCP server in SSE mode, mount the images folder, expose port `8080`, define the `PORT=8080` environment variable, and override the command:
+
+```bash
+docker run -it --rm \
+  -p 8080:8080 \
+  -e PORT=8080 \
+  -v /absolute/path/to/fractal-mcp-bridge/images:/app/images \
+  fractal-mcp-bridge \
+  python src/fractal_mcp/bridge/server.py
+```
+
+---
+
 ## 🛠️ MCP Bridge Integration & Usage
 
 The `fractal-mcp` server exposes high-performance fractal computation and rendering tools to AI agents using the Model Context Protocol (MCP).
