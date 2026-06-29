@@ -27,6 +27,7 @@ This repository uses a consolidated guidelines and rules structure.
 ### Testing Guidelines
 - **Test Coverage:** All unit tests must target **100% statement coverage** (or at least 99% after trying).
 - **Compulsory Unit Tests:** Always create a unit test for every function or class you create.
+- **Dedicated Test Files:** When creating a new code module or source file, always create a corresponding, dedicated test file containing its unit tests. Do not place unit tests for a new module inside existing test files.
 - **Automated Checks:** Always run `bin/run-checks` (if available) after making any code changes (but not for md files). This script executes:
   1. Ruff formatting checks: `ruff format --check src tests`
   2. Ruff linting checks: `ruff check src tests`

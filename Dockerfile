@@ -12,12 +12,21 @@ RUN apt-get update && apt-get install -y \
 # Copy the entire project first to ensure pyproject.toml and lib/ are present
 COPY . .
 
-# Install the project in editable mode.
-# This uses your pyproject.toml to map lib/fractal_math correctly.
-RUN pip install --no-cache-dir -e .
+# Ensure scripts are executable
+RUN chmod +x bin/run-checks bin/run-fractal-web-explorer
 
-# Cloud Run listens on 8080 by default
+# Install the project in editable mode with development dependencies.
+# This uses your pyproject.toml to map lib/fractal_math correctly and includes test/lint tools.
+RUN pip install --no-cache-dir -e .[dev]
+
+# Run formatting, linting, type checks, and unit tests, then clean up generated test artifacts
+RUN ./bin/run-checks && rm -rf htmlcov .coverage
+
+
+# Expose ports for the bridge server (8080) and the web explorer (8001)
 EXPOSE 8080
+EXPOSE 8001
 
-# Run the bridge server
-CMD ["python", "src/fractal_mcp/bridge/server.py"]
+# Run the web explorer by default
+CMD ["./bin/run-fractal-web-explorer"]
+
