@@ -50,9 +50,9 @@ fractal-mcp-bridge/
 ## 🌍 Fractal Web Explorer
 If you want to interactively explore the Mandelbrot, Julia, and Exponential sets in more detail, you can spin up the encapsulated Fractal Web Explorer.
 
-From the repository root, run:
+Once the package is installed, run:
 ```bash
-bin/run-fractal-web-explorer
+fractal-web-explorer
 ```
 Open the browser link provided in the terminal (defaults to `http://localhost:8001`).
 
@@ -139,8 +139,7 @@ To use the Docker image as an MCP stdio server in client configurations (like Cl
         "-v",
         "/absolute/path/to/fractal-mcp-bridge/images:/app/images",
         "fractal-mcp-bridge",
-        "python",
-        "src/fractal_mcp/bridge/server.py"
+        "fractal-mcp"
       ]
     }
   }
@@ -156,7 +155,7 @@ docker run -it --rm \
   -e PORT=8080 \
   -v /absolute/path/to/fractal-mcp-bridge/images:/app/images \
   fractal-mcp-bridge \
-  python src/fractal_mcp/bridge/server.py
+  fractal-mcp
 ```
 
 ---

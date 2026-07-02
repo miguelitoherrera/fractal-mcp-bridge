@@ -34,6 +34,7 @@ where = ["src"]
 
 [project.scripts]
 fractal-mcp = "fractal_mcp.bridge.server:main"
+fractal-web-explorer = "fractal_mcp.app.main:main"
 
 [tool.ruff]
 line-length = 120

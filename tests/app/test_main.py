@@ -1,9 +1,10 @@
 # Integration tests for the FastAPI explorer application.
 import unittest
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
-from fractal_mcp.app.main import app
+from fractal_mcp.app.main import app, main
 
 
 class TestExplorerApp(unittest.TestCase):
@@ -26,6 +27,12 @@ class TestExplorerApp(unittest.TestCase):
             response = client.get("/render?fractal_type=invalid")
             # 422 means the endpoint was reached but validation failed
             self.assertEqual(response.status_code, 422)
+
+    @patch("fractal_mcp.app.main.uvicorn.run")
+    def test_main(self, mock_run: MagicMock) -> None:
+        """Verify that main() runs the FastAPI application via uvicorn."""
+        main()
+        mock_run.assert_called_once_with(app, host="0.0.0.0", port=8001)
 
 
 if __name__ == "__main__":
