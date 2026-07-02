@@ -35,5 +35,10 @@ app.include_router(router)
 # Serve static files (UI)
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 
-if __name__ == "__main__":  # pragma: no cover
+
+def main() -> None:
     uvicorn.run(app, host="0.0.0.0", port=8001)
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

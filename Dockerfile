@@ -53,4 +53,5 @@ EXPOSE 8080
 EXPOSE 8001
 
 # Run the web explorer by default
-CMD ["python", "-m", "fractal_mcp.app.main"]
+CMD ["fractal-web-explorer"]
+
