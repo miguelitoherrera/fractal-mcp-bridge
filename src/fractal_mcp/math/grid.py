@@ -36,7 +36,7 @@ def make_grid_generator(
         y_step = (y_max - y_min) / height
         grid = np.empty((height, width), dtype=np.float32)
 
-        for y in numba.prange(height):
+        for y in numba.prange(height):  # type: ignore[attr-defined, no-untyped-call]
             for x in range(width):
                 z = complex(x_min + x * x_step, y_max - y * y_step)
                 grid[y, x] = element_func(z, *args, max_iterations)

@@ -106,7 +106,7 @@ def generate_newton_grid(
     roots_grid = np.empty((height, width), dtype=np.float32)
     iters_grid = np.empty((height, width), dtype=np.float32)
 
-    for y in numba.prange(height):
+    for y in numba.prange(height):  # type: ignore[attr-defined, no-untyped-call]
         for x in range(width):
             z = complex(x_min + x * x_step, y_max - y * y_step)
             angle, iters = newton_set(z, power, max_iterations)
